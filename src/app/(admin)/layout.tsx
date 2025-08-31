@@ -13,9 +13,9 @@ export default function AdminLayout({
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const role = typeof window !== "undefined" ? localStorage.getItem("role") : null;
-  const isMechanic = role == "2";
+  const isUser = role == "2";
   // Dynamic class for main content margin based on sidebar state
-  const mainContentMargin = isMechanic
+  const mainContentMargin = isUser
     ? "ml-0"
     : isMobileOpen
       ? "ml-0"

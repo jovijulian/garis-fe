@@ -31,12 +31,11 @@ export default function UserSecurityCard() {
     const payload = {
       old_password: oldPassword,
       new_password: newPassword,
-      confirm_password: confirmPassword,
     };
 
 
     try {
-      await httpPost(endpointUrl("auth/update-password"), payload, true);
+      await httpPost(endpointUrl("auth/change-password"), payload, true);
       toast.success("Berhasil ganti password!");
       setOldPassword("");
       setNewPassword("");

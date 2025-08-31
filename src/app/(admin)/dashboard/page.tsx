@@ -10,7 +10,7 @@ import Dashboard from "./dashboard";
 
 export const metadata: Metadata = {
   title:
-    "Dashboard | Bacip Moto",
+    "Dashboard",
 };
 
 export default function Ecommerce() {

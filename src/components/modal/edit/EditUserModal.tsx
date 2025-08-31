@@ -11,14 +11,14 @@ import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import { useModal } from "@/hooks/useModal";
 
-interface EditFeatureModalProps {
+interface EditUserModalProps {
     isOpen: boolean;
     selectedId: number;
     onClose: () => void;
     onSuccess?: () => void;
 }
 
-const EditFeatureModal: React.FC<EditFeatureModalProps> = ({
+const EditUserModal: React.FC<EditUserModalProps> = ({
     isOpen,
     selectedId,
     onClose,
@@ -27,7 +27,38 @@ const EditFeatureModal: React.FC<EditFeatureModalProps> = ({
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (!selectedId) return;
+
+            setIsLoading(true);
+            setError("");
+            try {
+                const response = await httpGet(endpointUrl(`users/${selectedId}`), true);
+                const userData = response.data.data;
+
+                setName(userData.name || "");
+                setEmail(userData.email || "");
+                setPhone(userData.phone || "");
+
+            } catch (err: any) {
+                toast.error(err?.response?.data?.message || "Failed to fetch user data.");
+                setError("Could not load user data.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (isOpen) {
+            fetchUserData();
+        } else {
+            handleCancel();
+        }
+    }, [isOpen, selectedId]);
     const handleSubmit = async () => {
         setError("");
 
@@ -39,12 +70,13 @@ const EditFeatureModal: React.FC<EditFeatureModalProps> = ({
 
 
         try {
-            await httpPost(endpointUrl("users/" + selectedId), payload, true);
+            await httpPut(endpointUrl(`users/${selectedId}`), payload, true);
             toast.success("User updated succesfully");
             setName("");
             setPhone("");
             setEmail("");
             onClose();
+            onSuccess?.();
         } catch (error: any) {
             toast.error(error?.response?.data?.message);
             setError(error?.response?.data?.message || "Failed to change user.");
@@ -140,4 +172,4 @@ const EditFeatureModal: React.FC<EditFeatureModalProps> = ({
     );
 };
 
-export default EditFeatureModal;
+export default EditUserModal;

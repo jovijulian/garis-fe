@@ -11,43 +11,71 @@ import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import { useModal } from "@/hooks/useModal";
 
-interface EditFeatureModalProps {
+interface EditProps {
     isOpen: boolean;
     selectedId: number;
     onClose: () => void;
     onSuccess?: () => void;
 }
 
-const EditFeatureModal: React.FC<EditFeatureModalProps> = ({
+const EditRoomModal: React.FC<EditProps> = ({
     isOpen,
     selectedId,
     onClose,
     onSuccess,
 }) => {
     const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [phone, setPhone] = useState("");
+    const [description, setDescription] = useState("");
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+    useEffect(() => {
+        const fetchRoomData = async () => {
+            if (!selectedId) return;
+
+            setIsLoading(true);
+            setError("");
+            try {
+                const response = await httpGet(endpointUrl(`rooms/${selectedId}`), true);
+                const roomData = response.data.data;
+
+                setName(roomData.name || "");
+                setDescription(roomData.description || "");
+
+            } catch (err: any) {
+                toast.error(err?.response?.data?.message || "Failed to fetch room data.");
+                setError("Could not load room data.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (isOpen) {
+            fetchRoomData();
+        } else {
+            handleCancel();
+        }
+    }, [isOpen, selectedId]);
     const handleSubmit = async () => {
         setError("");
 
         const payload = {
             name,
-            email,
-            phone
+            description
         };
 
 
         try {
-            await httpPost(endpointUrl("users/" + selectedId), payload, true);
-            toast.success("User updated succesfully");
+            await httpPut(endpointUrl(`rooms/${selectedId}`), payload, true);
+            toast.success("Room updated succesfully");
             setName("");
-            setPhone("");
-            setEmail("");
+            setDescription("");
             onClose();
+            onSuccess?.();
         } catch (error: any) {
             toast.error(error?.response?.data?.message);
-            setError(error?.response?.data?.message || "Failed to change user.");
+            setError(error?.response?.data?.message || "Failed to change room.");
         }
 
 
@@ -56,8 +84,7 @@ const EditFeatureModal: React.FC<EditFeatureModalProps> = ({
         onClose();
         setError("");
         setName("");
-        setPhone("");
-        setEmail("");
+        setDescription("");
     };
 
     if (!isOpen) return null;
@@ -67,7 +94,7 @@ const EditFeatureModal: React.FC<EditFeatureModalProps> = ({
             <div className="no-scrollbar relative w-full max-w-[500px] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
                 <div className="pr-10">
                     <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90 lg:text-2xl">
-                        Edit User
+                        Edit Room
                     </h4>
                 </div>
                 <form
@@ -91,28 +118,16 @@ const EditFeatureModal: React.FC<EditFeatureModalProps> = ({
                         </div>
 
                         <div>
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                type="email"
-                                id="email"
-                                name="email"
-                                defaultValue={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
+                            <Label htmlFor="description">Description</Label>
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Additional description..."
+                                rows={4}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
                             />
                         </div>
 
-                        <div>
-                            <Label htmlFor="phone">Phone</Label>
-                            <Input
-                                type="text"
-                                id="phone"
-                                name="phone"
-                                defaultValue={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                required
-                            />
-                        </div>
                         {error && (
                             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
                         )}
@@ -140,4 +155,4 @@ const EditFeatureModal: React.FC<EditFeatureModalProps> = ({
     );
 };
 
-export default EditFeatureModal;
+export default EditRoomModal;

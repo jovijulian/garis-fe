@@ -48,7 +48,6 @@ const SignIn: React.FC = () => {
         url: endpointUrl(`auth/login`),
         data: {
           ...payload,
-          user_agent: navigator.userAgent,
         },
       });
 
@@ -75,20 +74,18 @@ const SignIn: React.FC = () => {
     try {
       const response = await httpGet(endpointUrl(`auth/me`), true);
       const user = response.data.data;
-      localStorage.setItem("role", user.role_id);
+      localStorage.setItem("role", user.role);
       localStorage.setItem("name", user.name);
       localStorage.setItem("email", user.email);
       localStorage.setItem("user_id", user.id);
 
-      setCookie("role", user.role_id);
+      setCookie("role", user.role);
 
-      if (user.role_id == 1) {
+      if (user.role == 1) {
         window.location.href = "/";
-      } else if (user.role_id == 2) {
-        window.location.href = "/mechanic-transaction";
-      } else if (user.role_id == 3) {
-        window.location.href = "/";
-      }
+      } else if (user.role == 2) {
+        window.location.href = "/booking";
+      } 
     } catch (error) {
       console.log(error);
     }
@@ -111,20 +108,9 @@ const SignIn: React.FC = () => {
           </div>
 
           <div className="relative mb-8 text-center">
-            <div className="inline-flex items-center justify-center w-60 h-40 rounded-xl relative">
-              {/* <FaWrench className="w-8 h-8 text-white" /> */}
-              <Image
-                // className="w-8 h-8"
-                src="/images/logo/logo-bacip.png"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </div>
-            {/* <h1 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-2">
-              <span>Bacip Moto</span>
-              <CiSettings className="w-5 h-5 text-blue-400" />
-            </h1> */}
+           <h1 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+              <span>Booking Apps</span>
+            </h1>
             <p className="text-slate-400">
               Please sign in to continue!
             </p>

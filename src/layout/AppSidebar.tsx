@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { LuLetterText } from "react-icons/lu";
+import { MdMeetingRoom } from "react-icons/md";
 import {
   BoxCubeIcon,
   CalenderIcon,
@@ -19,80 +20,65 @@ import {
   UserCircleIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
-import { FaUserCog, FaUsers, FaWrench } from "react-icons/fa";
+import { FaExchangeAlt, FaUserCog, FaUsers, FaHouseUser, FaBoxes } from "react-icons/fa";
 import { IoGrid } from "react-icons/io5";
+import { TbReport, TbSettingsFilled } from "react-icons/tb";
 
 type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  roles: number[];
 };
 
 const navItems: NavItem[] = [
   {
     icon: <IoGrid />,
     name: "Dashboard",
-    path: "/",
+    path: "/dashboard",
+    roles: [1],
   },
   {
-    icon: <FaWrench />,
-    name: "Transaction",
-    path: "/transaction",
+    icon: <FaExchangeAlt />,
+    name: "Manage Booking",
+    path: "/manage-booking",
+    roles: [1],
+  },
+  {
+    icon: <MdMeetingRoom />,
+    name: "Rooms",
+    path: "/rooms",
+    roles: [1],
   },
   {
     icon: <FaUsers />,
-    name: "Customers",
-    path: "/customer",
+    name: "Users",
+    path: "/users",
+    roles: [1],
   },
-  {
-    icon: <LuLetterText />,
-    name: "Feature",
-    path: "/feature",
-  },
-  {
-    icon: <FaUserCog />,
-    name: "Admin & Mechanics",
-    path: "/mechanic",
-  },
-
-
-  // {
-  //   name: "Forms",
-  //   icon: <ListIcon />,
-  //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  // },
-  // {
-  //   name: "Tables",
-  //   icon: <TableIcon />,
-  //   subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  // },
-  // {
-  //   name: "Pages",
-  //   icon: <PageIcon />,
-  //   subItems: [
-  //     { name: "Blank Page", path: "/blank", pro: false },
-  //     { name: "404 Error", path: "/error-404", pro: false },
-  //   ],
-  // },
 ];
 
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
-  const role = typeof window !== "undefined" ? localStorage.getItem("role") : null;
-  const isMechanic = role == "2";
+  const [role, setRole] = useState<number | null>(null);
+  useEffect(() => {
+    const userRole = localStorage.getItem("role");
+    if (userRole) {
+      setRole(parseInt(userRole, 10));
+    }
+  }, []);
 
   const filteredNavItems = React.useMemo(() => {
-    // Jika role adalah '3'
-    if (role === '3') {
-      const allowedMenus = ["Dashboard", "Transaction", "Customers"];
-      return navItems.filter(item => allowedMenus.includes(item.name));
+    if (role === null) {
+      return [];
     }
-    // Jika role lain (selain mekanik, yang sudah di-handle di bawah)
-    return navItems;
-  }, [role]); // Dijalankan ulang hanya jika userRole berubah
+    return navItems.filter(item => item.roles.includes(role));
+  }, [role]);
+
+
   const renderMenuItems = (
     navItems: NavItem[],
     menuType: "main" | "others"
@@ -272,7 +258,7 @@ const AppSidebar: React.FC = () => {
       return { type: menuType, index };
     });
   };
-  if (isMechanic) return null;
+  if (role === 2) return null;
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
@@ -291,33 +277,24 @@ const AppSidebar: React.FC = () => {
         className={`py-8 flex  ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
           }`}
       >
-        <Link href="/">
+
+        <Link href="/" className="flex items-center">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
               {/* Logo */}
-              <Image
-                className="dark:hidden -mt-4"
-                src="/images/logo/logo-bacip.png"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block -mt-5"
-                src="/images/logo/logo-bacip.png"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
+              <svg viewBox="0 0 54 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-10 text-blue-600">
+                <path d="M27.3546 3.1746C21.7442 3.1746 16.7856 5.96385 13.7915 10.2305L10.4399 9.56057C13.892 3.83178 20.1756 0 27.3546 0C34.5281 0 40.8075 3.82591 44.2613 9.54743L40.9084 10.2176C37.9134 5.95821 32.9593 3.1746 27.3546 3.1746Z" fill="currentColor" />
+                <path d="M17.1529 19.7194C17.1529 25.3503 21.7203 29.915 27.3546 29.915C32.9887 29.915 37.5561 25.3503 37.5561 19.7194C37.5561 19.5572 37.5524 19.3959 37.5449 19.2355C38.5617 19.0801 39.5759 18.9013 40.5867 18.6994L40.6926 18.6782C40.7191 19.0218 40.7326 19.369 40.7326 19.7194C40.7326 27.1036 34.743 33.0896 27.3546 33.0896C19.966 33.0896 13.9765 27.1036 13.9765 19.7194C13.9765 19.374 13.9896 19.0316 14.0154 18.6927L14.0486 18.6994C15.0837 18.9062 16.1223 19.0886 17.1637 19.2467C17.1566 19.4033 17.1529 19.561 17.1529 19.7194Z" fill="currentColor" />
+              </svg>
+              <span className="text-gray-800 dark:text-white font-bold text-xl sm:text-2xl ml-2">
+                Booking Apps
+              </span>
             </>
           ) : (
-
-            <Image
-              src="/images/logo/logo-bacip.png"
-              alt="Logo"
-              width={32}
-              height={32}
-            />
+            <svg viewBox="0 0 54 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-10 text-blue-600">
+              <path d="M27.3546 3.1746C21.7442 3.1746 16.7856 5.96385 13.7915 10.2305L10.4399 9.56057C13.892 3.83178 20.1756 0 27.3546 0C34.5281 0 40.8075 3.82591 44.2613 9.54743L40.9084 10.2176C37.9134 5.95821 32.9593 3.1746 27.3546 3.1746Z" fill="currentColor" />
+              <path d="M17.1529 19.7194C17.1529 25.3503 21.7203 29.915 27.3546 29.915C32.9887 29.915 37.5561 25.3503 37.5561 19.7194C37.5561 19.5572 37.5524 19.3959 37.5449 19.2355C38.5617 19.0801 39.5759 18.9013 40.5867 18.6994L40.6926 18.6782C40.7191 19.0218 40.7326 19.369 40.7326 19.7194C40.7326 27.1036 34.743 33.0896 27.3546 33.0896C19.966 33.0896 13.9765 27.1036 13.9765 19.7194C13.9765 19.374 13.9896 19.0316 14.0154 18.6927L14.0486 18.6994C15.0837 18.9062 16.1223 19.0886 17.1637 19.2467C17.1566 19.4033 17.1529 19.561 17.1529 19.7194Z" fill="currentColor" />
+            </svg>
           )}
         </Link>
       </div>

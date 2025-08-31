@@ -9,7 +9,7 @@ import { CustomerLeaderboard } from "@/components/dashboard/CustomerLeaderboard"
 import { MechanicLeaderboard } from "@/components/dashboard/MechanicLeaderboard";
 import { useRouter, useSearchParams } from "next/navigation";
 import DateRangePicker from "@/components/common/DateRangePicker";
-import { endpointUrl, httpGet, httpPost } from "../../../helpers";
+import { endpointUrl, httpGet, httpPost } from "../../../../helpers";
 import toast from "react-hot-toast";
 import moment from "moment";
 
@@ -167,48 +167,6 @@ export default function Dashboard() {
     const currentStartDate = searchParams.get("start_date") || moment().startOf('month').format("YYYY-MM-DD");
     const currentEndDate = searchParams.get("end_date") || moment().endOf('month').format("YYYY-MM-DD");
 
-    const getData = async () => {
-        setIsLoading(true);
-
-        const params: any = {
-        };
-        if (currentStartDate) params.start_date = currentStartDate;
-        if (currentEndDate) params.end_date = currentEndDate;
-
-        try {
-            const response = await httpPost(
-                endpointUrl("/dashboard?" + new URLSearchParams(params).toString()),
-                "",
-                true
-            );
-            const responseData = response.data.data as Data;
-            setDashboardData(responseData);
-
-        } catch (error) {
-            toast.error("Failed to fetch data");
-            setDashboardData(null);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    useEffect(() => {
-        getData();
-    }, [searchParams]);
-    const handleDatesChange = (dates: { startDate: string | null; endDate: string | null }) => {
-        const currentParams = new URLSearchParams(Array.from(searchParams.entries()));
-
-        if (dates.startDate) {
-            currentParams.set("start_date", dates.startDate);
-        } else {
-            currentParams.delete("start_date");
-        }
-        if (dates.endDate) {
-            currentParams.set("end_date", dates.endDate);
-        } else {
-            currentParams.delete("end_date");
-        }
-        router.push(`?${currentParams.toString()}`);
-    }
     return (
         <div className="p-4 md:p-6 space-y-6">
             {/* Bagian Header */}
@@ -219,41 +177,6 @@ export default function Dashboard() {
 
             </div>
 
-            <div className="w-full">
-                <DateRangePicker
-                    onDatesChange={handleDatesChange}
-                    initialStartDate={searchParams.get("start_date") || moment().startOf('month').format("YYYY-MM-DD")}
-                    initialEndDate={searchParams.get("end_date") || moment().endOf('month').format("YYYY-MM-DD")}
-                />
-            </div>
-            {/* <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-
-            </div> */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-8">
-                    <TransactionTrendChart
-                        data={dashboardData?.grafik.transaction || []}
-                        startDate={currentStartDate}
-                        endDate={currentEndDate}
-                    />
-                </div>
-                <div className="lg:col-span-4">
-                    <PopularServicesChart data={dashboardData?.feature.list || []} />
-                </div>
-            </div>
-            {/* <hr /> */}
-            <SummaryCards
-                totalTransactions={dashboardData?.transaction.count_all || 0}
-                completedTransactions={dashboardData?.transaction.completed || 0}
-                pendingTransactions={dashboardData?.transaction.on_progress || 0}
-                newCustomers={dashboardData?.customer.count_new_this_month || 0}
-                totalCustomers={dashboardData?.customer.count_all || 0}
-                totalMechanics={dashboardData?.mechanic.count_all || 0}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <CustomerLeaderboard data={dashboardData?.customer.leaderboard || []} />
-                <MechanicLeaderboard data={dashboardData?.mechanic.leaderboard || []} />
-            </div>
         </div>
     );
 }
