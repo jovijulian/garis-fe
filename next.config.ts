@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   env: {
-    BASE_URL: "http://127.0.0.1:8080/api/v1/",
+    BASE_URL: "https://booking-be-production.up.railway.app/api/v1/",
   },
   experimental: {
     optimizePackageImports: [
