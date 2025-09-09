@@ -3,6 +3,7 @@ import { jwtVerify } from 'jose';
 
 const publicRoutes = [
     '/signin',
+    '/menus' 
 ];
 
 const rolePermissions: Record<string, string[]> = {
@@ -21,8 +22,8 @@ const rolePermissions: Record<string, string[]> = {
 };
 
 const homeRoutes: Record<string, string> = {
-    '1': '/dashboard',
-    '2': '/booking',
+    '1': '/menus',
+    '2': '/menus',
 };
 
 const getJwtSecret = () => {
@@ -62,6 +63,10 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL(userHomeRoute, request.url));
     }
 
+    if (pathname.startsWith('/menus')) {
+        return NextResponse.next();
+    }
+
     if (!publicRoutes.includes(pathname)) {
         const allowedRoutes = rolePermissions[userRole] || [];
         const isAuthorized = allowedRoutes.some(route => pathname.startsWith(route));
@@ -74,8 +79,6 @@ export async function middleware(request: NextRequest) {
     }
 
     return NextResponse.next();
-
-   
 }
 
 export const config = {
