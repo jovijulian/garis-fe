@@ -81,13 +81,8 @@ const SignIn: React.FC = () => {
       localStorage.setItem("id_user", user.id_user);
 
       setCookie("role", user.role);
-      console.log(user)
-
-      if (user.role == 1) {
-        window.location.href = "/";
-      } else if (user.role == 2) {
-        window.location.href = "/booking";
-      }
+      window.location.href = "/menus";
+      
     } catch (error) {
       console.log(error);
     }
