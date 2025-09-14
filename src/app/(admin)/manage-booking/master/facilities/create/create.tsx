@@ -37,25 +37,25 @@ export default function CreateForm() {
             }
 
             await httpPost(
-                endpointUrl("/rooms"),
+                endpointUrl("/amenities"),
                 data,
                 true,
             );
-            toast.success("Room added successfully!");
-            router.push("/rooms");
+            toast.success("Fasilitas berhasil ditambahkan!");
+            router.push("/manage-booking/master/facilities");
         } catch (error: any) {
-            toast.error(error?.response?.data?.errors?.type || "Failed to add room");
+            toast.error(error?.response?.data?.errors?.type || "Gagal menambahkan fasilitas");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <ComponentCard title="Room Data">
+        <ComponentCard title="Data Fasilitas">
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                     <label htmlFor="type" className="block font-medium mb-1 text-gray-700 dark:text-gray-300">
-                        Name<span className="text-red-400 ml-1">*</span>
+                        Nama<span className="text-red-400 ml-1">*</span>
                     </label>
                     <Input
                         type="text"
@@ -66,12 +66,12 @@ export default function CreateForm() {
                 </div>
                 <div>
                     <label htmlFor="type" className="block font-medium mb-1 text-gray-700 dark:text-gray-300">
-                        Description
+                        Deskripsi
                     </label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Additional description..."
+                        placeholder=""
                         rows={4}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
                     />
@@ -79,7 +79,7 @@ export default function CreateForm() {
 
                 <div className="flex justify-end gap-2">
                     <button
-                        onClick={() => router.push("/rooms")}
+                        onClick={() => router.push("/manage-booking/master/facilities")}
                         type="button"
                         className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
                     >
@@ -90,7 +90,7 @@ export default function CreateForm() {
                         disabled={loading}
                         className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                     >
-                        {loading ? "Creating..." : "Add Room"}
+                        {loading ? "Menambahkan..." : "Tambahkan"}
                     </button>
                 </div>
             </form>

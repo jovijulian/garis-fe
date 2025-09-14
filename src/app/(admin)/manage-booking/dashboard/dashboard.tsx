@@ -9,7 +9,7 @@ import { CustomerLeaderboard } from "@/components/dashboard/CustomerLeaderboard"
 import { MechanicLeaderboard } from "@/components/dashboard/MechanicLeaderboard";
 import { useRouter, useSearchParams } from "next/navigation";
 import DateRangePicker from "@/components/common/DateRangePicker";
-import { endpointUrl, httpGet, httpPost } from "../../../../helpers";
+import { endpointUrl, httpGet, httpPost } from "../../../../../helpers";
 import toast from "react-hot-toast";
 import moment from "moment";
 

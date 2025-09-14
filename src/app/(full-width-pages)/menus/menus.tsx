@@ -38,7 +38,7 @@ const menuItems: {
             title: "Peminjaman Ruangan",
             description: "Booking dan kelola jadwal ruangan meeting.",
             icon: CalendarClock,
-            href: "/manage-booking",
+            href: "/manage-booking/dashboard",
             color: "blue",
         },
         {

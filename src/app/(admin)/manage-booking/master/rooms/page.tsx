@@ -1,16 +1,16 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import IndexPage from "./manage-booking";
+import IndexPage from "./rooms";
 import { Metadata } from "next";
 import React, { Suspense } from "react";
 export const metadata: Metadata = {
-    title: "Kelola Pengajuan Booking",
+    title: "Ruangan",
 };
 
 
 export default function BasicTables() {
     return (
         <div>
-            <PageBreadcrumb pageTitle="Kelola Pengajuan Booking" />
+            <PageBreadcrumb pageTitle="Kelola Ruangan" />
             <div className="space-y-6">
                 <div
                     className={`rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]`}

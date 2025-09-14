@@ -7,7 +7,10 @@ import {
     GitBranch, 
     Home, 
     FileText,
-    Settings
+    Settings,
+    School,
+    LayoutList,
+    GitPullRequestArrow
 } from 'lucide-react';
 
 export type NavItem = {
@@ -15,22 +18,34 @@ export type NavItem = {
   icon: React.ReactNode;
   path: string;
   roles: number[]; // 1: Super Admin, 2: Admin GA, 3: User
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  subItems?: { name: string; path: string; pro?: boolean; new?: boolean, roles: number[] }[];
 };
 
 export const menuConfig: Record<string, NavItem[]> = {
 
   booking: [
     {
-      name: 'Dashboard Booking',
+      name: 'Dashboard',
       icon: <LayoutDashboard />,
+      path: '/manage-booking/dashboard',
+      roles: [1, 2],
+    },
+    {
+      name: 'Pengajuan Booking',
+      icon: <GitPullRequestArrow />,
       path: '/manage-booking',
       roles: [1, 2],
     },
     {
       name: 'Daftar Ruangan',
-      icon: <GitBranch />,
-      path: '/manage-booking/rooms',
+      icon: <School />,
+      path: '/manage-booking/master/rooms',
+      roles: [1, 2],
+    },
+    {
+      name: 'Daftar Fasilitas',
+      icon: <LayoutList />,
+      path: '/manage-booking/master/facilities',
       roles: [1, 2],
     },
     {

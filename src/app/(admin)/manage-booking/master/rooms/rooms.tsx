@@ -61,7 +61,7 @@ export default function RoomsPage() {
         const defaultColumns = [
             {
                 id: "action",
-                header: "Action",
+                header: "Aksi",
                 accessorKey: "action",
                 cell: ({ row }: any) => {
                     return (
@@ -106,6 +106,24 @@ export default function RoomsPage() {
                 header: "Description",
                 accessorKey: "description",
                 cell: ({ row }: any) => <span>{row.description}</span>,
+            },
+            {
+                id: "nama_cab",
+                header: "Cabang",
+                accessorKey: "nama_cab",
+                cell: ({ row }: any) => <span>{row.cabang?.nama_cab}</span>,
+            },
+            {
+                id: "capacity",
+                header: "Kapasitas",
+                accessorKey: "capacity",
+                cell: ({ row }: any) => <span>{row.capacity}</span>,
+            },
+            {
+                id: "location",
+                header: "Detail Lokasi",
+                accessorKey: "location",
+                cell: ({ row }: any) => <span>{row.location}</span>,
             },
             {
                 id: "created_at",
@@ -158,7 +176,6 @@ export default function RoomsPage() {
     };
     return (
         <div className="space-y-4">
-
             {/* Action Buttons */}
             <div className="flex justify-end items-center">
                 <div className="flex gap-2">
@@ -171,11 +188,11 @@ export default function RoomsPage() {
                     />
 
                     <button
-                        onClick={() => router.push("/rooms/create")}
+                        onClick={() => router.push("/manage-booking/master/rooms/create")}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
                     >
                         <span>+</span>
-                        Create
+                        Tambah
                     </button>
                     {/* {selectedRows.length > 0 && (
                         <button
@@ -215,7 +232,7 @@ export default function RoomsPage() {
                 itemName={selectedData?.name || ""}
                 selectedData={selectedData}
                 onSuccess={getData}
-                message="User deleted successfully!"
+                message="Ruangan berhasil dihapus!"
             />
 
             <EditModal

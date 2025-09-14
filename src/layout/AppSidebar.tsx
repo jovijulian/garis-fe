@@ -234,12 +234,12 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
-        <svg viewBox="0 0 54 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-10 text-blue-600">
+        {/* <svg viewBox="0 0 54 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-10 text-blue-600">
           <path d="M27.3546 3.1746C21.7442 3.1746 16.7856 5.96385 13.7915 10.2305L10.4399 9.56057C13.892 3.83178 20.1756 0 27.3546 0C34.5281 0 40.8075 3.82591 44.2613 9.54743L40.9084 10.2176C37.9134 5.95821 32.9593 3.1746 27.3546 3.1746Z" fill="currentColor" />
           <path d="M17.1529 19.7194C17.1529 25.3503 21.7203 29.915 27.3546 29.915C32.9887 29.915 37.5561 25.3503 37.5561 19.7194C37.5561 19.5572 37.5524 19.3959 37.5449 19.2355C38.5617 19.0801 39.5759 18.9013 40.5867 18.6994L40.6926 18.6782C40.7191 19.0218 40.7326 19.369 40.7326 19.7194C40.7326 27.1036 34.743 33.0896 27.3546 33.0896C19.966 33.0896 13.9765 27.1036 13.9765 19.7194C13.9765 19.374 13.9896 19.0316 14.0154 18.6927L14.0486 18.6994C15.0837 18.9062 16.1223 19.0886 17.1637 19.2467C17.1566 19.4033 17.1529 19.561 17.1529 19.7194Z" fill="currentColor" />
-        </svg>
-        <span className="text-gray-800 dark:text-white font-bold text-xl sm:text-2xl ml-2">
-          Booking Apps
+        </svg> */}
+        <span className="text-blue-800 dark:text-white font-bold text-xl sm:text-2xl ml-2">
+          GARIS 
         </span>
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
