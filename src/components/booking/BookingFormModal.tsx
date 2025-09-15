@@ -121,7 +121,7 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
 
         try {
             if (isEditMode && bookingData) {
-                await httpPut(endpointUrl(`/bookings/${bookingData.id}`), payload, true);
+                await httpPut(endpointUrl(`/bookings/user/${bookingData.id}`), payload, true);
                 toast.success("Booking berhasil diperbarui!");
             } else {
                 // Logika check-availability bisa ditambahkan di sini jika diperlukan untuk mode create
