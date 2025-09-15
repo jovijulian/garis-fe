@@ -1,14 +1,17 @@
+// components/booking/BookingCard.tsx
+
 import React from 'react';
 import moment from 'moment';
-import { Clock, Calendar, Bookmark, Home, Edit, Trash2 } from 'lucide-react';
-import Badge from '@/components/ui/badge/Badge';
+import 'moment/locale/id';
+import { Calendar, Clock, Edit, Trash2, Building, CheckCircle, XCircle, Hourglass } from 'lucide-react';
+import Link from 'next/link';
 
+// Definisikan interface yang akurat sesuai respons API
 interface Booking {
     id: number;
     purpose: string;
-    booking_date: string;
     start_time: string;
-    duration_minutes: number;
+    end_time: string;
     status: 'Submit' | 'Approved' | 'Rejected';
     room: { name: string };
 }
@@ -19,46 +22,81 @@ interface BookingCardProps {
     onDelete: () => void;
 }
 
-const BookingCard: React.FC<BookingCardProps> = ({ booking, onEdit, onDelete }) => {
-    const startTime = moment(booking.start_time, "HH:mm:ss");
-    const endTime = startTime.clone().add(booking.duration_minutes, 'minutes');
-    const isActionable = booking.status === 'Submit';
+const statusConfig = {
+    Submit: {
+        label: 'Menunggu Persetujuan',
+        icon: <Hourglass className="w-4 h-4 text-yellow-600" />,
+        style: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    },
+    Approved: {
+        label: 'Disetujui',
+        icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+        style: 'bg-green-100 text-green-800 border-green-300',
+    },
+    Rejected: {
+        label: 'Ditolak',
+        icon: <XCircle className="w-4 h-4 text-red-600" />,
+        style: 'bg-red-100 text-red-800 border-red-300',
+    },
+};
 
-    const getStatusColor = () => {
-        switch (booking.status) {
-            case 'Approved': return 'success';
-            case 'Rejected': return 'error';
-            default: return 'warning';
-        }
-    };
+const BookingCard: React.FC<BookingCardProps> = ({ booking, onEdit, onDelete }) => {
+    moment.locale('id');
+    const { label, icon, style } = statusConfig[booking.status];
+    const canBeModified = booking.status === 'Submit';
 
     return (
-        <div className="bg-white rounded-2xl shadow p-5 flex flex-col justify-between transition hover:shadow-lg">
-            <div>
-                <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-bold text-lg text-gray-800 break-all">{booking.room.name}</h3>
-                    <Badge color={getStatusColor()}>{booking.status}</Badge>
+
+        <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col h-full transition-all hover:shadow-lg">
+            <Link
+                href={`/manage-booking/my-bookings/${booking.id}`}
+                className="block h-full group"
+            >
+                <div className="p-5 flex-grow">
+                    {/* Status Badge */}
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${style}`}>
+                        {icon}
+                        <span>{label}</span>
+                    </div>
+
+                    {/* Judul Keperluan */}
+                    <h3 className="text-lg font-bold text-gray-800 mt-3">{booking.purpose}</h3>
+
+                    {/* Detail Ruangan & Waktu */}
+                    <div className="space-y-3 mt-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-3">
+                            <Building className="w-4 h-4 text-gray-400" />
+                            <span>{booking.room.name}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <span>{moment(booking.start_time).format('dddd, DD MMMM YYYY')}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Clock className="w-4 h-4 text-gray-400" />
+                            <span>{moment(booking.start_time).format('HH:mm')} - {moment(booking.end_time).format('HH:mm')}</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="space-y-3 text-sm text-gray-600">
-                    <div className="flex items-center gap-3"><Calendar className="w-4 h-4 text-gray-400" /><span>{moment(booking.booking_date).format("dddd, DD MMMM YYYY")}</span></div>
-                    <div className="flex items-center gap-3"><Clock className="w-4 h-4 text-gray-400" /><span>{startTime.format("HH:mm")} - {endTime.format("HH:mm")} ({booking.duration_minutes} min)</span></div>
-                    <div className="flex items-center gap-3"><Bookmark className="w-4 h-4 text-gray-400" /><span>{booking.purpose}</span></div>
-                </div>
-            </div>
-            <div className="border-t mt-4 pt-4 flex justify-end gap-3">
-                <button 
-                    onClick={onEdit}
-                    disabled={!isActionable}
-                    className="flex items-center gap-2 text-sm text-blue-600 font-semibold disabled:text-gray-400 disabled:cursor-not-allowed hover:text-blue-800"
-                >
-                    <Edit className="w-4 h-4" /> Edit
-                </button>
-                <button 
+            </Link>
+
+            {/* Tombol Aksi */}
+            <div className="bg-gray-50 p-4 flex justify-end gap-3 border-t">
+                <button
                     onClick={onDelete}
-                    disabled={!isActionable}
-                    className="flex items-center gap-2 text-sm text-red-600 font-semibold disabled:text-gray-400 disabled:cursor-not-allowed hover:text-red-800"
+                    disabled={!canBeModified}
+                    title={canBeModified ? "Batalkan Booking" : "Tidak dapat dibatalkan"}
+                    className="p-2 text-gray-500 rounded-full hover:bg-red-100 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
-                    <Trash2 className="w-4 h-4" /> Delete
+                    <Trash2 className="w-4 h-4" />
+                </button>
+                <button
+                    onClick={onEdit}
+                    disabled={!canBeModified}
+                    title={canBeModified ? "Ubah Booking" : "Tidak dapat diubah"}
+                    className="p-2 text-gray-500 rounded-full hover:bg-blue-100 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                >
+                    <Edit className="w-4 h-4" />
                 </button>
             </div>
         </div>

@@ -1,16 +1,18 @@
 import React from 'react';
-import { 
-    LayoutDashboard, 
-    CalendarClock, 
-    Car, 
-    Users, 
-    GitBranch, 
-    Home, 
-    FileText,
-    Settings,
-    School,
-    LayoutList,
-    GitPullRequestArrow
+import {
+  LayoutDashboard,
+  CalendarClock,
+  Car,
+  Users,
+  GitBranch,
+  Home,
+  FileText,
+  Settings,
+  School,
+  LayoutList,
+  GitPullRequestArrow,
+  List,
+  PlusCircle
 } from 'lucide-react';
 
 export type NavItem = {
@@ -48,6 +50,19 @@ export const menuConfig: Record<string, NavItem[]> = {
       path: '/manage-booking/master/facilities',
       roles: [1, 2],
     },
+    {
+      name: 'Ajukan Booking',
+      icon: <PlusCircle />,
+      path: '/manage-booking/create-booking',
+      roles: [3],
+    },
+    {
+      name: 'Riwayat Pengajuan Booking',
+      icon: <List />,
+      path: '/manage-booking/my-bookings',
+      roles: [3],
+    },
+
     {
       name: 'Menu',
       icon: <Home />,
@@ -93,22 +108,22 @@ export const menuConfig: Record<string, NavItem[]> = {
   ],
   user: [
     {
-        name: "Booking Saya",
-        icon: <CalendarClock />,
-        path: "/portal-pelanggan",
-        roles: [3],
+      name: "Booking Saya",
+      icon: <CalendarClock />,
+      path: "/portal-pelanggan",
+      roles: [3],
     },
     {
-        name: "Buat Booking Baru",
-        icon: <FileText />,
-        path: "/portal-pelanggan/new", 
-        roles: [3],
+      name: "Buat Booking Baru",
+      icon: <FileText />,
+      path: "/portal-pelanggan/new",
+      roles: [3],
     },
     {
-        name: "Kembali ke Menu Utama",
-        icon: <Home />,
-        path: "/menus",
-        roles: [1, 2, 3],
+      name: "Kembali ke Menu Utama",
+      icon: <Home />,
+      path: "/menus",
+      roles: [1, 2, 3],
     }
   ],
 };

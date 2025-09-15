@@ -79,6 +79,7 @@ const SignIn: React.FC = () => {
       localStorage.setItem("name", user.name);
       localStorage.setItem("email", user.email);
       localStorage.setItem("id_user", user.id_user);
+      localStorage.setItem("sites", user.sites)
 
       setCookie("role", user.role);
       window.location.href = "/menus";

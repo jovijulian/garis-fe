@@ -18,13 +18,20 @@ const rolePermissions: Record<string, string[]> = {
     '2': [
         '/manage-booking',
         '/profile'
-    ]
+    ],
+    '3': [
+        '/manage-booking/my-bookings',
+        '/manage-booking/create-booking',
+        '/profile'
+
+    ],
     
 };
 
 const homeRoutes: Record<string, string> = {
     '1': '/menus',
     '2': '/menus',
+    '3': '/menus',
 };
 
 const getJwtSecret = () => {

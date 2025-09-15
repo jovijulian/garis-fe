@@ -110,7 +110,10 @@ const MenuCard: React.FC<MenuCardProps> = ({
     userRole,
 }) => {
     const isDisabled = title === "Admin Panel" && userRole !== "1";
-
+    let dynamicHref = href;
+    if (title === "Peminjaman Ruangan" && userRole === "3") {
+        dynamicHref = "/manage-booking/my-bookings";
+    }
     const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         if (isDisabled) {
             e.preventDefault(); // Prevent navigation if disabled
@@ -118,13 +121,13 @@ const MenuCard: React.FC<MenuCardProps> = ({
     };
 
     return (
-        <Link href={href} className="group block" onClick={handleCardClick} >
+        <Link href={dynamicHref} className="group block" onClick={handleCardClick} >
             <div
                 className={`
                     bg-white dark:bg-gray-800 rounded-2xl shadow p-6 h-full flex flex-col justify-between
                     transition-all duration-300 
                     ${isDisabled
-                        ? 'opacity-50 cursor-not-allowed' 
+                        ? 'opacity-50 cursor-not-allowed'
                         : 'hover:shadow-xl hover:-translate-y-1'
                     }
                 `}
@@ -154,16 +157,16 @@ const MenuCard: React.FC<MenuCardProps> = ({
 export default function MenusPage() {
     const [userName, setUserName] = useState("");
     const [userEmail, setUserEmail] = useState("");
-    const [userRole, setUserRole] = useState<string | null>(null); 
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     useEffect(() => {
         const name = localStorage.getItem("name");
         const email = localStorage.getItem("email");
-        const role = localStorage.getItem("role"); 
+        const role = localStorage.getItem("role");
         if (name) setUserName(name);
         if (email) setUserEmail(email);
         if (role) setUserRole(role);
-      }, []);
+    }, []);
     return (
         <div className="min-h-screen xl:flex-center">
             <div
@@ -182,7 +185,7 @@ export default function MenusPage() {
 
                     <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {menuItems.map((item) => (
-                            <MenuCard key={item.href} {...item} userRole={userRole}/>
+                            <MenuCard key={item.href} {...item} userRole={userRole} />
                         ))}
                     </div>
                 </div>
