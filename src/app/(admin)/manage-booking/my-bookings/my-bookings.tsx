@@ -1,13 +1,13 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, AlertTriangle, Plus, Info, Router } from 'lucide-react';
+import { Loader2, AlertTriangle, Plus, Info, Router, ChevronLeft, ChevronRight } from 'lucide-react';
 import { endpointUrl, httpGet } from '../../../../../helpers';
 import { toast } from 'react-toastify';
 
 import BookingCard from '@/components/booking/BookingCard';
 import BookingFormModal from '@/components/booking/BookingFormModal';
 import DeactiveModal from "@/components/modal/deactive/Deactive";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 // 1. Interface disesuaikan dengan respons API terbaru
 interface AmenityItem {
@@ -30,21 +30,37 @@ interface Booking {
 
 export default function MyBookingsPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(6); // Mungkin lebih sedikit untuk tampilan kartu
+    const [lastPage, setLastPage] = useState(1);
+    const [count, setCount] = useState(0);
 
     const [isFormModalOpen, setFormModalOpen] = useState(false);
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-    const fetchUserBookings = useCallback(async () => {
+    const fetchUserBookings = async () => {
+        const page = searchParams.get("page") || Number(currentPage);
+        const perPageParam = searchParams.get("per_page") || perPage;
+
+        const params: any = {
+            per_page: perPageParam,
+            page: Number(page),
+        };
         try {
             setError(null);
             setIsLoading(true);
-            // Endpoint ini akan mengambil booking milik user yang sedang login
-            const response = await httpGet(endpointUrl("/bookings/user"), true);
-            setBookings(response.data.data.data || []);
+            const response = await httpGet(endpointUrl("/bookings/user"), true, params);
+            const responseData = response.data.data;
+            setBookings(responseData.data || []);
+            setCount(responseData.pagination.total);
+            setLastPage(responseData.pagination.total_pages);
+            setCurrentPage(responseData.pagination.page);
         } catch (err) {
             console.error(err);
             setError("Gagal memuat daftar booking Anda.");
@@ -52,11 +68,12 @@ export default function MyBookingsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    };
 
-    useEffect(() => {
-        fetchUserBookings();
-    }, [fetchUserBookings]);
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
 
     const handleOpenCreateModal = () => {
         setSelectedBooking(null);
@@ -72,6 +89,16 @@ export default function MyBookingsPage() {
         setSelectedBooking(booking);
         setDeleteModalOpen(true);
     };
+
+    useEffect(() => {
+        fetchUserBookings();
+    }, [searchParams, currentPage, perPage]);
+
+    // Fungsi untuk mengubah halaman
+    // const handlePageChange = (newPage: number) => {
+    //     if (newPage < 1 || newPage > totalPages) return;
+    //     router.push(`/manage-booking/my-bookings?page=${newPage}`);
+    // };
 
     if (isLoading) {
         return (
@@ -107,16 +134,46 @@ export default function MyBookingsPage() {
                 </div>
 
                 {bookings.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {bookings.map(booking => (
-                            <BookingCard
-                                key={booking.id}
-                                booking={booking}
-                                onEdit={() => handleOpenEditModal(booking)}
-                                onDelete={() => handleOpenDeleteModal(booking)}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {bookings.map(booking => (
+                                <BookingCard
+                                    key={booking.id}
+                                    booking={booking}
+                                    onEdit={() => handleOpenEditModal(booking)}
+                                    onDelete={() => handleOpenDeleteModal(booking)}
+                                />
+                            ))}
+                        </div>
+
+                        {/* --- Komponen Paginasi --- */}
+                        {count > 0 && lastPage > 1 && (
+                            <div className="flex items-center justify-between pt-4">
+                                <span className="text-sm text-gray-600">
+                                    Total {count} booking
+                                </span>
+                                <div className="inline-flex items-center gap-2">
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className="p-2 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                                    >
+                                        <ChevronLeft className="w-5 h-5" />
+                                    </button>
+                                    <span className="text-sm font-semibold text-gray-700">
+                                        Halaman {currentPage} dari {lastPage}
+                                    </span>
+                                    <button
+                                        onClick={() => handlePageChange(Number(currentPage) + 1)}
+                                        disabled={currentPage === lastPage}
+                                        className="p-2 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                                    >
+                                        <ChevronRight className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 ) : (
                     <div className="text-center py-20 bg-white rounded-2xl shadow">
                         <Info className="w-12 h-12 mx-auto mb-4 text-gray-400" />

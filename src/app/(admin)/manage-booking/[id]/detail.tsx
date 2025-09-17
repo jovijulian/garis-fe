@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import ChangeStatusModal from "@/components/modal/ChangeStatusModal";
 import RescheduleModal from '@/components/modal/RescheduleModal';
+import { Info } from "lucide-react";
 
 interface User {
     id_user: string;
@@ -36,7 +37,7 @@ interface BookingData {
     purpose: string;
     start_time: string;
     end_time: string;
-    status: 'Submit' | 'Approved' | 'Rejected';
+    status: 'Submit' | 'Approved' | 'Rejected' | 'Canceled';
     notes: string | null;
     is_conflicting: number;
     approved_by: string | null;
@@ -113,6 +114,9 @@ export default function BookingDetailPage() {
         if (status === 'Rejected') {
             return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-red-100 text-red-800"><FaTimesCircle /> Ditolak</div>;
         }
+        if (status === 'Canceled') {
+            return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-gray-200 text-gray-800"><Info /> Dibatalkan</div>;
+        }
         // Status 'Submit'
         const color = isConflicting === 1 ? "bg-orange-100 text-orange-800" : "bg-yellow-100 text-yellow-800";
         const text = isConflicting === 1 ? "Bentrok, Perlu Tinjauan" : "Menunggu Persetujuan";
@@ -175,7 +179,7 @@ export default function BookingDetailPage() {
                 </div>
             )}
 
-            {data.is_conflicting == 1 && (
+            {data.is_conflicting == 1 && data.status === 'Submit' && (
                 <div className="flex justify-end gap-3 mb-6">
                     <button
                         onClick={() => handleOpenRescheduleModal(data)}

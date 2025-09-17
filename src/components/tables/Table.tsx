@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ interface Column {
   header?: string;
   cell?: (context: { row: any; value: any }) => React.ReactNode;
   render?: (value: any, row: any) => React.ReactNode;
-  sortable?: boolean;
+  sortable?: boolean; // Properti ini tidak lagi diperlukan untuk mengaktifkan sorting
   width?: string;
   accessorFn?: (row: any) => any;
 }
@@ -30,7 +30,6 @@ interface CustomTableProps {
   loading?: boolean;
   checkedData?: any[];
   setCheckedData?: (data: any[]) => void;
-  // Optional callbacks for parent notifications
   onPageChange?: (page: number) => void;
   onPerPageChange?: (perPage: number) => void;
 }
@@ -48,28 +47,69 @@ export default function CustomTable({
   onPageChange,
   onPerPageChange,
 }: CustomTableProps) {
-  // Internal pagination state
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
 
-  // Handle page change internally and notify parent if callback exists
+  const [sortConfig, setSortConfig] = useState<{
+    key: string | null;
+    direction: "ascending" | "descending";
+  }>({
+    key: null,
+    direction: "ascending",
+  });
+
+  const sortedData = useMemo(() => {
+    if (!data) return [];
+    const sortableItems = [...data];
+    if (sortConfig.key !== null) {
+      const sortColumn = columns.find((c) => c.id === sortConfig.key);
+      if (!sortColumn) return sortableItems;
+
+      sortableItems.sort((a, b) => {
+        const aValue = sortColumn.accessorFn
+          ? sortColumn.accessorFn(a)
+          : a[sortConfig.key!];
+        const bValue = sortColumn.accessorFn
+          ? sortColumn.accessorFn(b)
+          : b[sortConfig.key!];
+
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+
+        if (aValue < bValue) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [data, columns, sortConfig]);
+
+  const handleSort = (columnId: string) => {
+    let direction: "ascending" | "descending" = "ascending";
+    if (sortConfig.key === columnId && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key: columnId, direction });
+  };
+
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > lastPage) return;
     setPage(newPage);
     if (onPageChange) onPageChange(newPage);
   };
 
-  // Handle perPage change internally, reset page to 1 and notify parent
   const handlePerPageChange = (newPerPage: number) => {
     setPerPage(newPerPage);
     setPage(1);
     if (onPerPageChange) onPerPageChange(newPerPage);
   };
 
-  // Handle select all checkbox
   const handleSelectAll = (checked: boolean) => {
     if (!setCheckedData) return;
-
     if (checked) {
       setCheckedData(data);
     } else {
@@ -77,10 +117,8 @@ export default function CustomTable({
     }
   };
 
-  // Handle individual row selection
   const handleRowSelect = (row: any, checked: boolean) => {
     if (!setCheckedData) return;
-
     if (checked) {
       setCheckedData([...checkedData, row]);
     } else {
@@ -88,30 +126,23 @@ export default function CustomTable({
     }
   };
 
-  // Check if all rows are selected
   const isAllSelected = data.length > 0 && checkedData.length == data.length;
   const isIndeterminate =
     checkedData.length > 0 && checkedData.length < data.length;
 
-  // Render cell content based on column configuration
   const renderCellContent = (column: Column, row: any) => {
     const value = column.accessorFn ? column.accessorFn(row) : row[column.id];
-
     if (column.cell) {
       return column.cell({ row, value });
     }
-
     if (column.render) {
       return column.render(value, row);
     }
-
     return value;
   };
 
-  // Pagination component using internal state and handlers
   const renderPagination = () => {
     if (!pagination) return null;
-
     return (
       <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-white/[0.05]">
         <div className="flex items-center gap-2">
@@ -130,7 +161,6 @@ export default function CustomTable({
             from {total} rows
           </span>
         </div>
-
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500 dark:text-gray-400">
             Page {page} from {lastPage}
@@ -142,7 +172,6 @@ export default function CustomTable({
           >
             &lt;
           </button>
-
           <button
             onClick={() => handlePageChange(page + 1)}
             disabled={page == lastPage}
@@ -160,11 +189,14 @@ export default function CustomTable({
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="ml-2 text-gray-500 dark:text-gray-400">Loading...</span>
+          <span className="ml-2 text-gray-500 dark:text-gray-400">
+            Loading...
+          </span>
         </div>
       </div>
     );
   }
+
   if (!data || data.length == 0) {
     return (
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -199,10 +231,7 @@ export default function CustomTable({
               </TableHeader>
             </Table>
           </div>
-
-          {/* Empty state */}
           <div className="flex flex-wrap justify-center p-6">
-            {/* <img src="/assets/icons/empty.svg" alt="empty" className="w-32 h-32" /> */}
             <div className="w-full text-center">
               <h6 className="text-lg text-gray-700 font-medium">No Data Found</h6>
               <p className="text-gray-500">No data available to display</p>
@@ -213,13 +242,11 @@ export default function CustomTable({
     );
   }
 
-
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
         <div className="min-w-full">
           <Table>
-            {/* Table Header */}
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 {selection && (
@@ -241,24 +268,35 @@ export default function CustomTable({
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    {column.header}
+                    {/* PERUBAHAN UTAMA DI SINI */}
+                    <div
+                      className="flex items-center gap-2 cursor-pointer select-none"
+                      onClick={() => handleSort(column.id)}
+                    >
+                      {column.header}
+                      {sortConfig.key === column.id && (
+                        <span>
+                          {sortConfig.direction === "ascending" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                 ))}
               </TableRow>
             </TableHeader>
 
-            {/* Table Body */}
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {data.length == 0 ? (
-                <TableRow className="flex justify-center">
-                  <TableCell
-                    className="px-5 py-12 text-center flex justify-center text-gray-500 dark:text-gray-400"
+              {sortedData.length == 0 ? (
+                <TableRow>
+                   <TableCell
+                    colSpan={columns.length + (selection ? 1 : 0)}
+                    className="px-5 py-12 text-center text-gray-500 dark:text-gray-400"
                   >
                     No data available
                   </TableCell>
                 </TableRow>
               ) : (
-                data.map((row, index) => (
+                sortedData.map((row, index) => (
                   <TableRow key={row.id || index}>
                     {selection && (
                       <TableCell className="px-5 py-4">
@@ -275,7 +313,10 @@ export default function CustomTable({
                       </TableCell>
                     )}
                     {columns.map((column) => (
-                      <TableCell key={column.id} className="px-5 py-4 text-start">
+                      <TableCell
+                        key={column.id}
+                        className="px-5 py-4 text-start"
+                      >
                         <div className="text-gray-800 text-theme-sm dark:text-white/90">
                           {renderCellContent(column, row)}
                         </div>
@@ -288,7 +329,6 @@ export default function CustomTable({
           </Table>
         </div>
       </div>
-
       {renderPagination()}
     </div>
   );

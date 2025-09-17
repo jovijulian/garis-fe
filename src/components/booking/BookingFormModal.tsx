@@ -19,7 +19,7 @@ interface BookingData {
     purpose: string;
     start_time: string;
     end_time: string;
-    status: 'Submit' | 'Approved' | 'Rejected';
+    status: 'Submit' | 'Approved' | 'Rejected' | 'Canceled';
     room: { id: number; name: string; };
     notes: string | null;
     amenities: AmenityItem[];

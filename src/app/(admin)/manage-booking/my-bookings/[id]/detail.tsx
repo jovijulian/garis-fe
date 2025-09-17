@@ -14,6 +14,7 @@ import {
     FaCalendarAlt, FaClock, FaUser, FaBuilding, FaClipboardList,
     FaChair, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaStickyNote
 } from "react-icons/fa";
+import { Info } from "lucide-react";
 
 // --- Definisikan Interface Data ---
 interface AmenityItem {
@@ -25,7 +26,7 @@ interface BookingData {
     purpose: string;
     start_time: string;
     end_time: string;
-    status: 'Submit' | 'Approved' | 'Rejected';
+    status: 'Submit' | 'Approved' | 'Rejected' | 'Canceled';
     notes: string | null;
     user: { nama_user: string; };
     room: { id: number; name: string; };
@@ -69,6 +70,9 @@ export default function MyBookingDetailPage() {
         }
         if (status === 'Rejected') {
             return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-red-100 text-red-800"><FaTimesCircle /> Ditolak</div>;
+        }
+        if (status === 'Canceled') {
+            return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-gray-200 text-gray-800"><Info /> Dibatalkan</div>;
         }
         return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800"><FaHourglassHalf /> Menunggu Persetujuan</div>;
     };

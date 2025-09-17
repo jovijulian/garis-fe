@@ -3,7 +3,7 @@
 import React from 'react';
 import moment from 'moment';
 import 'moment/locale/id';
-import { Calendar, Clock, Edit, Trash2, Building, CheckCircle, XCircle, Hourglass } from 'lucide-react';
+import { Calendar, Clock, Edit, Trash2, Building, CheckCircle, XCircle, Hourglass, Info } from 'lucide-react';
 import Link from 'next/link';
 
 // Definisikan interface yang akurat sesuai respons API
@@ -37,6 +37,11 @@ const statusConfig = {
         label: 'Ditolak',
         icon: <XCircle className="w-4 h-4 text-red-600" />,
         style: 'bg-red-100 text-red-800 border-red-300',
+    },
+    Canceled: {
+        label: 'Dibatalkan',
+        icon: <Info className="w-4 h-4 text-gray-600" />,
+        style: 'bg-gray-200 text-gray-800 border-gray-300',
     },
 };
 

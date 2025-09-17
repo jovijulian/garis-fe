@@ -12,6 +12,8 @@ import DeactiveModal from "@/components/modal/deactive/Deactive";
 import { FaEdit, FaTrash, FaCheck, FaTimes, FaExclamationTriangle } from "react-icons/fa";
 import ChangeStatusModal from "@/components/modal/ChangeStatusModal";
 import RescheduleModal from '@/components/modal/RescheduleModal';
+import CancelBookingModal from '@/components/modal/CancelBookingModal';
+import { CircleX, Trash2 } from "lucide-react";
 
 interface BookingDataItem {
     id: number;
@@ -19,7 +21,7 @@ interface BookingDataItem {
     start_time: string;
     end_time: string;
     is_conflicting: number;
-    status: 'Submit' | 'Approved' | 'Rejected';
+    status: 'Submit' | 'Approved' | 'Rejected' | 'Canceled';
     user: {
         id_user: string;
         nama_user: string;
@@ -42,6 +44,7 @@ export default function ManageBookingPage() {
     const [count, setCount] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
     const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const router = useRouter()
     const [selectedData, setSelectedData] = useState<BookingDataItem | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -100,47 +103,56 @@ export default function ManageBookingPage() {
             id: "action",
             header: "Aksi",
             cell: ({ row }: { row: any }) => {
-                const booking = row; // Gunakan .original untuk data yang benar
+                const booking = row;
 
-                if (booking.status !== 'Submit') {
-                    return <span className="text-gray-400">-</span>;
+                if (booking.is_conflicting === 1 && booking.status === "Submit") {
+                  return (
+                    <button
+                      onClick={() => handleOpenRescheduleModal(booking)}
+                      title="Selesaikan Konflik Jadwal"
+                      className="p-2 rounded-md bg-orange-100 text-orange-700 hover:bg-orange-200 transition-all flex items-center gap-2 text-sm"
+                    >
+                      <FaExclamationTriangle className="w-4 h-4" />
+                      <span>Atur Ulang</span>
+                    </button>
+                  );
                 }
-
-                // 2. Logika utama: Tampilkan tombol berbeda berdasarkan status konflik
-                if (booking.is_conflicting === 1) {
-                    // Jika BENTROK, tampilkan satu tombol untuk membuka modal Reschedule
-                    return (
-                        <button
-                            onClick={() => handleOpenRescheduleModal(booking)}
-                            title="Selesaikan Konflik Jadwal"
-                            className="p-2 rounded-md bg-orange-100 text-orange-700 hover:bg-orange-200 transition-all flex items-center gap-2 text-sm"
-                        >
-                            <FaExclamationTriangle className="w-4 h-4" />
-                            <span>Atur Ulang</span>
-                        </button>
-                    );
-                } else {
-                    // Jika TIDAK BENTROK, tampilkan tombol Tolak & Setujui seperti biasa
-                    return (
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => handleOpenModal(booking, 'Rejected')}
-                                title="Tolak Booking"
-                                className="p-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-all"
-                            >
-                                <FaTimes className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => handleOpenModal(booking, 'Approved')}
-                                title="Setujui Booking"
-                                className="p-2 rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-all"
-                            >
-                                <FaCheck className="w-4 h-4" />
-                            </button>
-                        </div>
-                    );
+            
+                if (booking.status === "Approved") {
+                  return (
+                    <button
+                      onClick={() => handleOpenCancelModal(booking)}
+                      title="Batalkan Booking"
+                      className="p-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    >
+                      <CircleX className="w-4 h-4 text-red-500" />
+                    </button>
+                  );
                 }
-            },
+            
+                if (booking.status === "Submit") {
+                  return (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenModal(booking, "Rejected")}
+                        title="Tolak Booking"
+                        className="p-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-all"
+                      >
+                        <FaTimes className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleOpenModal(booking, "Approved")}
+                        title="Setujui Booking"
+                        className="p-2 rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-all"
+                      >
+                        <FaCheck className="w-4 h-4" />
+                      </button>
+                    </div>
+                  );
+                }
+            
+                return null;
+              },
         },
         {
             id: "room_name",
@@ -229,6 +241,27 @@ export default function ManageBookingPage() {
         setIsRescheduleModalOpen(true);
     };
 
+    const handleOpenCancelModal = (booking: BookingDataItem) => {
+        setSelectedData(booking);
+        setIsCancelModalOpen(true);
+    };
+
+    const handleConfirmCancel = async () => {
+        if (!selectedData) return;
+
+        setIsSubmitting(true);
+        try {
+            await httpPut(endpointUrl(`bookings/cancel/${selectedData.id}`), {}, true);
+            toast.success("Booking berhasil dibatalkan.");
+            getData();
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Gagal membatalkan booking.");
+        } finally {
+            setIsSubmitting(false);
+            setIsCancelModalOpen(false);
+        }
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex justify-end items-center">
@@ -257,6 +290,13 @@ export default function ManageBookingPage() {
                 onConfirm={handleUpdateStatus}
                 booking={selectedData}
                 actionType={actionType}
+                isSubmitting={isSubmitting}
+            />
+            <CancelBookingModal
+                isOpen={isCancelModalOpen}
+                onClose={() => setIsCancelModalOpen(false)}
+                onConfirm={handleConfirmCancel}
+                booking={selectedData}
                 isSubmitting={isSubmitting}
             />
 

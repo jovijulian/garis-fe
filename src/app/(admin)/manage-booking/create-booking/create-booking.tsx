@@ -46,43 +46,44 @@ export default function CreateBookingPage() {
     });
 
     const [roomOptions, setRoomOptions] = useState<SelectOption[]>([]);
+    const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
     const [amenityOptions, setAmenityOptions] = useState<AmenityOption[]>([]);
     const [loadingOptions, setLoadingOptions] = useState(true);
+    const [loadingRoomOptions, setLoadingRoomOptions] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedSite, setSelectedSite] = useState<string | null>(null);
 
-    // Mengambil data master Ruangan & Fasilitas
     useEffect(() => {
-        const fetchOptions = async () => {
-            try {
-                const [roomsRes, amenitiesRes] = await Promise.all([
-                    httpGet(endpointUrl("/rooms/options"), true),
-                    httpGet(endpointUrl("/amenities/options"), true),
-                ]);
-
-                const formattedRooms = roomsRes.data.data.map((room: any) => ({
-                    value: room.id.toString(),
-                    label: `${room.name} (Kapasitas: ${room.capacity} orang)`,
-                }));
-
-                setRoomOptions(formattedRooms);
-                setAmenityOptions(amenitiesRes.data.data || []);
-
-            } catch (error) {
-                toast.error("Gagal memuat data ruangan dan fasilitas.");
-            } finally {
-                setLoadingOptions(false);
-            }
-        };
-
         fetchOptions();
     }, []);
 
-    // Handler untuk input biasa
+    const fetchOptions = async () => {
+        try {
+            const [siteRes, amenitiesRes] = await Promise.all([
+                httpGet(endpointUrl("/rooms/site-options"), true),
+                httpGet(endpointUrl("/amenities/options"), true),
+            ]);
+
+            const formattedSite = siteRes.data.data.map((site: any) => ({
+                value: site.id_cab,
+                label: `${site.nama_cab}`,
+            }));
+
+            setSiteOptions(formattedSite);
+            setAmenityOptions(amenitiesRes.data.data || []);
+
+        } catch (error) {
+            console.log(error)
+            toast.error("Gagal memuat data cabang dan fasilitas.");
+        } finally {
+            setLoadingOptions(false);
+        }
+    };
+
     const handleFieldChange = (field: keyof BookingFormData, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    // Handler khusus untuk checkbox fasilitas
     const handleAmenityChange = (amenityId: number) => {
         setFormData(prev => {
             const newAmenityIds = prev.amenity_ids.includes(amenityId)
@@ -105,18 +106,15 @@ export default function CreateBookingPage() {
             toast.error("Waktu selesai harus setelah waktu mulai.");
             return;
         }
-        
+
         setIsSubmitting(true);
         try {
-            // Cek ketersediaan jadwal ke backend
-            const availabilityRes = await httpGet(endpointUrl('/bookings/check-availability'), true, {
+            const availabilityRes = await httpGet(endpointUrl('/bookings/check-availability1'), true, {
                 room_id: room_id,
                 start_time: moment(start_time).utc().toISOString(),
                 end_time: moment(end_time).utc().toISOString(),
             });
 
-            // --- PERUBAHAN DI SINI ---
-            // Jika tidak tersedia, tampilkan pesan informatif dari backend
             if (!availabilityRes.data.data.is_available) {
                 const conflictInfo = availabilityRes.data.data.conflictingBooking;
                 const message = `Peringatan: Jadwal ini sudah dipesan oleh ${conflictInfo.booked_by} untuk keperluan "${conflictInfo.purpose}".\n\nApakah Anda tetap ingin mengajukan (agar admin yang menentukan)?`;
@@ -128,7 +126,6 @@ export default function CreateBookingPage() {
                 }
             }
 
-            // Siapkan payload final dengan konversi waktu ke UTC
             const payload = {
                 ...formData,
                 start_time: moment(start_time).utc().toISOString(),
@@ -145,18 +142,51 @@ export default function CreateBookingPage() {
             setIsSubmitting(false);
         }
     };
-    
+
+    const handleSiteChange = async (siteId: any) => {
+        setLoadingRoomOptions(true);
+        setSelectedSite(siteId);
+
+        handleFieldChange("room_id", null);
+        setRoomOptions([]);
+        try {
+            const roomsRes = await httpGet(endpointUrl("/rooms/options"), true, { site: siteId.value });
+            const formattedRooms = roomsRes.data.data.map((room: any) => ({
+                value: room.id.toString(),
+                label: `${room.name} (Kapasitas: ${room.capacity} orang)`,
+            }));
+            setRoomOptions(formattedRooms);
+        } catch (error) {
+            setRoomOptions([]);
+        } finally {
+            setLoadingRoomOptions(false);
+        }
+    };
+
+    const minDateTime = moment().format('YYYY-MM-DDTHH:mm');
+
     return (
         <ComponentCard title="Ajukan Booking Ruangan">
             <form onSubmit={handleSubmit} className="space-y-6 max-w-full ">
                 <div>
+                    <label className="block font-medium mb-1">Cabang<span className="text-red-500 ml-1">*</span></label>
+                    <Select
+                        onValueChange={(value) => handleSiteChange(value)}
+                        placeholder={loadingOptions ? "Memuat cabang..." : "Pilih Cabang"}
+                        value={_.find(siteOptions, { value: selectedSite })}
+                        options={siteOptions}
+                        disabled={loadingOptions}
+                    />
+                </div>
+                <div>
                     <label className="block font-medium mb-1">Ruangan<span className="text-red-500 ml-1">*</span></label>
                     <Select
                         onValueChange={(opt) => handleFieldChange('room_id', parseInt(opt.value))}
-                        placeholder={loadingOptions ? "Memuat ruangan..." : "Pilih Ruangan"}
-                        value={_.find(roomOptions, { value: formData.room_id?.toString() })}
+                        placeholder={loadingRoomOptions ? "Memuat ruangan..." : "Pilih Ruangan"}
+                        value={roomOptions.find(opt => opt.value === formData.room_id?.toString()) || null}
+
                         options={roomOptions}
-                        disabled={loadingOptions}
+                        disabled={loadingRoomOptions}
                     />
                 </div>
                 <div>
@@ -176,16 +206,18 @@ export default function CreateBookingPage() {
                             type="datetime-local"
                             value={formData.start_time}
                             onChange={e => handleFieldChange('start_time', e.target.value)}
+                            min={minDateTime}
                             className="w-full border p-2 rounded-md dark:bg-gray-800 dark:border-gray-600"
                             required
                         />
                     </div>
-                     <div>
+                    <div>
                         <label className="block font-medium mb-1">Waktu Selesai<span className="text-red-500 ml-1">*</span></label>
                         <input
                             type="datetime-local"
                             value={formData.end_time}
                             onChange={e => handleFieldChange('end_time', e.target.value)}
+                            min={formData.start_time || minDateTime}
                             className="w-full border p-2 rounded-md dark:bg-gray-800 dark:border-gray-600"
                             required
                         />
