@@ -77,8 +77,8 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({ isOpen, booking, onCl
         setIsSubmitting(true);
         try {
             // Menggunakan endpoint khusus untuk update status
-            await httpPut(endpointUrl(`bookings/status/${booking.id}`), { status: 'Approved' }, true);
-            toast.success("Booking disetujui. Booking lain yang bentrok telah ditolak.");
+            await httpPut(endpointUrl(`bookings/force-approve/${booking.id}`), "", true);
+            toast.success("Booking disetujui. Booking lain yang bentrok dikembalikan ke status Submit.");
             onSuccess();
             onClose();
         } catch (error: any) {

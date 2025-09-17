@@ -12,6 +12,7 @@ import ComponentCard from '@/components/common/ComponentCard';
 import Select from '@/components/form/Select-custom';
 import Input from '@/components/form/input/InputField';
 import { Check, Loader2 } from 'lucide-react';
+import ConflictConfirmationModal from '@/components/modal/ConflictConfirmationModal';
 
 // Interface untuk data form
 interface BookingFormData {
@@ -52,6 +53,8 @@ export default function CreateBookingPage() {
     const [loadingRoomOptions, setLoadingRoomOptions] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedSite, setSelectedSite] = useState<string | null>(null);
+    const [isConflictModalOpen, setConflictModalOpen] = useState(false);
+    const [conflictDetails, setConflictDetails] = useState(null);
 
     useEffect(() => {
         fetchOptions();
@@ -93,6 +96,28 @@ export default function CreateBookingPage() {
         });
     };
 
+    const handleConfirmSubmit = async () => {
+        setIsSubmitting(true);
+        try {
+            const payload = {
+                ...formData,
+                start_time: moment(formData.start_time).utc().toISOString(),
+                end_time: moment(formData.end_time).utc().toISOString(),
+            };
+
+            await httpPost(endpointUrl("/bookings"), payload, true);
+            toast.success("Pengajuan booking berhasil dikirim!");
+            setConflictModalOpen(false); // Tutup modal
+            router.push("/manage-booking/my-bookings");
+
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Gagal mengirim pengajuan.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Fungsi ini dipanggil saat form di-submit pertama kali
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const { room_id, purpose, start_time, end_time } = formData;
@@ -116,31 +141,21 @@ export default function CreateBookingPage() {
             });
 
             if (!availabilityRes.data.data.is_available) {
-                const conflictInfo = availabilityRes.data.data.conflictingBooking;
-                const message = `Peringatan: Jadwal ini sudah dipesan oleh ${conflictInfo.booked_by} untuk keperluan "${conflictInfo.purpose}".\n\nApakah Anda tetap ingin mengajukan (agar admin yang menentukan)?`;
-
-                const proceed = window.confirm(message);
-                if (!proceed) {
-                    setIsSubmitting(false);
-                    return;
-                }
+                // Jika bentrok, simpan detailnya dan BUKA MODAL
+                setConflictDetails(availabilityRes.data.data.conflictingBooking);
+                setConflictModalOpen(true);
+                setIsSubmitting(false); // Berhenti loading karena menunggu input user
+                return; // Hentikan proses submit utama
             }
 
-            const payload = {
-                ...formData,
-                start_time: moment(start_time).utc().toISOString(),
-                end_time: moment(end_time).utc().toISOString(),
-            };
-
-            await httpPost(endpointUrl("/bookings"), payload, true);
-            toast.success("Pengajuan booking berhasil dikirim!");
-            router.push("/manage-booking/my-bookings");
+            // Jika tidak bentrok, langsung kirim
+            await handleConfirmSubmit();
 
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Gagal mengirim pengajuan.");
-        } finally {
+            toast.error(error?.response?.data?.message || "Gagal memeriksa ketersediaan.");
             setIsSubmitting(false);
         }
+        // finally tidak perlu di sini karena sudah dihandle di handleConfirmSubmit
     };
 
     const handleSiteChange = async (siteId: any) => {
@@ -267,6 +282,14 @@ export default function CreateBookingPage() {
                     </button>
                 </div>
             </form>
+            <ConflictConfirmationModal
+                isOpen={isConflictModalOpen}
+                onClose={() => setConflictModalOpen(false)}
+                onConfirm={handleConfirmSubmit}
+                conflictInfo={conflictDetails}
+                isSubmitting={isSubmitting}
+            />
         </ComponentCard>
+
     );
 }
