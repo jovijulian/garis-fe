@@ -191,7 +191,6 @@ export default function BookingDetailPage() {
                     </button>
                 </div>
             )
-
             }
 
             {/* --- Detail Fasilitas dan Catatan --- */}
@@ -247,7 +246,7 @@ export default function BookingDetailPage() {
                 booking={data}
                 onClose={() => setIsRescheduleModalOpen(false)}
                 onSuccess={getDetail}
-                // onSuccess={getData}
+            // onSuccess={getData}
             />
         </ComponentCard>
     );

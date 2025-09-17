@@ -218,6 +218,14 @@ export default function ManageBookingPage() {
                 return <Badge color={color}>{status}</Badge>;
             },
         },
+        {
+            id: "created_at",
+            header: "Dibuat pada",
+            accessorFn: (row: any) => row.created_at,
+            cell: ({ row }: { row: any }) => (
+                <span>{moment(row.created_at).format("DD-MMM-YYYY, HH:mm")}</span>
+            ),
+        },
     ], []);
 
     const handleOpenModal = (booking: BookingDataItem, action: 'Approved' | 'Rejected') => {
