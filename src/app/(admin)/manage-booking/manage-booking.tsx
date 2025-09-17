@@ -158,6 +158,7 @@ export default function ManageBookingPage() {
             id: "room_name",
             header: "Nama Ruangan",
             accessorKey: "room.name",
+            accessorFn: (row: any) => row.room?.name,
             cell: ({ row }: { row: any }) => {
                 const booking = row;
                 return (
@@ -179,17 +180,20 @@ export default function ManageBookingPage() {
             id: "user_name",
             header: "Diajukan Oleh",
             accessorKey: "user.nama_user",
+            accessorFn: (row: any) => row.user?.nama_user,
             cell: ({ row }: any) => <span>{row.user?.nama_user}</span>,
         },
         {
             id: "purpose",
             header: "Keperluan",
             accessorKey: "purpose",
+            accessorFn: (row: any) => row.purpose,
             cell: ({ row }: any) => <span>{row.purpose}</span>,
         },
         {
             id: "booking_date",
             header: "Tanggal",
+            accessorFn: (row: any) => row.start_time,
             cell: ({ row }: { row: any }) => (
                 <span>{moment(row.start_time).format("DD MMM YYYY")}</span>
             ),
@@ -197,6 +201,7 @@ export default function ManageBookingPage() {
         {
             id: "time",
             header: "Waktu",
+            accessorFn: (row: any) => row.start_time,
             cell: ({ row }: { row: any }) => {
                 const startTime = moment(row.start_time).format("HH:mm");
                 const endTime = moment(row.end_time).format("HH:mm");
@@ -206,6 +211,7 @@ export default function ManageBookingPage() {
         {
             id: "status",
             header: "Status",
+            accessorFn: (row: any) => row.status,
             cell: ({ row }: { row: any }) => {
                 const status = row.status;
                 const color = status === 'Approved' ? 'success' : status === 'Rejected' ? 'error' : 'warning';
