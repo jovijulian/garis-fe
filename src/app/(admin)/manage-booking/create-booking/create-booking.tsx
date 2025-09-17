@@ -109,7 +109,7 @@ export default function CreateBookingPage() {
 
         setIsSubmitting(true);
         try {
-            const availabilityRes = await httpGet(endpointUrl('/bookings/check-availability1'), true, {
+            const availabilityRes = await httpGet(endpointUrl('/bookings/check-availability'), true, {
                 room_id: room_id,
                 start_time: moment(start_time).utc().toISOString(),
                 end_time: moment(end_time).utc().toISOString(),
