@@ -11,7 +11,7 @@ import moment from "moment";
 import { useRouter } from 'next/navigation';
 import { toast } from "react-toastify";
 import DeactiveModal from "@/components/modal/deactive/Deactive";
-import EditModal from "@/components/modal/edit/EditFacilityModal";
+import EditModal from "@/components/modal/edit/EditTopicModal";
 import { FaEdit, FaPlus, FaTrash } from "react-icons/fa";
 import DateRangePicker from "@/components/common/DateRangePicker";
 
@@ -19,10 +19,11 @@ interface TableDataItem {
     id: number;
     name: string;
     description: string;
+    created_at: string;
 }
 
 
-export default function RoomsPage() {
+export default function TopicsPage() {
     const searchParams = useSearchParams();
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage, setPerPage] = useState(20);
@@ -95,7 +96,7 @@ export default function RoomsPage() {
             },
             {
                 id: "name",
-                header: "Nama",
+                header: "Nama topik",
                 accessorKey: "name",
                 cell: ({ row }: any) => <span>{row.name}</span>,
             },
@@ -104,6 +105,12 @@ export default function RoomsPage() {
                 header: "Deskripsi",
                 accessorKey: "description",
                 cell: ({ row }: any) => <span>{row.description}</span>,
+            },
+            {
+                id: "created_at",
+                header: "Dibuat pada",
+                accessorKey: "created_at",
+                cell: ({ row }: any) => <span>{moment(row.created_at).format("DD-MM-YYYY")}</span>,
             },
         ];
         return [...defaultColumns, ...columns.filter((col) => col.field !== "id" && col.field !== "hide_this_column_field")];
@@ -124,7 +131,7 @@ export default function RoomsPage() {
 
         try {
             const response = await httpGet(
-                endpointUrl("amenities"), true, params
+                endpointUrl("topics"), true, params
             );
 
             const responseData = response.data.data.data;
@@ -157,7 +164,7 @@ export default function RoomsPage() {
                     />
 
                     <button
-                        onClick={() => router.push("/manage-booking/master/facilities/create")}
+                        onClick={() => router.push("/manage-booking/master/topics/create")}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
                     >
                         <span>+</span>
@@ -197,11 +204,11 @@ export default function RoomsPage() {
                     setIsDeleteModalOpen(false);
                     setSelectedData(null);
                 }}
-                url={`amenities/${selectedData?.id}`}
+                url={`topics/${selectedData?.id}`}
                 itemName={selectedData?.name || ""}
                 selectedData={selectedData}
                 onSuccess={getData}
-                message="Fasilitas berhasil dihapus!"
+                message="Topik berhasil dihapus!"
             />
 
             <EditModal

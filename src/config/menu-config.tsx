@@ -12,7 +12,8 @@ import {
   LayoutList,
   GitPullRequestArrow,
   List,
-  PlusCircle
+  PlusCircle,
+  Pin
 } from 'lucide-react';
 
 export type NavItem = {
@@ -48,6 +49,12 @@ export const menuConfig: Record<string, NavItem[]> = {
       name: 'Daftar Fasilitas',
       icon: <LayoutList />,
       path: '/manage-booking/master/facilities',
+      roles: [1, 2],
+    },
+    {
+      name: 'Daftar Topik',
+      icon: <Pin />,
+      path: '/manage-booking/master/topics',
       roles: [1, 2],
     },
     {
