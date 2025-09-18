@@ -26,10 +26,12 @@ interface BookingData {
     purpose: string;
     start_time: string;
     end_time: string;
+    detail_topic: string;
     status: 'Submit' | 'Approved' | 'Rejected' | 'Canceled';
     notes: string | null;
     user: { nama_user: string; };
     room: { id: number; name: string; };
+    topic: { id: number; name: string; };
     amenities: AmenityItem[];
 }
 
@@ -90,6 +92,7 @@ export default function MyBookingDetailPage() {
                     <div className="flex flex-col md:flex-row items-start justify-between mb-4">
                         <div>
                             <h3 className="text-2xl font-bold text-gray-800">{data.purpose}</h3>
+                            <p className="text-gray-500">Topik: <strong>{data.topic.name} {data.detail_topic ? `(${data.detail_topic})` : ''}</strong></p>
                             <p className="text-gray-500">Ruangan: <strong>{data.room.name}</strong></p>
                         </div>
                         {getStatusBadge(data.status)}

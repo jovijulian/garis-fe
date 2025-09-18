@@ -30,6 +30,10 @@ interface BookingDataItem {
         id: number;
         name: string;
     };
+    topic: {
+        id: number;
+        name: string;
+    };
     amenities: [];
     notes: string | null;
 }
@@ -182,6 +186,13 @@ export default function ManageBookingPage() {
             accessorKey: "user.nama_user",
             accessorFn: (row: any) => row.user?.nama_user,
             cell: ({ row }: any) => <span>{row.user?.nama_user}</span>,
+        },
+        {
+            id: "topic.name",
+            header: "Topik Rapat",
+            accessorKey: "topic.name",
+            accessorFn: (row: any) => row.topic?.name,
+            cell: ({ row }: any) => <span>{row.topic?.name}</span>,
         },
         {
             id: "purpose",

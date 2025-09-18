@@ -17,6 +17,8 @@ import ConflictConfirmationModal from '@/components/modal/ConflictConfirmationMo
 // Interface untuk data form
 interface BookingFormData {
     room_id: number | null;
+    topic_id: number | null;
+    detail_topic: string;
     purpose: string;
     start_time: string;
     end_time: string;
@@ -35,10 +37,18 @@ interface AmenityOption {
     name: string;
 }
 
+interface TopicOption {
+    id: number;
+    name: string;
+}
+
+
 export default function CreateBookingPage() {
     const router = useRouter();
     const [formData, setFormData] = useState<BookingFormData>({
         room_id: null,
+        topic_id: null,
+        detail_topic: '',
         purpose: '',
         start_time: '',
         end_time: '',
@@ -48,6 +58,7 @@ export default function CreateBookingPage() {
 
     const [roomOptions, setRoomOptions] = useState<SelectOption[]>([]);
     const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
+    const [topicOptions, setTopicOptions] = useState<TopicOption[]>([]);
     const [amenityOptions, setAmenityOptions] = useState<AmenityOption[]>([]);
     const [loadingOptions, setLoadingOptions] = useState(true);
     const [loadingRoomOptions, setLoadingRoomOptions] = useState(true);
@@ -62,9 +73,10 @@ export default function CreateBookingPage() {
 
     const fetchOptions = async () => {
         try {
-            const [siteRes, amenitiesRes] = await Promise.all([
+            const [siteRes, amenitiesRes, topicRes] = await Promise.all([
                 httpGet(endpointUrl("/rooms/site-options"), true),
                 httpGet(endpointUrl("/amenities/options"), true),
+                httpGet(endpointUrl("/topics/options"), true),
             ]);
 
             const formattedSite = siteRes.data.data.map((site: any) => ({
@@ -74,10 +86,10 @@ export default function CreateBookingPage() {
 
             setSiteOptions(formattedSite);
             setAmenityOptions(amenitiesRes.data.data || []);
-
+            setTopicOptions(topicRes.data.data || []);
         } catch (error) {
             console.log(error)
-            toast.error("Gagal memuat data cabang dan fasilitas.");
+            toast.error("Gagal memuat data cabang / fasilitas / topik.");
         } finally {
             setLoadingOptions(false);
         }
@@ -190,6 +202,7 @@ export default function CreateBookingPage() {
                         placeholder={loadingOptions ? "Memuat cabang..." : "Pilih Cabang"}
                         value={_.find(siteOptions, { value: selectedSite })}
                         options={siteOptions}
+                        isClearable
                         disabled={loadingOptions}
                     />
                 </div>
@@ -199,11 +212,54 @@ export default function CreateBookingPage() {
                         onValueChange={(opt) => handleFieldChange('room_id', parseInt(opt.value))}
                         placeholder={loadingRoomOptions ? "Memuat ruangan..." : "Pilih Ruangan"}
                         value={roomOptions.find(opt => opt.value === formData.room_id?.toString()) || null}
-
                         options={roomOptions}
+                        isClearable
                         disabled={loadingRoomOptions}
                     />
                 </div>
+                <div>
+                    <label className="block font-medium mb-1">Topik Kegiatan<span className="text-red-500 ml-1">*</span></label>
+                    <Select
+                        onValueChange={(selectedOption) => {
+                            if (selectedOption) {
+                                handleFieldChange('topic_id', parseInt(selectedOption.value));
+
+                                if (selectedOption.label.toLowerCase() !== 'lain-lainnya') {
+                                    handleFieldChange('detail_topic', '');
+                                }
+                            } else {
+                                handleFieldChange('topic_id', null);
+                                handleFieldChange('detail_topic', '');
+                            }
+                        }}
+                        placeholder={loadingOptions ? "Memuat topik..." : "Pilih Topik"}
+                        value={topicOptions.find(opt => opt.id === formData.topic_id) ? {
+                            value: formData.topic_id!.toString(),
+                            label: topicOptions.find(opt => opt.id === formData.topic_id)!.name
+                        } : null}
+                        options={topicOptions.map(topic => ({
+                            value: topic.id.toString(),
+                            label: topic.name
+                        }))}
+                        isClearable
+                        disabled={loadingOptions}
+                    />
+                </div>
+                {topicOptions.find(opt => opt.id === formData.topic_id)?.name.toLowerCase() === 'lain-lainnya' && (
+                    <div className="animate-fade-in">
+                        <label className="block font-medium mb-1">
+                            Detail Topik (Lain-lainnya)
+                            <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <Input
+                            type="text"
+                            defaultValue={formData.detail_topic}
+                            onChange={(e) => handleFieldChange('detail_topic', e.target.value)}
+                            placeholder="Sebutkan topik spesifik kegiatan Anda"
+                            required
+                        />
+                    </div>
+                )}
                 <div>
                     <label className="block font-medium mb-1">Keperluan / Judul Kegiatan<span className="text-red-500 ml-1">*</span></label>
                     <Input

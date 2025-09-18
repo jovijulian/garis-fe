@@ -3,17 +3,19 @@
 import React from 'react';
 import moment from 'moment';
 import 'moment/locale/id';
-import { Calendar, Clock, Edit, Trash2, Building, CheckCircle, XCircle, Hourglass, Info } from 'lucide-react';
+import { Calendar, Clock, Edit, Trash2, Building, CheckCircle, XCircle, Hourglass, Info, Pin } from 'lucide-react';
 import Link from 'next/link';
 
 // Definisikan interface yang akurat sesuai respons API
 interface Booking {
     id: number;
     purpose: string;
+    detail_topic: string;
     start_time: string;
     end_time: string;
     status: 'Submit' | 'Approved' | 'Rejected';
     room: { name: string };
+    topic: { name: string };
 }
 
 interface BookingCardProps {
@@ -69,6 +71,10 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onEdit, onDelete }) 
 
                     {/* Detail Ruangan & Waktu */}
                     <div className="space-y-3 mt-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-3">
+                            <Pin className="w-4 h-4 text-gray-400" />
+                            <span>{booking.topic.name} {booking.detail_topic ? `(${booking.detail_topic})` : ''}</span>
+                        </div>
                         <div className="flex items-center gap-3">
                             <Building className="w-4 h-4 text-gray-400" />
                             <span>{booking.room.name}</span>

@@ -27,6 +27,11 @@ interface Room {
     location: string;
 }
 
+interface Topic {
+    id: number;
+    name: string;
+}
+
 interface BookingAmenity {
     id: number;
     name: string;
@@ -36,6 +41,7 @@ interface BookingData {
     id: number;
     purpose: string;
     start_time: string;
+    detail_topic: string;
     end_time: string;
     status: 'Submit' | 'Approved' | 'Rejected' | 'Canceled';
     notes: string | null;
@@ -44,6 +50,7 @@ interface BookingData {
     updated_at: string;
     user: User;
     room: Room;
+    topic: Topic;
     amenities: BookingAmenity[];
 }
 
@@ -135,6 +142,7 @@ export default function BookingDetailPage() {
                 <div className="flex flex-col md:flex-row items-start justify-between mb-4">
                     <div>
                         <h3 className="text-2xl font-bold text-gray-800">{data.purpose}</h3>
+                        <p className="text-gray-500">Topik: <strong>{data.topic.name} {data.detail_topic ? `(${data.detail_topic})` : ''}</strong></p>
                         <p className="text-gray-500">Diajukan oleh: <strong>{data.user.nama_user}</strong></p>
                     </div>
                     {getStatusBadge(data.status, data.is_conflicting)}

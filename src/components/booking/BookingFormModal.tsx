@@ -21,6 +21,7 @@ interface BookingData {
     end_time: string;
     status: 'Submit' | 'Approved' | 'Rejected' | 'Canceled';
     room: { id: number; name: string; };
+    topic: { id: number; name: string; };
     notes: string | null;
     amenities: AmenityItem[];
 }
@@ -32,6 +33,7 @@ interface BookingFormModalProps {
 }
 interface SelectOption { value: string; label: string; }
 interface AmenityOption { id: number; name: string; }
+interface TopicOption { id: number; name: string; }
 
 const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, onSuccess, bookingData }) => {
     const isEditMode = !!bookingData;
@@ -39,6 +41,7 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
 
     const [formData, setFormData] = useState({
         room_id: null as number | null,
+        topic_id: null as number | null,
         purpose: '',
         start_time: '',
         end_time: '',
@@ -48,6 +51,7 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
 
     const [roomOptions, setRoomOptions] = useState<SelectOption[]>([]);
     const [amenityOptions, setAmenityOptions] = useState<AmenityOption[]>([]);
+    const [topicOptions, setTopicOptions] = useState<SelectOption[]>([]);
     const [loadingOptions, setLoadingOptions] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -58,9 +62,10 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
             const fetchOptions = async () => {
                 try {
                     setLoadingOptions(true);
-                    const [roomsRes, amenitiesRes] = await Promise.all([
+                    const [roomsRes, amenitiesRes, topicRes] = await Promise.all([
                         httpGet(endpointUrl("/rooms/options"), true),
                         httpGet(endpointUrl("/amenities/options"), true),
+                        httpGet(endpointUrl("/topics/options"), true),
                     ]);
                     const formattedRooms = roomsRes.data.data.map((room: any) => ({
                         value: room.id.toString(),
@@ -68,8 +73,13 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
                     }));
                     setRoomOptions(formattedRooms);
                     setAmenityOptions(amenitiesRes.data.data || []);
+                    const formattedTopics = topicRes.data.data.map((topic: any) => ({
+                        value: topic.id.toString(),
+                        label: `${topic.name}`,
+                    }));
+                    setTopicOptions(formattedTopics);
                 } catch (error) {
-                    toast.error("Gagal memuat data ruangan dan fasilitas.");
+                    toast.error("Gagal memuat data ruangan / fasilitas / topik.");
                 } finally {
                     setLoadingOptions(false);
                 }
@@ -80,6 +90,7 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
             if (isEditMode && bookingData) {
                 setFormData({
                     room_id: bookingData.room.id,
+                    topic_id: bookingData.topic.id,
                     purpose: bookingData.purpose,
                     start_time: moment(bookingData.start_time).format('YYYY-MM-DDTHH:mm'),
                     end_time: moment(bookingData.end_time).format('YYYY-MM-DDTHH:mm'),
@@ -89,7 +100,7 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
             } else {
                 // Reset form untuk mode create
                 setFormData({
-                    room_id: null, purpose: '', start_time: '', end_time: '', notes: '', amenity_ids: [],
+                    room_id: null, topic_id: null, purpose: '', start_time: '', end_time: '', notes: '', amenity_ids: [],
                 });
             }
         }
@@ -149,6 +160,16 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
                             placeholder={loadingOptions ? "Memuat..." : "Pilih Ruangan"}
                             value={_.find(roomOptions, { value: formData.room_id?.toString() })}
                             options={roomOptions}
+                            disabled={loadingOptions}
+                        />
+                    </div>
+                    <div>
+                        <label className="block font-medium mb-1">Topik</label>
+                        <Select
+                            onValueChange={(opt) => handleFieldChange('topic_id', parseInt(opt.value))}
+                            placeholder={loadingOptions ? "Memuat..." : "Pilih Topik"}
+                            value={_.find(topicOptions, { value: formData.topic_id?.toString() })}
+                            options={topicOptions}
                             disabled={loadingOptions}
                         />
                     </div>

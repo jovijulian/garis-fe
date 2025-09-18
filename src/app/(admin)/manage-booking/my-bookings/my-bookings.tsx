@@ -19,10 +19,12 @@ interface AmenityItem {
 interface Booking {
     id: number;
     purpose: string;
+    detail_topic: string;
     start_time: string;
     end_time: string;
     status: 'Submit' | 'Approved' | 'Rejected';
     room: { id: number; name: string; };
+    topic: { id: number; name: string; };
     // Tambahkan dua properti ini
     notes: string | null;
     amenities: AmenityItem[];
