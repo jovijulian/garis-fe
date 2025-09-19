@@ -738,3 +738,22 @@ span.flatpickr-weekday,
   opacity: 0.8;
   cursor: grabbing; /* Changes the cursor to indicate dragging */
 }
+
+.fc-daygrid-event {
+  /* Hapus border default agar warna kita lebih dominan */
+  border: none !important;
+  color: white !important; /* Agar teks selalu putih di atas background berwarna */
+}
+
+.fc-bg-success {
+  background-color: #10b981 !important; /* Hijau untuk Approved */
+}
+.fc-bg-warning {
+  background-color: #f59e0b !important; /* Kuning untuk Submit */
+}
+.fc-bg-danger {
+  background-color: #ef4444 !important; /* Merah untuk Rejected */
+}
+.fc-bg-secondary {
+  background-color: #6b7280 !important; /* Abu-abu untuk Canceled */
+}

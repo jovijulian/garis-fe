@@ -4,17 +4,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, AlertTriangle, BarChart3, Calendar } from 'lucide-react';
 import { endpointUrl, httpGet } from '../../../../../helpers';
 
-// Impor komponen-komponen baru kita
 import KeyMetrics from '@/components/dashboard-booking/KeyMetrics';
 import Charts from '@/components/dashboard-booking/Charts';
 import TopLists from '@/components/dashboard-booking/TopLists';
-import FilterComponent from '@/components/common/FilterComponent'; // Komponen Anda
 import DateRangePicker from '@/components/common/DateRangePicker';
 import moment from 'moment';
 import toast from 'react-hot-toast';
 import { useRouter, useSearchParams } from "next/navigation";
 
-// --- Definisikan interface sesuai respons BE ---
 interface KpiData {
     total_bookings_this_month: number;
     pending_bookings_count: number;
@@ -123,7 +120,6 @@ export default function BookingDashboardPage() {
                     initialEndDate={searchParams.get("end_date") || moment().endOf('month').format("YYYY-MM-DD")}
                 />
             </div>
-
             <KeyMetrics data={dashboardData?.kpi} />
             
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

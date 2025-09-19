@@ -13,7 +13,8 @@ import {
   GitPullRequestArrow,
   List,
   PlusCircle,
-  Pin
+  Pin,
+  Calendar
 } from 'lucide-react';
 
 export type NavItem = {
@@ -31,6 +32,12 @@ export const menuConfig: Record<string, NavItem[]> = {
       name: 'Dashboard',
       icon: <LayoutDashboard />,
       path: '/manage-booking/dashboard',
+      roles: [1, 2],
+    },
+    {
+      name: 'Kalendar Booking',
+      icon: <Calendar />,
+      path: '/manage-booking/calendar-booking',
       roles: [1, 2],
     },
     {
