@@ -63,9 +63,9 @@ const BookingCalendar: React.FC = () => {
     router.push(`/manage-booking/${clickInfo.event.id}`);
   }, [router]); // Bergantung pada 'router'
 
-  const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
-    router.push(`/manage-booking/create-booking?start=${selectInfo.startStr}`);
-  }, [router]); // Bergantung pada 'router'
+//   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
+//     router.push(`/manage-booking/create-booking?start=${selectInfo.startStr}`);
+//   }, [router]); // Bergantung pada 'router'
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 relative">
@@ -87,7 +87,7 @@ const BookingCalendar: React.FC = () => {
           }}
           events={fetchEvents}
           selectable={true}
-          select={handleDateSelect}
+        //   select={handleDateSelect}
           eventClick={handleEventClick}
           eventContent={renderEventContent}
           dayMaxEvents={true}
