@@ -105,7 +105,7 @@ export default function BookingDetailPage() {
         try {
             await httpPut(endpointUrl(`bookings/status/${id}`), { status: actionType }, true);
             toast.success(`Booking berhasil diubah menjadi "${actionType}"`);
-            setData(prevData => prevData ? { ...prevData, status: actionType } : null); 
+            setData(prevData => prevData ? { ...prevData, status: actionType } : null);
         } catch (error: any) {
             toast.error(error?.response?.data?.message || `Gagal mengubah status.`);
         } finally {
@@ -284,67 +284,69 @@ export default function BookingDetailPage() {
                     </div>
                 </div>
             </div>
-            <div className="mt-6">
-                <h4 className="text-lg font-semibold text-gray-700 mb-3">
-                    Bukti Booking & Catatan Admin
-                </h4>
-                <div className="bg-white border rounded-lg p-5 space-y-4">
-                    {data.proof_of_booking_path && (
-                        <div className="mb-4 pb-4 border-b">
-                            <p className="font-semibold mb-2">Bukti Saat Ini:</p>
-                            <button
-                                type="button"
-                                onClick={() => handleOpenPreview(`${imageUrl}${data.proof_of_booking_path}`)}
-                                className="text-blue-600 hover:underline font-semibold"
-                            >
-                                Lihat Bukti
-                            </button>
+            {data.status == 'Approved' && (
+                <div className="mt-6">
+                    <h4 className="text-lg font-semibold text-gray-700 mb-3">
+                        Bukti Booking & Catatan Admin
+                    </h4>
+                    <div className="bg-white border rounded-lg p-5 space-y-4">
+                        {data.proof_of_booking_path && (
+                            <div className="mb-4 pb-4 border-b">
+                                <p className="font-semibold mb-2">Bukti Saat Ini:</p>
+                                <button
+                                    type="button"
+                                    onClick={() => handleOpenPreview(`${imageUrl}${data.proof_of_booking_path}`)}
+                                    className="text-blue-600 hover:underline font-semibold"
+                                >
+                                    Lihat Bukti
+                                </button>
 
-                            {data.admin_note && (
-                                <div className="mt-3">
-                                    <p className="font-semibold mb-1">Catatan Admin:</p>
-                                    <p className="text-gray-600 bg-gray-50 p-2 rounded-md">{data.admin_note}</p>
+                                {data.admin_note && (
+                                    <div className="mt-3">
+                                        <p className="font-semibold mb-1">Catatan Admin:</p>
+                                        <p className="text-gray-600 bg-gray-50 p-2 rounded-md">{data.admin_note}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="space-y-3">
+                            <label htmlFor="file-upload" className="block font-medium">
+                                {data.proof_of_booking_path ? 'Ganti' : 'Upload'} Bukti Baru
+                            </label>
+                            <input
+                                id="file-upload" type="file" onChange={handleFileChange}
+                                accept="image/png, image/jpeg, application/pdf"
+                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            />
+                            {selectedFile && (
+                                <div className="space-y-3 pt-2">
+                                    <div>
+                                        <label htmlFor="admin-note" className="block font-medium mb-1">Catatan (Opsional)</label>
+                                        <textarea
+                                            id="admin-note"
+                                            value={adminNote}
+                                            onChange={(e) => setAdminNote(e.target.value)}
+                                            rows={3}
+                                            placeholder="Tambahkan catatan terkait bukti ini..."
+                                            className="w-full px-3 py-2 border rounded-lg"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-end">
+                                        <button
+                                            onClick={handleUpload}
+                                            disabled={isUploading}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                                        >
+                                            {isUploading ? 'Mengupload...' : 'Upload'}
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>
-                    )}
-
-                    <div className="space-y-3">
-                        <label htmlFor="file-upload" className="block font-medium">
-                            {data.proof_of_booking_path ? 'Ganti' : 'Upload'} Bukti Baru
-                        </label>
-                        <input
-                            id="file-upload" type="file" onChange={handleFileChange}
-                            accept="image/png, image/jpeg, application/pdf"
-                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                        />
-                        {selectedFile && (
-                            <div className="space-y-3 pt-2">
-                                <div>
-                                    <label htmlFor="admin-note" className="block font-medium mb-1">Catatan (Opsional)</label>
-                                    <textarea
-                                        id="admin-note"
-                                        value={adminNote}
-                                        onChange={(e) => setAdminNote(e.target.value)}
-                                        rows={3}
-                                        placeholder="Tambahkan catatan terkait bukti ini..."
-                                        className="w-full px-3 py-2 border rounded-lg"
-                                    />
-                                </div>
-                                <div className="flex items-center justify-end">
-                                    <button
-                                        onClick={handleUpload}
-                                        disabled={isUploading}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
-                                    >
-                                        {isUploading ? 'Mengupload...' : 'Upload'}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* --- Modal Konfirmasi --- */}
             <ChangeStatusModal
