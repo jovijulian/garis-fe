@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import moment from "moment";
 import 'moment/locale/id';
-import { endpointUrl, httpGet, httpPut } from "@/../helpers";
+import { endpointUrl, httpGet, httpPost, httpPut } from "@/../helpers";
 
 import ComponentCard from "@/components/common/ComponentCard";
 import {
@@ -15,6 +15,7 @@ import {
 import ChangeStatusModal from "@/components/modal/ChangeStatusModal";
 import RescheduleModal from '@/components/modal/RescheduleModal';
 import { Info } from "lucide-react";
+import ImagePreviewModal from "@/components/modal/ImagePreviewModal";
 
 interface User {
     id_user: string;
@@ -52,6 +53,8 @@ interface BookingData {
     room: Room;
     topic: Topic;
     amenities: BookingAmenity[];
+    proof_of_booking_path: string | null;
+    admin_note: string | null;
 }
 
 export default function BookingDetailPage() {
@@ -64,6 +67,12 @@ export default function BookingDetailPage() {
     const router = useRouter();
     const params = useParams();
     const id = Number(params.id);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [adminNote, setAdminNote] = useState<string>(""); // <-- State baru
+    const [isUploading, setIsUploading] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+    const imageUrl = process.env.IMAGE_URL
     moment.locale('id');
 
     useEffect(() => {
@@ -89,7 +98,6 @@ export default function BookingDetailPage() {
         setIsModalOpen(true);
     };
 
-    // Fungsi untuk melakukan aksi (Approve/Reject)
     const handleUpdateStatus = async () => {
         if (!actionType) return;
 
@@ -97,8 +105,7 @@ export default function BookingDetailPage() {
         try {
             await httpPut(endpointUrl(`bookings/status/${id}`), { status: actionType }, true);
             toast.success(`Booking berhasil diubah menjadi "${actionType}"`);
-            setData(prevData => prevData ? { ...prevData, status: actionType } : null); // Update state lokal
-            // onClose(); // Tutup modal setelah sukses
+            setData(prevData => prevData ? { ...prevData, status: actionType } : null); 
         } catch (error: any) {
             toast.error(error?.response?.data?.message || `Gagal mengubah status.`);
         } finally {
@@ -113,7 +120,6 @@ export default function BookingDetailPage() {
         setIsRescheduleModalOpen(true);
     };
 
-    // Komponen Badge Status yang menarik
     const getStatusBadge = (status: string, isConflicting: number) => {
         if (status === 'Approved') {
             return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-green-100 text-green-800"><FaCheckCircle /> Disetujui</div>;
@@ -128,6 +134,45 @@ export default function BookingDetailPage() {
         const color = isConflicting === 1 ? "bg-orange-100 text-orange-800" : "bg-yellow-100 text-yellow-800";
         const text = isConflicting === 1 ? "Bentrok, Perlu Tinjauan" : "Menunggu Persetujuan";
         return <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${color}`}><FaHourglassHalf /> {text}</div>;
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            setSelectedFile(event.target.files[0]);
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!selectedFile || !data) return;
+
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('proofFile', selectedFile);
+            formData.append('admin_note', adminNote);
+
+            await httpPost(endpointUrl(`bookings/upload-proof/${data.id}`), formData, true);
+
+
+            toast.success("Bukti booking berhasil diupload!");
+            if (data.id) getDetail();
+            setSelectedFile(null);
+            setAdminNote("");
+        } catch (error: any) {
+            toast.error(error.message);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleOpenPreview = (url: string) => {
+        setPreviewImageUrl(url);
+        setIsPreviewOpen(true);
+    };
+
+    const handleClosePreview = () => {
+        setPreviewImageUrl(null);
+        setIsPreviewOpen(false);
     };
 
     if (isLoading) return <p className="text-center mt-10 text-gray-400">Memuat detail booking...</p>;
@@ -239,6 +284,67 @@ export default function BookingDetailPage() {
                     </div>
                 </div>
             </div>
+            <div className="mt-6">
+                <h4 className="text-lg font-semibold text-gray-700 mb-3">
+                    Bukti Booking & Catatan Admin
+                </h4>
+                <div className="bg-white border rounded-lg p-5 space-y-4">
+                    {data.proof_of_booking_path && (
+                        <div className="mb-4 pb-4 border-b">
+                            <p className="font-semibold mb-2">Bukti Saat Ini:</p>
+                            <button
+                                type="button"
+                                onClick={() => handleOpenPreview(`${imageUrl}${data.proof_of_booking_path}`)}
+                                className="text-blue-600 hover:underline font-semibold"
+                            >
+                                Lihat Bukti
+                            </button>
+
+                            {data.admin_note && (
+                                <div className="mt-3">
+                                    <p className="font-semibold mb-1">Catatan Admin:</p>
+                                    <p className="text-gray-600 bg-gray-50 p-2 rounded-md">{data.admin_note}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="space-y-3">
+                        <label htmlFor="file-upload" className="block font-medium">
+                            {data.proof_of_booking_path ? 'Ganti' : 'Upload'} Bukti Baru
+                        </label>
+                        <input
+                            id="file-upload" type="file" onChange={handleFileChange}
+                            accept="image/png, image/jpeg, application/pdf"
+                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                        {selectedFile && (
+                            <div className="space-y-3 pt-2">
+                                <div>
+                                    <label htmlFor="admin-note" className="block font-medium mb-1">Catatan (Opsional)</label>
+                                    <textarea
+                                        id="admin-note"
+                                        value={adminNote}
+                                        onChange={(e) => setAdminNote(e.target.value)}
+                                        rows={3}
+                                        placeholder="Tambahkan catatan terkait bukti ini..."
+                                        className="w-full px-3 py-2 border rounded-lg"
+                                    />
+                                </div>
+                                <div className="flex items-center justify-end">
+                                    <button
+                                        onClick={handleUpload}
+                                        disabled={isUploading}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                                    >
+                                        {isUploading ? 'Mengupload...' : 'Upload'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
 
             {/* --- Modal Konfirmasi --- */}
             <ChangeStatusModal
@@ -255,6 +361,12 @@ export default function BookingDetailPage() {
                 onClose={() => setIsRescheduleModalOpen(false)}
                 onSuccess={getDetail}
             // onSuccess={getData}
+            />
+            <ImagePreviewModal
+                isOpen={isPreviewOpen}
+                onClose={handleClosePreview}
+                imageUrl={previewImageUrl}
+                imageTitle="Preview Bukti Booking"
             />
         </ComponentCard>
     );

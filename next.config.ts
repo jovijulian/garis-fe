@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   },
   env: {
     BASE_URL: "https://booking-be-v49x.vercel.app/api/v1/",
+    IMAGE_URL: "https://f38qmrhd9kdkwje8.public.blob.vercel-storage.com/",
+
   },
   experimental: {
     optimizePackageImports: [
