@@ -255,10 +255,10 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ onDatesChange, initia
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 min-w-[280px] sm:min-w-[500px]">
-          <div className="flex flex-col sm:flex-row">
+         <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 w-auto animate-fade-in-up">
+          <div className="flex">
             {/* Predefined Ranges */}
-            <div className="w-full sm:w-48 p-4 border-r border-gray-200 bg-gray-50 rounded-l-2xl">
+            <div className="w-48 p-4 border-r border-gray-200 bg-gray-50 rounded-l-2xl">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Shortcut</h3>
               <div className="space-y-1">
                 {predefinedRanges.map((range, index) => (
