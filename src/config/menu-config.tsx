@@ -35,12 +35,6 @@ export const menuConfig: Record<string, NavItem[]> = {
       roles: [1, 2],
     },
     {
-      name: 'Kalendar Booking',
-      icon: <Calendar />,
-      path: '/manage-booking/calendar-booking',
-      roles: [1, 2],
-    },
-    {
       name: 'Pengajuan Booking',
       icon: <GitPullRequestArrow />,
       path: '/manage-booking',

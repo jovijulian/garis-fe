@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback } from "react"; // 1. Import useCallback
+import React, { useState, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -28,7 +28,6 @@ const BookingCalendar: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
-  // 2. Bungkus semua fungsi dengan useCallback
   const fetchEvents: EventSourceFunc = useCallback(async (fetchInfo, successCallback, failureCallback) => {
     try {
       const params = {
@@ -57,15 +56,11 @@ const BookingCalendar: React.FC = () => {
       toast.error("Gagal memuat data booking.");
       failureCallback(error as Error);
     }
-  }, []); // Dependency array kosong karena tidak bergantung pada state/props apa pun
+  }, []);
 
   const handleEventClick = useCallback((clickInfo: EventClickArg) => {
     router.push(`/manage-booking/${clickInfo.event.id}`);
-  }, [router]); // Bergantung pada 'router'
-
-//   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
-//     router.push(`/manage-booking/create-booking?start=${selectInfo.startStr}`);
-//   }, [router]); // Bergantung pada 'router'
+  }, [router]);
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 relative">
@@ -76,8 +71,8 @@ const BookingCalendar: React.FC = () => {
         </div>
       )}
 
-      <div className="custom-calendar">
-        <FullCalendar
+      <div className="custom-calendar h-[400px] overflow-hidden">
+      <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
           headerToolbar={{
@@ -92,13 +87,133 @@ const BookingCalendar: React.FC = () => {
           eventContent={renderEventContent}
           dayMaxEvents={true}
           loading={(isLoading) => setIsLoading(isLoading)}
+          
         />
       </div>
+
+      {/* Custom CSS untuk membuat kalender lebih compact - FORCE HEIGHT */}
+      <style jsx global>{`
+        /* FORCE HEIGHT - Pendekatan yang lebih agresif */
+        .custom-calendar {
+          height: 400px !important;
+          max-height: 400px !important;
+          overflow: hidden !important;
+        }
+        
+        .custom-calendar .fc {
+          height: 400px !important;
+          max-height: 400px !important;
+          font-size: 0.875rem;
+        }
+        
+        .custom-calendar .fc-view-harness {
+          height: 350px !important;
+          max-height: 350px !important;
+        }
+        
+        .custom-calendar .fc-daygrid-body {
+          height: 300px !important;
+          max-height: 300px !important;
+        }
+        
+        .custom-calendar .fc-scrollgrid {
+          height: 350px !important;
+          max-height: 350px !important;
+        }
+        
+        .custom-calendar .fc-daygrid-day {
+          min-height: 45px !important; /* Kurangi tinggi sel hari */
+          max-height: 45px !important;
+          height: 45px !important;
+        }
+        
+        .custom-calendar .fc-daygrid-day-frame {
+          padding: 1px !important;
+          min-height: 43px !important;
+          height: 43px !important;
+        }
+        
+        .custom-calendar .fc-daygrid-day-events {
+          min-height: 20px !important;
+          max-height: 25px !important;
+        }
+        
+        .custom-calendar .fc-daygrid-event {
+          margin: 0px 1px 1px 1px !important;
+          font-size: 0.7rem !important;
+          padding: 1px 2px !important;
+          min-height: 14px !important;
+          max-height: 16px !important;
+        }
+        
+        .custom-calendar .fc-col-header-cell {
+          padding: 3px !important;
+          height: 25px !important;
+          min-height: 25px !important;
+        }
+        
+        .custom-calendar .fc-toolbar {
+          margin-bottom: 0.25rem !important;
+          padding: 0 !important;
+        }
+        
+        .custom-calendar .fc-toolbar-chunk {
+          display: flex;
+          align-items: center;
+        }
+        
+        .custom-calendar .fc-button {
+          padding: 2px 6px !important;
+          font-size: 0.8rem !important;
+        }
+        
+        .custom-calendar .fc-toolbar-title {
+          font-size: 1.1rem !important;
+          margin: 0 !important;
+        }
+        
+        .compact-event {
+          border-radius: 2px !important;
+          padding: 0px 2px !important;
+          line-height: 1.1 !important;
+        }
+        
+        .compact-day-cell {
+          border: 1px solid #e5e7eb !important;
+        }
+        
+        /* Dark mode adjustments */
+        .dark .custom-calendar .fc-theme-standard td,
+        .dark .custom-calendar .fc-theme-standard th {
+          border-color: #374151 !important;
+        }
+        
+        .dark .custom-calendar .fc-daygrid-day-number {
+          color: #d1d5db !important;
+        }
+        
+        /* Remove any flex-grow or expanding behavior */
+        .custom-calendar .fc-daygrid-body-unbalanced .fc-daygrid-day-events {
+          position: absolute;
+          left: 0;
+          right: 0;
+        }
+        
+        /* Hide overflow content */
+        .custom-calendar .fc-daygrid-day-top {
+          flex-direction: row;
+          justify-content: flex-end;
+        }
+        
+        .custom-calendar .fc-daygrid-day-number {
+          padding: 2px 4px !important;
+          font-size: 0.8rem !important;
+        }
+      `}</style>
     </div>
   );
 };
 
-// Fungsi render ini berada di luar komponen utama, jadi tidak perlu useCallback
 const renderEventContent = (eventInfo: EventContentArg) => {
   const startTime = moment(eventInfo.event.start).format('HH:mm');
   const endTime = eventInfo.event.end ? moment(eventInfo.event.end).format('HH:mm') : '';

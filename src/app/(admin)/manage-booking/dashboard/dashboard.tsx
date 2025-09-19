@@ -5,12 +5,17 @@ import { Loader2, AlertTriangle, BarChart3, Calendar } from 'lucide-react';
 import { endpointUrl, httpGet } from '../../../../../helpers';
 
 import KeyMetrics from '@/components/dashboard-booking/KeyMetrics';
-import Charts from '@/components/dashboard-booking/Charts';
-import TopLists from '@/components/dashboard-booking/TopLists';
 import DateRangePicker from '@/components/common/DateRangePicker';
 import moment from 'moment';
 import toast from 'react-hot-toast';
 import { useRouter, useSearchParams } from "next/navigation";
+import BookingCalendar from '@/components/calendar/BookingCalendar';
+import { StatusDistributionChart } from '@/components/dashboard-booking/StatusDistributionChart';
+import { BookingTrendChart } from '@/components/dashboard-booking/BookingTrendChart';
+import { RoomUtilizationChart } from '@/components/dashboard-booking/RoomUtilizationChart';
+import { TopTopicsList } from '@/components/dashboard-booking/TopTopicsList';
+import { TopAmenitiesList } from '@/components/dashboard-booking/TopAmenitiesList';
+
 
 interface KpiData {
     total_bookings_this_month: number;
@@ -83,8 +88,8 @@ export default function BookingDashboardPage() {
         }
         router.push(`?${currentParams.toString()}`);
     };
-    
-   
+
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-screen bg-gray-50">
@@ -107,8 +112,10 @@ export default function BookingDashboardPage() {
         );
     }
 
+    const { kpi, charts, rankings } = dashboardData;
     return (
         <div className="p-4 md:p-6 space-y-6 bg-gray-50 dark:bg-gray-900">
+            {/* Header dengan Judul dan Date Range Picker */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800">Dashboard Booking</h1>
@@ -120,16 +127,75 @@ export default function BookingDashboardPage() {
                     initialEndDate={searchParams.get("end_date") || moment().endOf('month').format("YYYY-MM-DD")}
                 />
             </div>
-            <KeyMetrics data={dashboardData?.kpi} />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-3">
-                    <Charts data={dashboardData?.charts} />
+
+            {/* Baris 1: Key Metrics (Sejajar) */}
+            <KeyMetrics data={kpi} />
+
+            {/* Baris 2: Kalender (9 kolom) + Status Chart (3 kolom) */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                {/* Kalender - 9 kolom */}
+                <div className="xl:col-span-9">
+                    <BookingCalendar />
                 </div>
-                <div className="lg:col-span-2">
-                    <TopLists data={dashboardData?.rankings} />
+
+                {/* Status Distribution Chart - 3 kolom */}
+                <div className="xl:col-span-3">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 h-[400px]">
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                            Status Booking
+                        </h3>
+                        {/* Status Distribution Component */}
+                        <StatusDistributionChart data={rankings.status_distribution} />
+                    </div>
                 </div>
             </div>
+
+            {/* Baris 3: Tren Booking (6 kolom) + Top 5 Ruangan (6 kolom) */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                {/* Tren Booking Chart - 6 kolom */}
+                <div className="xl:col-span-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                            Tren Booking
+                        </h3>
+                        <BookingTrendChart data={charts.booking_trend} />
+                    </div>
+                </div>
+
+                {/* Top 5 Ruangan - 6 kolom */}
+                <div className="xl:col-span-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                            Top 5 Ruangan Digunakan
+                        </h3>
+                        <RoomUtilizationChart data={charts.room_utilization} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Baris 4: Top 5 Topik (6 kolom) + Top 5 Fasilitas (6 kolom) */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                {/* Top 5 Topik Meeting - 6 kolom */}
+                <div className="xl:col-span-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                            Top 5 Topik Meeting
+                        </h3>
+                        <TopTopicsList data={rankings.top_topics} />
+                    </div>
+                </div>
+
+                {/* Top 5 Fasilitas - 6 kolom */}
+                <div className="xl:col-span-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                            Top 5 Fasilitas Diminta
+                        </h3>
+                        <TopAmenitiesList data={rankings.top_amenities} />
+                    </div>
+                </div>
+            </div>
+
         </div>
     );
 }

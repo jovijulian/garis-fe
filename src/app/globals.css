@@ -757,3 +757,16 @@ span.flatpickr-weekday,
 .fc-bg-secondary {
   background-color: #6b7280 !important; /* Abu-abu untuk Canceled */
 }
+.calendar-compact {
+  @apply h-96 max-h-96 overflow-hidden;
+}
+
+.calendar-compact :global(.fc) {
+  height: 24rem !important;
+  max-height: 24rem !important;
+}
+
+.calendar-compact :global(.fc-daygrid-day) {
+  height: 2.75rem !important;
+  min-height: 2.75rem !important;
+}
