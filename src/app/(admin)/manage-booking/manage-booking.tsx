@@ -13,7 +13,9 @@ import { FaEdit, FaTrash, FaCheck, FaTimes, FaExclamationTriangle } from "react-
 import ChangeStatusModal from "@/components/modal/ChangeStatusModal";
 import RescheduleModal from '@/components/modal/RescheduleModal';
 import CancelBookingModal from '@/components/modal/CancelBookingModal';
-import { CircleX, Trash2 } from "lucide-react";
+import { CircleX, FileDown, Trash2 } from "lucide-react";
+import ExportModal from '@/components/modal/ExportModal'; 
+
 
 interface BookingDataItem {
     id: number;
@@ -53,8 +55,8 @@ export default function ManageBookingPage() {
     const [selectedData, setSelectedData] = useState<BookingDataItem | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-    // Tambahkan 2 state ini:
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [actionType, setActionType] = useState<'Approved' | 'Rejected' | null>(null);
     useEffect(() => {
         getData();
@@ -289,7 +291,7 @@ export default function ManageBookingPage() {
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end items-center">
+            <div className="flex justify-end items-center gap-2">
                 <input
                     type="text"
                     value={searchTerm}
@@ -297,6 +299,13 @@ export default function ManageBookingPage() {
                     placeholder="Cari berdasarkan keperluan, ruangan, atau nama..."
                     className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                 <button
+                        onClick={() => setIsExportModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                        <FileDown size={18} />
+                        <span>Export</span>
+                    </button>
             </div>
 
             <Table
@@ -330,6 +339,10 @@ export default function ManageBookingPage() {
                 booking={selectedData}
                 onClose={() => setIsRescheduleModalOpen(false)}
                 onSuccess={getData}
+            />
+            <ExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
             />
         </div>
     );
