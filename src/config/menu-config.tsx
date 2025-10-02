@@ -79,6 +79,27 @@ export const menuConfig: Record<string, NavItem[]> = {
     }
   ],
 
+  order: [
+    {
+      name: 'Dashboard',
+      icon: <LayoutDashboard />,
+      path: '/orders/dashboard',
+      roles: [1, 2],
+    },
+    {
+      name: 'Daftar Tipe Konsumsi',
+      icon: <LayoutList />,
+      path: '/orders/master/consumption-types',
+      roles: [1, 2],
+    },
+    {
+      name: 'Menu',
+      icon: <Home />,
+      path: '/menus',
+      roles: [1, 2, 3],
+    }
+  ],
+
   vehicle: [
     {
       name: 'Dashboard Kendaraan',

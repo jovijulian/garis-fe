@@ -52,7 +52,7 @@ const menuItems: {
             title: "Order",
             description: "Pantau dan atur pesanan dengan mudah.",
             icon: ShoppingCart,
-            href: "/vehicles1",
+            href: "/orders/dashboard",
             color: "indigo",
         },
         {
@@ -113,6 +113,9 @@ const MenuCard: React.FC<MenuCardProps> = ({
     let dynamicHref = href;
     if (title === "Peminjaman Ruangan" && userRole === "3") {
         dynamicHref = "/manage-booking/my-bookings";
+    }
+    if (title === "Order" && userRole === "3") {
+        dynamicHref = "/orders/my-orders";
     }
     const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         if (isDisabled) {

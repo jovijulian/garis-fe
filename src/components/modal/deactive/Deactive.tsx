@@ -81,7 +81,7 @@ const DeactiveModal: React.FC<DeactiveModalProps> = ({
                 {/* Description */}
                 <div className="mb-8">
                     <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                        Apakah Anda yakin ingin menghapus?{" "}
+                        Apakah Anda yakin ingin menghapus{" "}
                         <span className="font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md">
                             {itemName || "this item"}
                         </span>
