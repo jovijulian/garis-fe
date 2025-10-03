@@ -14,7 +14,9 @@ import {
   List,
   PlusCircle,
   Pin,
-  Calendar
+  Calendar,
+  ShoppingCart,
+  BaggageClaim
 } from 'lucide-react';
 
 export type NavItem = {
@@ -87,10 +89,28 @@ export const menuConfig: Record<string, NavItem[]> = {
       roles: [1, 2],
     },
     {
+      name: 'List Pesanan',
+      icon: <BaggageClaim />,
+      path: '/orders/manage-order',
+      roles: [1, 2],
+    },
+    {
       name: 'Daftar Tipe Konsumsi',
       icon: <LayoutList />,
       path: '/orders/master/consumption-types',
       roles: [1, 2],
+    },
+    {
+      name: 'Buat Pesanan',
+      icon: <PlusCircle />,
+      path: '/orders/create',
+      roles: [1,2,3],
+    },
+    {
+      name: 'Pesanan saya',
+      icon: <ShoppingCart />,
+      path: '/orders/my-orders',
+      roles: [3],
     },
     {
       name: 'Menu',
