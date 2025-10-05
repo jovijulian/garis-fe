@@ -104,7 +104,7 @@ export const menuConfig: Record<string, NavItem[]> = {
       name: 'Buat Pesanan',
       icon: <PlusCircle />,
       path: '/orders/create',
-      roles: [1,2,3],
+      roles: [3],
     },
     {
       name: 'Pesanan saya',
