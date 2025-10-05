@@ -14,7 +14,7 @@ import ChangeStatusOrderModal from "@/components/modal/ChangeStatusOrderModal";
 import RescheduleModal from '@/components/modal/RescheduleModal';
 import CancelOrderModal from '@/components/modal/CancelOrderModal';
 import { CircleX, FileDown, Trash2 } from "lucide-react";
-import ExportModal from '@/components/modal/ExportModal';
+import ExportOrderModal from '@/components/modal/ExportOrderModal';
 
 
 interface OrderDataItem {
@@ -353,7 +353,7 @@ export default function ManageOrderPage() {
                 isSubmitting={isSubmitting}
             />
 
-            <ExportModal
+            <ExportOrderModal
                 isOpen={isExportModalOpen}
                 onClose={() => setIsExportModalOpen(false)}
             />

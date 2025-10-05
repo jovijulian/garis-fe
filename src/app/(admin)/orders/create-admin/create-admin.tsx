@@ -10,7 +10,7 @@ import { endpointUrl, httpGet, httpPost } from '@/../helpers';
 import ComponentCard from '@/components/common/ComponentCard';
 import Select from '@/components/form/Select-custom';
 import Input from '@/components/form/input/InputField';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, PlusCircle, Trash2 } from 'lucide-react';
 
 type LocationType = 'booking' | 'room' | 'custom';
 interface SelectOption { value: string; label: string; }
@@ -27,7 +27,7 @@ export default function CreateOrderAdminPage() {
         consumption_type_id: null as number | null,
         pax: '',
         order_time: '',
-        menu_description: '',
+        menu_description: [''],
         note: '',
         user_id: null as string | null, // <-- Field baru untuk admin
     });
@@ -99,7 +99,8 @@ export default function CreateOrderAdminPage() {
         const payload: any = { ...formData };
         payload.pax = formData.pax ? parseInt(formData.pax.toString(), 10) : null;
         payload.order_time = moment(formData.order_time).toISOString();
-        payload.user_id = formData.user_id ? String(formData.user_id) : null; 
+        payload.user_id = formData.user_id ? String(formData.user_id) : null;
+        payload.menu_description = formData.menu_description.filter(item => item.trim() !== '').join('\n')
         if (locationType === 'booking') {
             delete payload.room_id;
             delete payload.cab_id;
@@ -121,6 +122,26 @@ export default function CreateOrderAdminPage() {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleMenuItemChange = (index: number, value: string) => {
+        const newMenuItems = [...formData.menu_description];
+        newMenuItems[index] = value;
+        handleFieldChange('menu_description', newMenuItems);
+    };
+
+    // Fungsi untuk menambah baris input baru
+    const addMenuItem = () => {
+        handleFieldChange('menu_description', [...formData.menu_description, '']);
+    };
+
+    // Fungsi untuk menghapus baris input
+    const removeMenuItem = (index: number) => {
+        // Sisakan minimal satu input
+        if (formData.menu_description.length <= 1) return;
+
+        const newMenuItems = formData.menu_description.filter((_, i) => i !== index);
+        handleFieldChange('menu_description', newMenuItems);
     };
 
     return (
@@ -254,9 +275,41 @@ export default function CreateOrderAdminPage() {
                         <input type="datetime-local" value={formData.order_time} onChange={e => handleFieldChange('order_time', e.target.value)} className="w-full border p-2 rounded-md" />
                     </div>
                 </div>
-                <div>
+                <div className="w-full">
                     <label className="block font-medium mb-1">Deskripsi Menu</label>
-                    <textarea value={formData.menu_description} onChange={(e) => handleFieldChange('menu_description', e.target.value)} rows={5} placeholder={"Contoh:\nNasi Ayam Bakar x15 (5 non-pedas)\nEs Teh Manis x15"} className="w-full border p-2 rounded-md" />
+                    <div className="w-full space-y-3">
+                        {formData.menu_description.map((item, index) => (
+                            <div key={index} className="flex items-center gap-2 w-full">
+                                <div className="flex-1"> {/* biar input fleksibel penuh */}
+                                    <Input
+                                        type="text"
+                                        defaultValue={item}
+                                        onChange={(e) => handleMenuItemChange(index, e.target.value)}
+                                        placeholder="Contoh: Nasi Ayam Bakar x5"
+                                        className="w-full"
+                                    />
+                                </div>
+                                {formData.menu_description.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeMenuItem(index)}
+                                        className="p-2 text-red-500 hover:bg-red-100 rounded-full shrink-0"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+
+                        <button
+                            type="button"
+                            onClick={addMenuItem}
+                            className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800"
+                        >
+                            <PlusCircle className="w-4 h-4" />
+                            Tambah Menu Lain
+                        </button>
+                    </div>
                 </div>
 
                 <div>
