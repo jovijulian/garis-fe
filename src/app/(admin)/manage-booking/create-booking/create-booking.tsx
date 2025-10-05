@@ -66,7 +66,7 @@ export default function CreateBookingPage() {
     const [selectedSite, setSelectedSite] = useState<string | null>(null);
     const [isConflictModalOpen, setConflictModalOpen] = useState(false);
     const [conflictDetails, setConflictDetails] = useState(null);
-
+    const [wantsToOrderConsumption, setWantsToOrderConsumption] = useState(false);
     useEffect(() => {
         fetchOptions();
     }, []);
@@ -117,10 +117,15 @@ export default function CreateBookingPage() {
                 end_time: moment(formData.end_time).utc().toISOString(),
             };
 
-            await httpPost(endpointUrl("/bookings"), payload, true);
+            const response = await httpPost(endpointUrl("/bookings"), payload, true);
+            const newBooking = response.data.data;
             toast.success("Pengajuan booking berhasil dikirim!");
-            setConflictModalOpen(false); // Tutup modal
-            router.push("/manage-booking/my-bookings");
+            setConflictModalOpen(false);
+            if (wantsToOrderConsumption) {
+                router.push(`/orders/create?bookingId=${newBooking.id}`);
+            } else {
+                router.push("/manage-booking/my-bookings");
+            }
 
         } catch (error: any) {
             toast.error(error?.response?.data?.message || "Gagal mengirim pengajuan.");
@@ -319,6 +324,22 @@ export default function CreateBookingPage() {
                         placeholder="Tuliskan permintaan atau catatan khusus di sini..."
                         className="w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-600"
                     />
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={wantsToOrderConsumption}
+                            onChange={(e) => setWantsToOrderConsumption(e.target.checked)}
+                            className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <div className="flex-1">
+                            <span className="font-semibold text-gray-800">Pesan Konsumsi (Makanan/Snack)</span>
+                            <p className="text-sm text-gray-500">
+                                Setelah ini, Anda akan diarahkan ke form pemesanan konsumsi.
+                            </p>
+                        </div>
+                    </label>
                 </div>
                 <div className="flex justify-end gap-3 pt-4">
                     <button

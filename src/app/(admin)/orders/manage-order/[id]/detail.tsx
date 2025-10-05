@@ -178,7 +178,7 @@ export default function OrderDetailPage() {
                 <DetailItem icon={<FaBuilding />} label="Cabang" value={data.cabang.nama_cab} />
                 <DetailItem icon={<FaMapMarkerAlt />} label="Lokasi/Ruangan" value={locationName} />
                 <DetailItem icon={<FaClock />} label="Waktu Konsumsi" value={moment(data.order_time).format('DD MMM YYYY, HH:mm')} />
-                <DetailItem icon={<FaUsers />} label="Jumlah" value={`${data.pax} pax`} />
+                <DetailItem icon={<FaUsers />} label="Jumlah" value={`${data.pax}`} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -39,7 +39,6 @@ export default function CreateOrderPage() {
     const [roomOptions, setRoomOptions] = useState<SelectOption[]>([]);
     const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
     const [consumptionTypeOptions, setConsumptionTypeOptions] = useState<SelectOption[]>([]);
-    
     const handleFieldChange = (field: keyof typeof formData, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -124,6 +123,7 @@ export default function CreateOrderPage() {
     return (
         <ComponentCard title="Ajukan Pesanan Konsumsi">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {}
                 <div className="space-y-2">
                     <label className="block font-medium mb-2">Untuk Keperluan Apa Pesanan Ini?</label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
