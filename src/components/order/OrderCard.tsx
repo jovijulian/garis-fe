@@ -5,13 +5,12 @@ import moment from 'moment';
 import 'moment/locale/id';
 import { Calendar, Clock, Edit, Trash2, Building, CheckCircle, XCircle, Hourglass, Info, Pin, Users } from 'lucide-react';
 import Link from 'next/link';
-
 interface Order {
     id: number;
-    consumption_type: { name: string };
+    purpose: string;
     pax: number;
     location_text: string;
-    start_time: string;
+    order_date: string;
     status: 'Submit' | 'Approved' | 'Rejected';
     room: { name: string };
 }
@@ -64,7 +63,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onEdit, onDelete }) => {
                         <span>{label}</span>
                     </div>
 
-                    <h3 className="text-lg font-bold text-gray-800 mt-3">{order.consumption_type.name}</h3>
+                    <h3 className="text-lg font-bold text-gray-800 mt-3">{order.purpose}</h3>
 
                     <div className="space-y-3 mt-4 text-sm text-gray-600">
                         <div className="flex items-center gap-3">
@@ -77,9 +76,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onEdit, onDelete }) => {
                         </div>
                         <div className="flex items-center gap-3">
                             <Calendar className="w-4 h-4 text-gray-400" />
-                            <span>{moment(order.start_time).format('dddd, DD MMMM YYYY, HH:mm')}</span>
+                            <span>{moment(order.order_date).format('dddd, DD MMMM YYYY')}</span>
                         </div>
-                       
+
                     </div>
                 </div>
             </Link>

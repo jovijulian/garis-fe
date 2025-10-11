@@ -6,21 +6,30 @@ import { toast } from "react-toastify";
 import moment from "moment";
 import 'moment/locale/id';
 import { endpointUrl, httpGet } from "@/../helpers";
-import { parseMenuDescription } from "@/../helpers/dataHelper";
 
 import ComponentCard from "@/components/common/ComponentCard";
 import DeactiveModal from "@/components/modal/deactive/Deactive";
 import {
-    FaCalendarAlt, FaClock, FaUser, FaBuilding, FaMapMarkerAlt, FaUsers, FaClipboardList, FaStickyNote,
-    FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaInfoCircle, FaUserCheck
+    FaUtensils, FaClock, FaUsers, FaBuilding, FaMapMarkerAlt, FaClipboardList, FaStickyNote,
+    FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaUserCheck, FaBox, FaCalendarDay
 } from "react-icons/fa";
+
+interface OrderDetailItem {
+    id: number;
+    menu: string;
+    qty: number;
+    delivery_time: string;
+    consumption_type: {
+        id: number;
+        name: string;
+    };
+}
 
 interface OrderData {
     id: number;
     purpose: string;
     pax: number;
-    order_time: string;
-    menu_description: string;
+    order_date: string; 
     note: string | null;
     status: 'Submit' | 'Approved' | 'Rejected' | 'Completed' | 'Canceled';
     location_text: string | null;
@@ -28,8 +37,9 @@ interface OrderData {
     updated_at: string;
     cabang: { nama_cab: string; };
     user: { nama_user: string; };
-    consumption_type: { name: string; };
     room: { name: string; } | null;
+    booking: any | null; 
+    details: OrderDetailItem[]; 
 }
 
 export default function MyOrderDetailPage() {
@@ -60,20 +70,25 @@ export default function MyOrderDetailPage() {
     }, [getDetail]);
 
     const getStatusBadge = (status: string) => {
-        if (status === 'Approved' || status === 'Completed') {
-            return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-green-100 text-green-800"><FaCheckCircle /> {status}</div>;
-        }
-        if (status === 'Rejected' || status === 'Canceled') {
-            return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-red-100 text-red-800"><FaTimesCircle /> {status}</div>;
-        }
-        return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800"><FaHourglassHalf /> Diajukan</div>;
+        const statusMap = {
+            'Approved': { icon: <FaCheckCircle />, color: 'green', label: 'Approved' },
+            'Completed': { icon: <FaCheckCircle />, color: 'green', label: 'Completed' },
+            'Rejected': { icon: <FaTimesCircle />, color: 'red', label: 'Rejected' },
+            'Canceled': { icon: <FaTimesCircle />, color: 'red', label: 'Canceled' },
+            'Submit': { icon: <FaHourglassHalf />, color: 'yellow', label: 'Diajukan' },
+        };
+        const currentStatus = statusMap[status as keyof typeof statusMap] || statusMap['Submit'];
+        return (
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-${currentStatus.color}-100 text-${currentStatus.color}-800`}>
+                {currentStatus.icon} {currentStatus.label}
+            </div>
+        );
     };
 
     if (isLoading) return <p className="text-center mt-10">Memuat pesanan Anda...</p>;
     if (!data) return <p className="text-center mt-10">Pesanan tidak ditemukan.</p>;
 
-    const menuItems = parseMenuDescription(data.menu_description);
-    const locationName = data.room ? data.room.name : data.location_text;
+    const locationName = data.room ? data.room.name : (data.booking?.room?.name || data.location_text);
 
     const canBeModified = data.status === 'Submit';
 
@@ -82,7 +97,7 @@ export default function MyOrderDetailPage() {
             <ComponentCard title="Detail Pesanan Anda">
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800">{data.consumption_type.name}</h1>
+                        <h1 className="text-3xl font-bold text-gray-800">{data.purpose}</h1>
                         <p className="text-gray-500">ID Pesanan: <strong>#{data.id}</strong></p>
                     </div>
                     {getStatusBadge(data.status)}
@@ -113,31 +128,46 @@ export default function MyOrderDetailPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <DetailItem icon={<FaBuilding />} label="Cabang" value={data.cabang.nama_cab} />
                     <DetailItem icon={<FaMapMarkerAlt />} label="Lokasi/Ruangan" value={locationName} />
-                    <DetailItem icon={<FaClock />} label="Waktu Konsumsi" value={moment(data.order_time).format('DD MMM YYYY, HH:mm')} />
-                    <DetailItem icon={<FaUsers />} label="Jumlah" value={`${data.pax}`} />
+                    <DetailItem icon={<FaCalendarDay />} label="Tanggal Pesanan" value={moment(data.order_date).format('DD MMM YYYY')} />
+                    <DetailItem icon={<FaUsers />} label="Jumlah Orang" value={`${data.pax}`} />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-white border rounded-lg p-5">
-                        <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaClipboardList /> Detail Menu Dipesan</h4>
-                        {menuItems.length > 0 ? (
-                            <ol className="list-decimal list-inside space-y-2 text-gray-800">
-                                {menuItems.map((item: any, index: any) => <li key={index}>{item}</li>)}
-                            </ol>
-                        ) : (
-                            <p className="text-gray-500 italic">Tidak ada deskripsi menu.</p>
-                        )}
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <div className="lg:col-span-3 space-y-4">
+                        <h4 className="text-lg font-semibold text-gray-700 mb-2 flex items-center gap-2"><FaClipboardList /> Detail Item Dipesan</h4>
+                        {data.details.map((item) => (
+                            <div key={item.id} className="bg-white border rounded-lg p-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h5 className="font-bold text-blue-700 flex items-center gap-2"><FaUtensils />{item.consumption_type.name}</h5>
+                                        <p className="text-gray-800 text-lg">{item.menu}</p>
+                                    </div>
+                                    <div className="text-right flex-shrink-0 ml-4">
+                                        <div className="font-bold text-gray-800 text-xl flex items-center gap-2">
+                                            {item.qty} pax
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="border-t mt-3 pt-3 text-sm text-gray-600 flex items-center gap-2">
+                                    <FaClock className="text-gray-400" />
+                                    <span>Waktu Antar: {moment(item.delivery_time).format('DD MMM YYYY, HH:mm')}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
-                    <div className="bg-white border rounded-lg p-5">
-                        <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaStickyNote /> Catatan Tambahan</h4>
-                        {data.note && data.note !== '-' ? (
-                            <p className="text-gray-600 bg-gray-50 p-3 rounded-md">{data.note}</p>
-                        ) : (
-                            <p className="text-gray-500 italic">Tidak ada catatan tambahan.</p>
-                        )}
+                    <div className="lg:col-span-2">
+                        <div className="bg-white border rounded-lg p-5 sticky top-24">
+                            <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaStickyNote /> Catatan Tambahan</h4>
+                            {data.note ? (
+                                <p className="text-gray-600 bg-gray-50 p-3 rounded-md whitespace-pre-wrap">{data.note}</p>
+                            ) : (
+                                <p className="text-gray-500 italic">Tidak ada catatan tambahan.</p>
+                            )}
+                        </div>
                     </div>
                 </div>
+
                 {data.status !== 'Submit' && (
                     <div className="mt-6">
                         <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaUserCheck /> Informasi Status</h4>
@@ -153,7 +183,7 @@ export default function MyOrderDetailPage() {
                 onClose={() => setDeleteModalOpen(false)}
                 url={`orders/${data?.id}`}
                 selectedData={data}
-                itemName={`pesanan ini`}
+                itemName={data?.purpose || ""}
                 onSuccess={() => router.push('/orders/my-orders')}
                 message="Pesanan berhasil dibatalkan!"
             />
@@ -163,7 +193,7 @@ export default function MyOrderDetailPage() {
 
 const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | null }) => (
     <div className="bg-white p-4 rounded-lg border flex items-start gap-4">
-        <div className="text-gray-400 mt-1">{icon}</div>
+        <div className="text-blue-500 text-xl mt-1">{icon}</div>
         <div>
             <span className="text-gray-500 text-sm block">{label}</span>
             <span className="font-semibold text-base text-gray-800">{value || '-'}</span>

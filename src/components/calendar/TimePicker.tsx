@@ -1,88 +1,61 @@
-import React, { useState, useEffect } from 'react';
-import { Clock } from 'lucide-react';
+// src/components/form/TimePicker.tsx
 
+import React from 'react';
+
+// Definisikan props yang akan diterima komponen ini
 interface TimePickerProps {
-  label: string;
-  value: string; // 'HH:mm'
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  required?: boolean;
+  value: string; // Formatnya "HH:mm", contoh: "14:30"
+  onChange: (newTime: string) => void; // Fungsi yang dipanggil saat nilai berubah
+  className?: string; // Untuk styling tambahan dari luar
+  required?: boolean; // Untuk validasi form
 }
 
-const TimePicker: React.FC<TimePickerProps> = ({
-  label,
-  value,
-  onChange,
-  disabled = false,
-  required = false,
-}) => {
-  const [displayValue, setDisplayValue] = useState(value);
+export default function TimePicker({ value, onChange, className = '', required = false }: TimePickerProps) {
+  // Memecah nilai 'value' menjadi jam dan menit
+  // Memberi nilai default jika 'value' kosong agar tidak error
+  const [hour = '', minute = ''] = value ? value.split(':') : [];
 
-  useEffect(() => {
-    setDisplayValue(value);
-  }, [value]);
+  // Membuat array untuk pilihan jam (00-23)
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  
+  // Membuat array untuk pilihan menit (increment 15 menit)
+  const minutes = ['00', '15', '30', '45'];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value.replace(/[^\d]/g, '');
-    const sanitized = input.slice(0, 4);
-
-    let formatted = sanitized;
-    if (sanitized.length > 2) {
-      formatted = `${sanitized.slice(0, 2)}:${sanitized.slice(2)}`;
-    }
-    
-    setDisplayValue(formatted);
-    
-    if (formatted.length === 5) {
-      onChange(formatted);
-    }
+  // Handler saat dropdown jam diubah
+  const handleHourChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newHour = e.target.value;
+    // Gabungkan dengan menit yang sudah ada, atau '00' jika belum dipilih
+    onChange(`${newHour}:${minute || '00'}`);
   };
-
-  const handleBlur = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const [hoursStr, minutesStr] = e.target.value.split(':');
-    let hours = parseInt(hoursStr || '0', 10);
-    let minutes = parseInt(minutesStr || '0', 10);
-
-    if (hours > 23) hours = 23;
-    if (minutes > 59) minutes = 59;
-
-    const finalTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    
-    setDisplayValue(finalTime);
-    onChange(finalTime);
+  
+  // Handler saat dropdown menit diubah
+  const handleMinuteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMinute = e.target.value;
+    // Gabungkan dengan jam yang sudah ada, atau '00' jika belum dipilih
+    onChange(`${hour || '00'}:${newMinute}`);
   };
 
   return (
-    <div className="w-full">
-      <label htmlFor={label} className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
-      <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <Clock className="h-5 w-5 text-gray-400" aria-hidden="true" />
-        </div>
-        <input
-          type="text" 
-          id={label}
-          name={label}
-          value={displayValue}
-          onChange={handleInputChange}
-          onBlur={handleBlur} 
-          disabled={disabled}
-          required={required}
-          placeholder="HH:mm"
-          maxLength={5}
-          className="
-            block w-full rounded-md border 
-            border-gray-300 bg-white py-2 pl-10 pr-3 
-            text-gray-900 shadow-sm
-            focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 
-            sm:text-sm disabled:cursor-not-allowed disabled:bg-gray-50
-          "
-        />
-      </div>
+    <div className={`flex items-center gap-2 ${className}`}>
+      <select
+        value={hour}
+        onChange={handleHourChange}
+        required={required}
+        className="w-full border p-2 rounded-md bg-white"
+      >
+        <option value="" disabled>Jam</option>
+        {hours.map(h => <option key={h} value={h}>{h}</option>)}
+      </select>
+      <span className="font-bold">:</span>
+      <select
+        value={minute}
+        onChange={handleMinuteChange}
+        required={required}
+        className="w-full border p-2 rounded-md bg-white"
+      >
+        <option value="" disabled>Menit</option>
+        {minutes.map(m => <option key={m} value={m}>{m}</option>)}
+      </select>
     </div>
   );
-};
-
-export default TimePicker;
+}

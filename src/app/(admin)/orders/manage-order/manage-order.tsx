@@ -99,7 +99,7 @@ export default function ManageOrderPage() {
             setLastPage(response.data.data.pagination.total_pages);
         } catch (error) {
             console.error(error);
-            toast.error("Gagal mengambil data booking");
+            toast.error("Gagal mengambil data order");
             setData([]);
         } finally {
             setIsLoading(false);
@@ -224,11 +224,11 @@ export default function ManageOrderPage() {
             cell: ({ row }: any) => <span>{row.room ? row.room.name : row.location_text}</span>,
         },
         {
-            id: "order_time",
-            header: "Waktu Pemesanan",
-            accessorFn: (row: any) => row.order_time,
+            id: "order_date",
+            header: "Tanggal Pemesanan",
+            accessorFn: (row: any) => row.order_date,
             cell: ({ row }: { row: any }) => (
-                <span>{moment(row.order_time).format("DD MMM YYYY, HH:mm")}</span>
+                <span>{moment(row.order_date).format("DD MMM YYYY")}</span>
             ),
         },
         {

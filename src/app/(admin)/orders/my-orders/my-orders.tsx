@@ -9,10 +9,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Order {
     id: number;
-    consumption_type: { name: string };
+    purpose: string;
     pax: number;
     location_text: string;
-    start_time: string;
+    order_date: string;
     status: 'Submit' | 'Approved' | 'Rejected';
     room: { name: string };
 }
@@ -172,7 +172,7 @@ export default function MyOrdersPage() {
                     setSelectedOrder(null);
                 }}
                 url={`orders/${selectedOrder?.id}`}
-                itemName={selectedOrder?.consumption_type.name || ""}
+                itemName={selectedOrder?.purpose || ""}
                 selectedData={selectedOrder}
                 onSuccess={fetchUserOrders}
                 message="Order berhasil dibatalkan!"
