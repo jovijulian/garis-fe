@@ -16,7 +16,11 @@ import {
   Pin,
   Calendar,
   ShoppingCart,
-  BaggageClaim
+  BaggageClaim,
+  ClipboardList,
+  UserCog,
+  Truck,
+  Settings2
 } from 'lucide-react';
 
 export type NavItem = {
@@ -122,16 +126,52 @@ export const menuConfig: Record<string, NavItem[]> = {
 
   vehicle: [
     {
-      name: 'Dashboard Kendaraan',
+      name: 'Dashboard',
       icon: <LayoutDashboard />,
-      path: '/vehicles',
+      path: '/vehicles/dashboard',
+      roles: [1, 2],
+    },
+    {
+      name: 'List Pengajuan',
+      icon: <ClipboardList />,
+      path: '/vehicles/requests',
       roles: [1, 2],
     },
     {
       name: 'Daftar Supir',
-      icon: <Users />,
+      icon: <UserCog />,
       path: '/vehicles/drivers',
       roles: [1, 2],
+    },
+    {
+      name: 'Daftar Kendaraan',
+      icon: <Truck />,
+      path: '/vehicles/drivers',
+      roles: [1, 2],
+    },
+    {
+      name: 'Master Jenis Kendaraan',
+      icon: <Settings2 />,
+      path: '/vehicles/drivers',
+      roles: [1, 2],
+    },
+    {
+      name: 'Ajukan Peminjaman',
+      icon: <PlusCircle />,
+      path: '/vehicles/create',
+      roles: [3],
+    },
+    {
+      name: 'Riwayat Pengajuan Saya',
+      icon: <List />,
+      path: '/vehicles/my-requests',
+      roles: [3],
+    },
+    {
+      name: 'Penugasan Saya',
+      icon: <Car />,
+      path: '/vehicles/my-assignments',
+      roles: [3], 
     },
     {
       name: 'Menu',

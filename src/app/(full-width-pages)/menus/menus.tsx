@@ -99,6 +99,7 @@ interface MenuCardProps {
     href: string;
     color: ColorKey;
     userRole: string | null;
+    isDriver: boolean;
 }
 
 const MenuCard: React.FC<MenuCardProps> = ({
@@ -108,6 +109,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
     href,
     color,
     userRole,
+    isDriver
 }) => {
     const isDisabled = title === "Admin Panel" && userRole !== "1";
     let dynamicHref = href;
@@ -116,6 +118,18 @@ const MenuCard: React.FC<MenuCardProps> = ({
     }
     if (title === "Order" && userRole === "3") {
         dynamicHref = "/orders/my-orders";
+    }
+
+    if (title === "Pengajuan Kendaraan") {
+        if (userRole === "3") {
+            if (isDriver) {
+                dynamicHref = "/vehicles/my-assignments";
+            } else {
+                dynamicHref = "/vehicles/my-requests";
+            }
+        } else {
+            dynamicHref = "/vehicles/dashboard";
+        }
     }
     const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         if (isDisabled) {
@@ -161,14 +175,20 @@ export default function MenusPage() {
     const [userName, setUserName] = useState("");
     const [userEmail, setUserEmail] = useState("");
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [isDriver, setIsDriver] = useState(false);
+
 
     useEffect(() => {
         const name = localStorage.getItem("name");
         const email = localStorage.getItem("email");
         const role = localStorage.getItem("role");
+        const driver = localStorage.getItem("is_driver");
         if (name) setUserName(name);
         if (email) setUserEmail(email);
         if (role) setUserRole(role);
+        if (driver) {
+            setIsDriver(driver === "true");
+        }
     }, []);
     return (
         <div className="min-h-screen xl:flex-center">
@@ -188,7 +208,7 @@ export default function MenusPage() {
 
                     <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {menuItems.map((item) => (
-                            <MenuCard key={item.href} {...item} userRole={userRole} />
+                            <MenuCard key={item.href} {...item} userRole={userRole} isDriver={isDriver} />
                         ))}
                     </div>
                 </div>

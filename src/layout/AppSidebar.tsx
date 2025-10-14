@@ -11,6 +11,7 @@ const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
   const [role, setRole] = useState<number | null>(null);
+  const [isDriver, setIsDriver] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
     index: number;
@@ -21,8 +22,12 @@ const AppSidebar: React.FC = () => {
 
   useEffect(() => {
     const userRole = localStorage.getItem("role");
+    const driverStatus = localStorage.getItem("is_driver");
     if (userRole) {
       setRole(parseInt(userRole, 10));
+    }
+    if (driverStatus) {
+      setIsDriver(driverStatus === "true");
     }
   }, []);
 
@@ -45,10 +50,21 @@ const AppSidebar: React.FC = () => {
     if (!currentMenuKey) {
       return [];
     }
-
+console.log(isDriver)
     const menu = menuConfig[currentMenuKey];
-    return menu.filter(item => item.roles.includes(role));
-  }, [pathname, role]);
+    const roleFilteredMenu = menu.filter(item => item.roles.includes(role));
+
+    if (role === 3 && currentMenuKey === 'vehicle') {
+      return roleFilteredMenu.filter(item => {
+        if (isDriver) {
+          return item.path !== '/vehicles/create' && item.path !== '/vehicles/my-requests';
+        } else {
+          return item.path !== '/vehicles/my-assignments';
+        }
+      });
+    }
+    return roleFilteredMenu;
+  }, [pathname, role, isDriver]);
 
   useEffect(() => {
     let submenuMatched = false;

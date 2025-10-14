@@ -80,10 +80,11 @@ const SignIn: React.FC = () => {
       localStorage.setItem("email", user.email);
       localStorage.setItem("id_user", user.id_user);
       localStorage.setItem("sites", user.sites)
+      localStorage.setItem("is_driver", user.is_driver)
 
       setCookie("role", user.role);
       window.location.href = "/menus";
-      
+
     } catch (error) {
       console.log(error);
     }
