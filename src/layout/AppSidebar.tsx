@@ -50,7 +50,6 @@ const AppSidebar: React.FC = () => {
     if (!currentMenuKey) {
       return [];
     }
-console.log(isDriver)
     const menu = menuConfig[currentMenuKey];
     const roleFilteredMenu = menu.filter(item => item.roles.includes(role));
 

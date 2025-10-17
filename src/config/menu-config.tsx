@@ -140,19 +140,19 @@ export const menuConfig: Record<string, NavItem[]> = {
     {
       name: 'Daftar Supir',
       icon: <UserCog />,
-      path: '/vehicles/drivers',
+      path: '/vehicles/master/drivers',
       roles: [1, 2],
     },
     {
       name: 'Daftar Kendaraan',
       icon: <Truck />,
-      path: '/vehicles/drivers',
+      path: '/vehicles/master/vehicles',
       roles: [1, 2],
     },
     {
       name: 'Master Jenis Kendaraan',
       icon: <Settings2 />,
-      path: '/vehicles/drivers',
+      path: '/vehicles/master/vehicle-types',
       roles: [1, 2],
     },
     {
