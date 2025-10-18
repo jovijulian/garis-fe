@@ -134,7 +134,7 @@ export const menuConfig: Record<string, NavItem[]> = {
     {
       name: 'List Pengajuan',
       icon: <ClipboardList />,
-      path: '/vehicles/requests',
+      path: '/vehicles/manage-requests',
       roles: [1, 2],
     },
     {

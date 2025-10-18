@@ -18,22 +18,23 @@ interface VehicleRequestPayload {
     cab_id: number | null;
     pickup_location_text: string | null;
     destination: string;
-    start_time: string; 
-    end_time: string | null;   
+    start_time: string;
+    end_time: string | null;
     passenger_count: number;
     passenger_names: string;
     requested_vehicle_type_id: number | null;
     requested_vehicle_count: number;
     purpose: string;
     note: string;
+    requires_driver?: boolean | number;
 }
 
 interface FormState {
     cab_id: number | null;
     pickup_location_text: string;
     destination: string;
-    start_date: string; 
-    start_time: string; 
+    start_date: string;
+    start_time: string;
     end_date: string;
     end_time: string | null;
     passenger_count: number;
@@ -42,6 +43,7 @@ interface FormState {
     requested_vehicle_count: number;
     purpose: string;
     note: string;
+    requires_driver?: number | null;
 }
 
 interface SelectOption { value: string; label: string; }
@@ -49,7 +51,7 @@ interface SelectOption { value: string; label: string; }
 export default function EditVehicleRequestPage() {
     const router = useRouter();
     const params = useParams();
-    const id = params.id as string; 
+    const id = params.id as string;
 
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,11 +72,12 @@ export default function EditVehicleRequestPage() {
         requested_vehicle_type_id: null,
         requested_vehicle_count: 1,
         purpose: "",
-        note: ""
+        note: "",
+        requires_driver: null,
     });
 
     useEffect(() => {
-        if (!id) return; 
+        if (!id) return;
 
         const fetchInitialData = async () => {
             try {
@@ -105,7 +108,8 @@ export default function EditVehicleRequestPage() {
                     requested_vehicle_type_id: requestData.requested_vehicle_type_id,
                     requested_vehicle_count: requestData.requested_vehicle_count,
                     purpose: requestData.purpose,
-                    note: requestData.note || ""
+                    note: requestData.note || "",
+                    requires_driver: requestData.requires_driver,
                 });
 
             } catch (error) {
@@ -147,7 +151,8 @@ export default function EditVehicleRequestPage() {
             requested_vehicle_type_id: Number(formData.requested_vehicle_type_id),
             requested_vehicle_count: Number(formData.requested_vehicle_count),
             purpose: formData.purpose,
-            note: formData.note
+            note: formData.note,
+            requires_driver: formData.requires_driver === 1 ? true : false,
         };
 
         try {
@@ -283,6 +288,19 @@ export default function EditVehicleRequestPage() {
                         <textarea value={formData.note} onChange={(e) => handleFieldChange('note', e.target.value)} rows={5} placeholder={"Contoh: Mohon siapkan mobil yang bersih."} className="w-full border p-2 rounded-md" />
                     </div>
                 </div>
+
+                <div>
+                    <label className="inline-flex items-center">
+                        <input
+                            type="checkbox"
+                            checked={formData.requires_driver === 1}
+                            onChange={(e) => handleFieldChange('requires_driver', e.target.checked ? 1 : 0)}
+                            className="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                        <span className="ml-2">Memerlukan Supir?</span>
+                    </label>
+                </div>
+
 
                 <div className="flex justify-end gap-3 pt-4">
                     <button type="button" onClick={() => router.back()} className="px-6 py-2 bg-gray-600 text-white rounded-lg">Batal</button>

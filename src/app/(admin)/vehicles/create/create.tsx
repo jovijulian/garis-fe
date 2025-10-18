@@ -26,6 +26,7 @@ interface VehicleRequestPayload {
   requested_vehicle_count: number;
   purpose: string;
   note: string;
+  requires_driver?: boolean;
 }
 
 interface FormState {
@@ -42,6 +43,7 @@ interface FormState {
   requested_vehicle_count: number;
   purpose: string;
   note: string;
+  requires_driver?: boolean;
 }
 
 interface SelectOption { value: string; label: string; }
@@ -69,7 +71,8 @@ export default function CreateVehicleRequestPage() {
     requested_vehicle_type_id: null,
     requested_vehicle_count: 1,
     purpose: "",
-    note: ""
+    note: "",
+    requires_driver: false,
   });
 
   useEffect(() => {
@@ -121,7 +124,8 @@ export default function CreateVehicleRequestPage() {
       requested_vehicle_type_id: Number(formData.requested_vehicle_type_id),
       requested_vehicle_count: Number(formData.requested_vehicle_count),
       purpose: formData.purpose,
-      note: formData.note
+      note: formData.note,
+      requires_driver: formData.requires_driver || false,
     };
 
     try {
@@ -249,6 +253,19 @@ export default function CreateVehicleRequestPage() {
             <textarea value={formData.note} onChange={(e) => handleFieldChange('note', e.target.value)} rows={5} placeholder={"Contoh: Mohon siapkan mobil yang bersih."} className="w-full border p-2 rounded-md" />
           </div>
         </div>
+
+        <div>
+          <label className="inline-flex items-center">
+            <input
+              type="checkbox"
+              checked={formData.requires_driver || false}
+              onChange={(e) => handleFieldChange('requires_driver', e.target.checked)}
+              className="form-checkbox h-5 w-5 text-blue-600"
+            />
+            <span className="ml-2">Memerlukan Sopir?</span>
+          </label>
+        </div>
+
 
         <div className="flex justify-end gap-3 pt-4">
           <button type="button" onClick={() => router.back()} className="px-6 py-2 bg-gray-600 text-white rounded-lg">Batal</button>

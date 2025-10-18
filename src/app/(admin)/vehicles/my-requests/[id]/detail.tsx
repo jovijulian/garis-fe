@@ -11,28 +11,25 @@ import ComponentCard from "@/components/common/ComponentCard";
 import DeactiveModal from "@/components/modal/deactive/Deactive";
 import {
     FaClock, FaUsers, FaBuilding, FaMapMarkerAlt, FaClipboardList, FaStickyNote,
-    FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaUserCheck, FaCalendarDay, FaCar, FaCarAlt, FaUserTie
+    FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaUserCheck, FaCalendarDay, FaCar
 } from "react-icons/fa";
+import Badge from "@/components/ui/badge/Badge";
 
-interface AssignedVehicle {
+interface AssignmentDetail {
     id: number;
-    vehicle_request_id: number;
+    request_id: number;
     vehicle_id: number;
+    driver_id: number | null;
+    note_for_driver: string | null;
     vehicle: {
         id: number;
         name: string;
         license_plate: string;
     };
-}
-
-interface AssignedDriver {
-    id: number;
-    vehicle_request_id: number;
-    driver_id: number;
     driver: {
         id: number;
         name: string;
-    };
+    } | null;
 }
 
 interface VehicleRequestData {
@@ -47,17 +44,17 @@ interface VehicleRequestData {
     destination: string;
     pickup_location_text: string | null;
     requested_vehicle_count: number;
+    requires_driver: number;
     approved_by: string | null;
     updated_at: string;
     cabang: { id_cab: number; nama_cab: string; };
     user: { id_user: string; nama_user: string; };
     vehicle_type: { id: number; name: string; } | null;
-    assigned_vehicles: AssignedVehicle[];
-    assigned_drivers: AssignedDriver[];
+    detail: AssignmentDetail[];
     rejection_reason: string | null;
 }
 
-export default function MyVehicleRequestDetailPage() {
+export default function VehicleRequestDetailPage() {
     const [data, setData] = useState<VehicleRequestData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
@@ -86,23 +83,20 @@ export default function MyVehicleRequestDetailPage() {
 
     const getStatusBadge = (status: string) => {
         const statusMap = {
-            'Approved': { icon: <FaCheckCircle />, color: 'green', label: 'Approved' },
-            'Completed': { icon: <FaCheckCircle />, color: 'green', label: 'Completed' },
-            'Rejected': { icon: <FaTimesCircle />, color: 'red', label: 'Rejected' },
-            'Canceled': { icon: <FaTimesCircle />, color: 'red', label: 'Canceled' },
+            'Approved': { icon: <FaCheckCircle />, color: 'green', label: 'Disetujui' },
+            'Completed': { icon: <FaCheckCircle />, color: 'blue', label: 'Selesai' },
+            'Rejected': { icon: <FaTimesCircle />, color: 'red', label: 'Ditolak' },
+            'Canceled': { icon: <FaTimesCircle />, color: 'gray', label: 'Dibatalkan' },
             'Submit': { icon: <FaHourglassHalf />, color: 'yellow', label: 'Diajukan' },
-            'In Progress': { icon: <FaClock />, color: 'blue', label: 'Dalam Proses' },
+            'In Progress': { icon: <FaClock />, color: 'purple', label: 'Dalam Proses' },
         };
         const currentStatus = statusMap[status as keyof typeof statusMap] || statusMap['Submit'];
-        return (
-            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-${currentStatus.color}-100 text-${currentStatus.color}-800`}>
-                {currentStatus.icon} {currentStatus.label}
-            </div>
-        );
+        return <Badge color={currentStatus.color as any}>{currentStatus.label}</Badge>;
     };
 
+
     if (isLoading) return <p className="text-center mt-10">Memuat pengajuan Anda...</p>;
-    if (!data) return <p className="text-center mt-10">Pengajuan tidak ditemukan.</p>;
+    if (!data) return <p className="text-center mt-10">Pengajuan tidak ditemukan atau Anda tidak berhak melihatnya.</p>;
 
     const locationName = data.pickup_location_text || data.cabang?.nama_cab || 'Lokasi tidak diset';
 
@@ -114,11 +108,10 @@ export default function MyVehicleRequestDetailPage() {
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-800">{data.purpose}</h1>
-                        <p className="text-gray-500">ID Pengajuan: <strong>#{data.id}</strong></p>
+                        <p className="text-gray-500">Diajukan oleh: <strong>{data.user?.nama_user}</strong> | ID: <strong>#{data.id}</strong></p>
                     </div>
                     {getStatusBadge(data.status)}
                 </div>
-
                 {canBeModified && (
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                         <p className="text-sm text-blue-800 flex-grow mb-2 md:mb-0">
@@ -140,9 +133,8 @@ export default function MyVehicleRequestDetailPage() {
                         </div>
                     </div>
                 )}
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <DetailItem icon={<FaBuilding />} label="Cabang Asal" value={data.cabang?.nama_cab} />
+                    <DetailItem icon={<FaBuilding />} label="Cabang Pemohon" value={data.cabang?.nama_cab} />
                     <DetailItem icon={<FaMapMarkerAlt />} label="Lokasi Jemput" value={locationName} />
                     <DetailItem icon={<FaCalendarDay />} label="Waktu Mulai" value={moment(data.start_time).format('DD MMM YYYY, HH:mm')} />
                     <DetailItem icon={<FaUsers />} label="Jumlah Penumpang" value={`${data.passenger_count}`} />
@@ -156,8 +148,9 @@ export default function MyVehicleRequestDetailPage() {
                             <div className="space-y-2">
                                 <InfoRow label="Tujuan" value={data.destination} />
                                 <InfoRow label="Waktu Selesai" value={data.end_time ? moment(data.end_time).format('DD MMM YYYY, HH:mm') : "-"} />
-                                <InfoRow label="Jenis Kendaraan" value={data.vehicle_type?.name || 'Tidak spesifik'} />
+                                <InfoRow label="Jenis Kendaraan Diminta" value={data.vehicle_type?.name || 'Tidak spesifik'} />
                                 <InfoRow label="Jumlah Unit Diminta" value={`${data.requested_vehicle_count} unit`} />
+                                <InfoRow label="Butuh Supir?" value={data.requires_driver === 1 ? 'Ya' : 'Tidak'} />
                             </div>
                         </div>
 
@@ -170,42 +163,35 @@ export default function MyVehicleRequestDetailPage() {
                             )}
                         </div>
 
-                        {data.status !== 'Submit' && (
+                        {data.status !== 'Submit' && data.status !== 'Rejected' && (
                             <div className="bg-white border rounded-lg p-5">
                                 <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaCar /> Hasil Penugasan</h4>
 
-                                {data.assigned_vehicles.length > 0 ? (
-                                    <div className="mb-4">
-                                        <h5 className="font-semibold text-gray-600 mb-2">Kendaraan:</h5>
-                                        <ul className="list-disc list-inside space-y-1">
-                                            {data.assigned_vehicles.map(v => (
-                                                <li key={v.id}>{v.vehicle.name} ({v.vehicle.license_plate})</li>
-                                            ))}
-                                        </ul>
+                                {data.detail && data.detail.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {data.detail.map((assignment, index) => (
+                                            <div key={assignment.id} className={`p-3 rounded-md ${index > 0 ? 'border-t mt-4 pt-4' : ''}`}>
+                                                <p className="font-semibold text-gray-800">
+                                                    {assignment.vehicle.name} ({assignment.vehicle.license_plate})
+                                                </p>
+                                                <p className="text-sm text-gray-600">
+                                                    Supir: {assignment.driver ? assignment.driver.name : <span className="italic text-gray-400">Tidak ada supir ditugaskan</span>}
+                                                </p>
+                                                {assignment.note_for_driver && <p className="text-xs text-gray-500 mt-1">Catatan: {assignment.note_for_driver}</p>}
+                                            </div>
+                                        ))}
                                     </div>
                                 ) : (
-                                    <p className="text-gray-500 italic text-sm mb-2">Belum ada kendaraan ditugaskan.</p>
-                                )}
-
-                                {data.assigned_drivers.length > 0 ? (
-                                    <div>
-                                        <h5 className="font-semibold text-gray-600 mb-2">Supir:</h5>
-                                        <ul className="list-disc list-inside space-y-1">
-                                            {data.assigned_drivers.map(d => (
-                                                <li key={d.id}>{d.driver.name}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                ) : (
-                                    <p className="text-gray-500 italic text-sm">Belum ada supir ditugaskan.</p>
+                                    <p className="text-gray-500 italic text-sm">Belum ada kendaraan/supir yang ditugaskan.</p>
                                 )}
                             </div>
                         )}
+
                     </div>
 
                     <div className="lg:col-span-2">
                         <div className="bg-white border rounded-lg p-5 sticky top-24">
-                            <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaStickyNote /> Catatan Tambahan</h4>
+                            <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaStickyNote /> Catatan Tambahan dari Pemohon</h4>
                             {data.note ? (
                                 <p className="text-gray-600 bg-gray-50 p-3 rounded-md whitespace-pre-wrap">{data.note}</p>
                             ) : (
@@ -219,7 +205,9 @@ export default function MyVehicleRequestDetailPage() {
                     <div className="mt-6">
                         <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaUserCheck /> Informasi Status</h4>
                         <div className="bg-white border rounded-lg p-5">
-                            <p>Status terakhir diperbarui pada {moment(data.updated_at).format('DD MMM YYYY, HH:mm')} oleh <strong>{data.user?.nama_user || data.approved_by || 'Sistem'}</strong>.</p>
+                            <p>Status terakhir diperbarui pada {moment(data.updated_at).format('DD MMM YYYY, HH:mm')}
+                                {data.approved_by && ` oleh ${data.approved_by}`}.
+                            </p>
                             {data.status === 'Rejected' && data.rejection_reason && (
                                 <div className="mt-3 border-t pt-3">
                                     <p className="font-semibold text-red-600">Alasan Penolakan:</p>
@@ -234,17 +222,19 @@ export default function MyVehicleRequestDetailPage() {
             <DeactiveModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
-                url={`vehicle-requests/${data?.id}`}
+                url={`vehicle-requests/cancel/${data?.id}`}
                 selectedData={data}
                 itemName={data?.purpose || ""}
-                onSuccess={() => router.push('/vehicles/my-requests')}
+                onSuccess={() => {
+                    setDeleteModalOpen(false);
+                    getDetail();
+                }}
                 message="Pengajuan berhasil dibatalkan!"
             />
         </>
     );
 }
 
-// Helper component (tetap sama)
 const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | number | null }) => (
     <div className="bg-white p-4 rounded-lg border flex items-start gap-4">
         <div className="text-blue-500 text-xl mt-1">{icon}</div>
@@ -255,7 +245,6 @@ const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: stri
     </div>
 );
 
-// Helper component baru untuk baris info
 const InfoRow = ({ label, value }: { label: string, value: string | number | null }) => (
     <div className="flex justify-between border-b border-gray-100 py-2">
         <span className="text-gray-500">{label}</span>
