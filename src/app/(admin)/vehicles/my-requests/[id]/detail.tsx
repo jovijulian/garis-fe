@@ -81,17 +81,19 @@ export default function VehicleRequestDetailPage() {
         getDetail();
     }, [getDetail]);
 
-    const getStatusBadge = (status: string) => {
-        const statusMap = {
-            'Approved': { icon: <FaCheckCircle />, color: 'green', label: 'Disetujui' },
-            'Completed': { icon: <FaCheckCircle />, color: 'blue', label: 'Selesai' },
-            'Rejected': { icon: <FaTimesCircle />, color: 'red', label: 'Ditolak' },
-            'Canceled': { icon: <FaTimesCircle />, color: 'gray', label: 'Dibatalkan' },
-            'Submit': { icon: <FaHourglassHalf />, color: 'yellow', label: 'Diajukan' },
-            'In Progress': { icon: <FaClock />, color: 'purple', label: 'Dalam Proses' },
-        };
-        const currentStatus = statusMap[status as keyof typeof statusMap] || statusMap['Submit'];
-        return <Badge color={currentStatus.color as any}>{currentStatus.label}</Badge>;
+     const getStatusBadge = (status: string) => {
+         let color: "success" | "error" | "warning" | "info" ;
+         let label = status;
+         switch (status) {
+             case 'Approved': color = 'success'; label = 'Approved'; break;
+             case 'Rejected': color = 'error'; label = 'Rejected'; break;
+             case 'Canceled': color = 'error'; label = 'Canceled'; break;
+             case 'In Progress': color = 'info'; label = 'In Progress'; break; 
+             case 'Completed': color = 'success'; label = 'Completed'; break;
+             case 'Submit': color = 'warning'; label = 'Submit'; break;
+             default: color = 'info'; break;
+         }
+         return <Badge color={color}>{label}</Badge>;
     };
 
 

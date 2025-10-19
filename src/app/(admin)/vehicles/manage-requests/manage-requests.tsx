@@ -18,11 +18,12 @@ import CancelOrderModal from '@/components/modal/CancelOrderModal';
 interface VehicleRequestDataItem {
     id: number;
     purpose: string;
-    destination: string; 
-    start_time: string; 
-    passenger_count: number; 
+    destination: string;
+    start_time: string;
+    passenger_count: number;
     pickup_location_text: string | null;
-    status: 'Submit' | 'Approved' | 'Rejected' | 'Completed' | 'Canceled' | 'In Progress'; 
+    status: 'Submit' | 'Approved' | 'Rejected' | 'Completed' | 'Canceled' | 'In Progress';
+    requires_driver: number; // Added
     user: {
         id_user: string;
         nama_user: string;
@@ -31,7 +32,11 @@ interface VehicleRequestDataItem {
         id_cab: number;
         nama_cab: string;
     };
-    created_at: string; 
+    vehicle_type: { // Added based on response
+        id: number;
+        name: string;
+    } | null;
+    created_at: string;
 }
 
 export default function ManageVehicleRequestsPage() {
@@ -43,13 +48,8 @@ export default function ManageVehicleRequestsPage() {
     const [lastPage, setLastPage] = useState(1);
     const [count, setCount] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
-    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const router = useRouter();
-    const [selectedData, setSelectedData] = useState<VehicleRequestDataItem | null>(null);
-    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     // const [isExportModalOpen, setIsExportModalOpen] = useState(false); // If using export modal
-    const [actionType, setActionType] = useState<'Approved' | 'Rejected' | null>(null);
 
     useEffect(() => {
         getData();
@@ -106,42 +106,17 @@ export default function ManageVehicleRequestsPage() {
             header: "Aksi",
             cell: ({ row }: { row: any }) => {
                 const request = row;
-
-                if (request.status === "Approved" ) {
-                    return (
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => handleOpenCancelModal(request)}
-                                title="Batalkan Pengajuan"
-                                className="p-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            >
-                                <CircleX className="w-4 h-4 text-red-500" />
-                            </button>
-                            {/* Add Print SPJ button here if needed later */}
-                        </div>
-                    );
-                }
-
-                if (request.status === "Submit") {
-                    return (
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => handleOpenModal(request, "Rejected")}
-                                title="Tolak Pengajuan"
-                                className="p-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-all"
-                            >
-                                <FaTimes className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => handleOpenModal(request, "Approved")}
-                                title="Setujui Pengajuan"
-                                className="p-2 rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-all"
-                            >
-                                <FaCheck className="w-4 h-4" />
-                            </button>
-                        </div>
-                    );
-                }
+                return (
+                    <div className="flex items-center justify-center"> 
+                        <button
+                            onClick={() => router.push(`/vehicles/manage-requests/${request.id}`)}
+                            title="Lihat Detail & Proses"
+                            className="p-2 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200"
+                        >
+                            <Eye className="w-4 h-4" />
+                        </button>
+                    </div>
+                );
             },
         },
         {
@@ -192,6 +167,14 @@ export default function ManageVehicleRequestsPage() {
             cell: ({ row }: { row: any}) => <span>{row.passenger_count}</span>,
         },
         {
+            id: "requires_driver",
+            header: "Butuh Supir?",
+            accessorFn: (row: any) => row.requires_driver === 1 ? "Ya" : "Tidak",
+            cell: ({ row }: { row: any }) => (
+                <span>{row.requires_driver === 1 ? "Ya" : "Tidak"}</span>
+            ),
+        },
+        {
             id: "status",
             header: "Status",
             accessorKey: "status",
@@ -216,52 +199,15 @@ export default function ManageVehicleRequestsPage() {
         },
     ], [router]); 
 
-    const handleOpenModal = (request: VehicleRequestDataItem, action: 'Approved' | 'Rejected') => {
-        setSelectedData(request);
-        setActionType(action);
-        setIsStatusModalOpen(true);
-    };
+   
 
-    const handleUpdateStatus = async () => {
-        if (!actionType || !selectedData) return;
-
-        setIsSubmitting(true);
-        try {
-            await httpPut(endpointUrl(`vehicle-requests/status/${selectedData.id}`), { status: actionType }, true);
-            toast.success(`Pengajuan berhasil diubah menjadi "${actionType}"`);
-            getData(); // Refresh table
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || `Gagal mengubah status.`);
-        } finally {
-            setIsSubmitting(false);
-            setIsStatusModalOpen(false);
-        }
-    };
-
-    const handleOpenCancelModal = (request: VehicleRequestDataItem) => {
-        setSelectedData(request);
-        setIsCancelModalOpen(true);
-    };
-
-    const handleConfirmCancel = async () => {
-        if (!selectedData) return;
-
-        setIsSubmitting(true);
-        try {
-            await httpPut(endpointUrl(`vehicles/cancel/${selectedData.id}`), {}, true);
-            toast.success("Pengajuan berhasil dibatalkan.");
-            getData();
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Gagal membatalkan pengajuan.");
-        } finally {
-            setIsSubmitting(false);
-            setIsCancelModalOpen(false);
-        }
-    };
+   
+  
+   
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-between items-center gap-2">
+            <div className="flex justify-end items-center gap-2">
                 <input
                     type="text"
                     value={searchTerm}
@@ -298,21 +244,7 @@ export default function ManageVehicleRequestsPage() {
                 onPerPageChange={handlePerPageChange}
             />
 
-            <ChangeStatusOrderModal 
-                isOpen={isStatusModalOpen}
-                onClose={() => setIsStatusModalOpen(false)}
-                onConfirm={handleUpdateStatus}
-                order={selectedData} 
-                actionType={actionType}
-                isSubmitting={isSubmitting}
-            />
-            <CancelOrderModal
-                isOpen={isCancelModalOpen}
-                onClose={() => setIsCancelModalOpen(false)}
-                onConfirm={handleConfirmCancel}
-                order={selectedData} 
-                isSubmitting={isSubmitting}
-            />
+            
 
             {/* <ExportVehicleRequestModal 
                 isOpen={isExportModalOpen}
