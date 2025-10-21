@@ -133,7 +133,7 @@ export default function VehicleRequestDetailPage() {
 
 
     if (isLoading) return <p className="text-center mt-10">Memuat pengajuan Anda...</p>;
-    if (!data) return <p className="text-center mt-10">Pengajuan tidak ditemukan atau Anda tidak berhak melihatnya.</p>;
+    if (!data) return <p className="text-center mt-10">Pengajuan tidak ditemukan.</p>;
 
     const locationName = data.pickup_location_text || data.cabang?.nama_cab || 'Lokasi tidak diset';
 

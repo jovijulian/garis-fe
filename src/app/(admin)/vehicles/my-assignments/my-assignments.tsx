@@ -1,26 +1,37 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, AlertTriangle, Plus, Info, Router, ChevronLeft, ChevronRight } from 'lucide-react';
-import { endpointUrl, httpGet } from '../../../../../helpers';
+import { endpointUrl, httpGet, httpPut } from '../../../../../helpers';
 import { toast } from 'react-toastify';
-import OrderCard from '@/components/order/OrderCard';
-import DeactiveModal from "@/components/modal/deactive/Deactive";
 import { useRouter, useSearchParams } from 'next/navigation';
+import AssignmentCard from '@/components/vehicle-request/Assignment';
 
-interface Order {
+interface Assignment {
     id: number;
-    purpose: string;
-    pax: number;
-    location_text: string;
-    order_date: string;
-    status: 'Submit' | 'Approved' | 'Rejected';
-    room: { name: string };
+    note_for_driver: string | null;
+    vehicle: {
+        id: number;
+        name: string;
+        license_plate: string;
+    };
+    vehicle_request: {
+        id: number;
+        purpose: string;
+        destination: string;
+        start_time: string;
+        status: 'Submit' | 'Approved' | 'Rejected' | 'Completed' | 'Canceled' | 'In Progress';
+        user: { nama_user: string };
+        cabang: { nama_cab: string };
+        pickup_location_text: string | null;
+        passenger_count: number;
+        passenger_names: string | null;
+    };
 }
 
 export default function MyOrdersPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [orders, setOrders] = useState<Order[]>([]);
+    const [assignments, setAssignments] = useState<Assignment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -29,11 +40,11 @@ export default function MyOrdersPage() {
     const [lastPage, setLastPage] = useState(1);
     const [count, setCount] = useState(0);
 
-    const [isFormModalOpen, setFormModalOpen] = useState(false);
-    const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [isSubmittingStatus, setIsSubmittingStatus] = useState(false);
+    const [targetRequestId, setTargetRequestId] = useState<number | null>(null);
+    const [targetStatus, setTargetStatus] = useState<'In Progress' | 'Completed' | null>(null);
 
-    const fetchUserOrders = async () => {
+    const fetchAssignments = async () => {
         const page = searchParams.get("page") || Number(currentPage);
         const perPageParam = searchParams.get("per_page") || perPage;
 
@@ -44,9 +55,9 @@ export default function MyOrdersPage() {
         try {
             setError(null);
             setIsLoading(true);
-            const response = await httpGet(endpointUrl("/orders/user"), true, params);
+            const response = await httpGet(endpointUrl("/vehicle-requests/driver"), true, params);
             const responseData = response.data.data;
-            setOrders(responseData.data || []);
+            setAssignments(responseData.data || []);
             setCount(responseData.pagination.total);
             setLastPage(responseData.pagination.total_pages);
             setCurrentPage(responseData.pagination.page);
@@ -63,23 +74,25 @@ export default function MyOrdersPage() {
         setCurrentPage(page);
     };
 
-
-    const handleOpenCreateModal = () => {
-        setSelectedOrder(null);
-        setFormModalOpen(true);
-    };
-
-    const handleOpenEditModal = (order: Order) => {
-        router.push(`/orders/edit/${order.id}`);
-    };
-
-    const handleOpenDeleteModal = (order: Order) => {
-        setSelectedOrder(order);
-        setDeleteModalOpen(true);
+    const handleTriggerStatus = async (requestId: number, newStatus: 'In Progress' | 'Completed') => {
+        setIsSubmittingStatus(true);
+        setTargetRequestId(requestId);
+        setTargetStatus(newStatus);
+        try {
+            await httpPut(endpointUrl(`vehicle-requests/status/${requestId}`), { status: newStatus }, true);
+            toast.success(`Status berhasil diubah menjadi "${newStatus}"`);
+            fetchAssignments();
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || `Gagal mengubah status.`);
+        } finally {
+            setIsSubmittingStatus(false);
+            setTargetRequestId(null);
+            setTargetStatus(null);
+        }
     };
 
     useEffect(() => {
-        fetchUserOrders();
+        fetchAssignments();
     }, [searchParams, currentPage, perPage]);
 
 
@@ -105,26 +118,19 @@ export default function MyOrdersPage() {
     return (
         <>
             <div className="p-4 md:p-6 space-y-6 bg-gray-50 min-h-screen">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800"></h1>
-                    <button
-                        onClick={(e) => router.push('/orders/create')}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow"
-                    >
-                        <Plus className="w-5 h-5" />
-                        <span>Ajukan Pemesanan</span>
-                    </button>
-                </div>
 
-                {orders.length > 0 ? (
+                {assignments.length > 0 ? (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {orders.map(order => (
-                                <OrderCard
-                                    key={order.id}
-                                    order={order}
-                                    onEdit={() => handleOpenEditModal(order)}
-                                    onDelete={() => handleOpenDeleteModal(order)}
+                            {assignments.map(assignment => (
+                                <AssignmentCard
+                                    key={assignment.id}
+                                    assignment={assignment}
+                                    onDetailClick={() => router.push(`/vehicles/my-assignments/${assignment.vehicle_request.id}`)}
+                                    onTriggerStatus={handleTriggerStatus}
+                                    isSubmittingStatus={isSubmittingStatus}
+                                    targetRequestId={targetRequestId}
+                                    targetStatus={targetStatus}
                                 />
                             ))}
                         </div>
@@ -132,7 +138,7 @@ export default function MyOrdersPage() {
                         {count > 0 && lastPage > 1 && (
                             <div className="flex items-center justify-between pt-4">
                                 <span className="text-sm text-gray-600">
-                                    Total {count} pesanan
+                                    Total {count} penugasan
                                 </span>
                                 <div className="inline-flex items-center gap-2">
                                     <button
@@ -157,26 +163,13 @@ export default function MyOrdersPage() {
                         )}
                     </>
                 ) : (
-                    <div className="text-center py-20 bg-white rounded-2xl shadow">
+                    <div className="text-center py-10">
                         <Info className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                        <h3 className="text-xl font-semibold text-gray-700">Belum Ada pemesanan</h3>
-                        <p className="text-gray-500 mt-2">Anda belum pernah membuat pemesanan. Silakan ajukan pemesanan pertama Anda!</p>
+                        <h3 className="text-xl font-semibold text-gray-700">Belum Ada Penugasan Aktif</h3>
+                        <p className="text-gray-500 mt-2">Anda saat ini tidak memiliki penugasan kendaraan.</p>
                     </div>
                 )}
             </div>
-
-            <DeactiveModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => {
-                    setDeleteModalOpen(false);
-                    setSelectedOrder(null);
-                }}
-                url={`orders/${selectedOrder?.id}`}
-                itemName={selectedOrder?.purpose || ""}
-                selectedData={selectedOrder}
-                onSuccess={fetchUserOrders}
-                message="Order berhasil dibatalkan!"
-            />
         </>
     );
 }
