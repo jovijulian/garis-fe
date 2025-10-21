@@ -10,6 +10,7 @@ import { FaPlus, FaTrash } from 'react-icons/fa';
 import { Loader2 } from 'lucide-react';
 import _ from 'lodash';
 
+
 interface SelectOption { value: string; label: string; }
 
 interface AssignmentRow {
@@ -29,11 +30,27 @@ interface AssignmentPayloadDetail {
 interface AssignmentModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: () => void; 
+    onSuccess: () => void;
     requestId: number;
     existingAssignments: any[];
     requiresDriver: boolean;
 }
+
+interface AssignmentModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSuccess: () => void;
+    requestId: number;
+    existingAssignments: any[];
+    requiresDriver: boolean;
+    adminCabId: number | null;
+}
+
+const statusOptions: SelectOption[] = [
+    { value: 'Available', label: 'Tersedia' },
+    { value: 'Not Available', label: 'Tidak Tersedia' },
+    { value: 'All', label: 'Semua Status' },
+];
 
 const AssignmentModal: React.FC<AssignmentModalProps> = ({
     isOpen,
@@ -42,6 +59,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     requestId,
     existingAssignments = [],
     requiresDriver,
+    adminCabId,
 }) => {
     const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
     const [vehicleOptions, setVehicleOptions] = useState<SelectOption[]>([]);
@@ -49,22 +67,45 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     const [loadingOptions, setLoadingOptions] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [statusFilter, setStatusFilter] = useState<string>('Available');
+    const [filterByBranch, setFilterByBranch] = useState<boolean>(true);
     const fetchOptions = useCallback(async () => {
         setLoadingOptions(true);
+        setVehicleOptions([]);
+        setDriverOptions([]);
+
+        const params: any = {};
+        if (statusFilter !== 'All') {
+            params.status = statusFilter;
+        }
+        if (filterByBranch && adminCabId) {
+            params.cab_id = adminCabId;
+        }
+
         try {
             const [vehiclesRes, driversRes] = await Promise.all([
-                httpGet(endpointUrl('/vehicles/options'), true), 
-                httpGet(endpointUrl('/drivers/options'), true),   
+                httpGet(endpointUrl('/vehicles/options'), true, params),
+                httpGet(endpointUrl('/drivers/options'), true, params),
             ]);
 
-            setVehicleOptions(vehiclesRes.data.data.map((v: any) => ({
+            const fetchedVehicleOptions = vehiclesRes.data.data.map((v: any) => ({
                 value: v.id.toString(),
                 label: `${v.name} (${v.license_plate})`
-            })));
-            setDriverOptions(driversRes.data.data.map((d: any) => ({
+            }));
+            const fetchedDriverOptions = driversRes.data.data.map((d: any) => ({
                 value: d.id.toString(),
                 label: d.name
+            }));
+
+            setVehicleOptions(fetchedVehicleOptions);
+            setDriverOptions(fetchedDriverOptions);
+
+            setAssignments(prevAssignments => prevAssignments.map(assign => ({
+                ...assign,
+                vehicle_id: fetchedVehicleOptions.some((opt: any) => opt.value === assign.vehicle_id) ? assign.vehicle_id : null,
+                driver_id: fetchedDriverOptions.some((opt: any) => opt.value === assign.driver_id) ? assign.driver_id : null,
             })));
+
 
         } catch (error) {
             toast.error("Gagal memuat data kendaraan/supir.");
@@ -72,7 +113,8 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         } finally {
             setLoadingOptions(false);
         }
-    }, []);
+    }, [statusFilter, filterByBranch, adminCabId]);
+    // ------------------------------
 
     useEffect(() => {
         if (isOpen) {
@@ -80,7 +122,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                 vehicle_id: detail.vehicle_id?.toString() || null,
                 driver_id: detail.driver_id?.toString() || null,
                 note_for_driver: detail.note_for_driver || '',
-                _key: Date.now() + index 
+                _key: Date.now() + index
             }));
             setAssignments(initialAssignments.length > 0 ? initialAssignments : [{ vehicle_id: null, driver_id: null, note_for_driver: '', _key: Date.now() }]);
             fetchOptions();
@@ -98,7 +140,6 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     const removeAssignmentRow = (keyToRemove: number) => {
         setAssignments(prev => prev.filter(row => row._key !== keyToRemove));
     };
-
     const handleAssignmentChange = (keyToUpdate: number, field: keyof AssignmentRow, value: any) => {
         setAssignments(prev =>
             prev.map(row =>
@@ -134,7 +175,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         try {
             await httpPut(endpointUrl(`/vehicle-requests/assignment/${requestId}`), payload, true);
             toast.success("Penugasan berhasil disimpan!");
-            onSuccess(); 
+            onSuccess();
         } catch (error: any) {
             alertToast(error, "Gagal menyimpan penugasan");
             console.error("Assignment error:", error);
@@ -145,7 +186,38 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-3xl">
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto"> 
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-start gap-4">
+
+                    {/* Bagian kiri - Label dan dropdown filter */}
+                    <div className="flex flex-col md:flex-row md:items-center gap-3">
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                            Filter Status Aset
+                        </label>
+                        <Select
+                            options={statusOptions}
+                            value={_.find(statusOptions, { value: statusFilter })}
+                            onValueChange={(opt) => setStatusFilter(opt ? opt.value : 'Available')}
+                        />
+                    </div>
+
+                    {/* Bagian kanan - Checkbox filter cabang */}
+                    <div className="flex items-center">
+                        <label className="inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={filterByBranch}
+                                onChange={(e) => setFilterByBranch(e.target.checked)}
+                                disabled={loadingOptions || isSubmitting || !adminCabId}
+                                className="form-checkbox h-5 w-5 text-blue-600 rounded disabled:opacity-50"
+                            />
+                            <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                Hanya tampilkan aset dari cabang saya
+                            </span>
+                        </label>
+                    </div>
+
+                </div>
                 {loadingOptions ? (
                     <div className="flex justify-center items-center py-10">
                         <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
@@ -182,18 +254,18 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                                     defaultValue={assignment.note_for_driver || ''}
                                     onChange={(e) => handleAssignmentChange(assignment._key!, 'note_for_driver', e.target.value)}
                                     placeholder="Instruksi khusus..."
-                                    disabled={isSubmitting || !assignment.driver_id} // Disable if no driver selected
+                                    disabled={isSubmitting || !assignment.driver_id}
                                 />
                             </div>
 
                             <div className="md:col-span-1 flex items-center justify-end">
-                                {assignments.length > 1 && (
+                                {assignments.length > 0 && (
                                     <button
                                         type="button"
                                         onClick={() => removeAssignmentRow(assignment._key!)}
-                                        className="p-2 text-red-500 hover:bg-red-100 rounded-full disabled:opacity-50"
+                                        className="p-2 text-red-500 hover:bg-red-100 rounded-full disabled:opacity-30 disabled:cursor-not-allowed"
                                         title="Hapus baris"
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || assignments.length <= 1}
                                     >
                                         <FaTrash size={14} />
                                     </button>
@@ -202,6 +274,10 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                         </div>
                     ))
                 )}
+                {!loadingOptions && vehicleOptions.length === 0 && driverOptions.length === 0 && (
+                    <p className="text-center text-gray-500 italic py-5">Tidak ada kendaraan atau supir yang cocok dengan filter.</p>
+                )}
+
 
                 {!loadingOptions && (
                     <button
@@ -228,7 +304,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                 <button
                     type="button"
                     onClick={handleSubmit}
-                    disabled={isSubmitting || loadingOptions || assignments.length === 0}
+                    disabled={isSubmitting || loadingOptions || assignments.length === 0 || assignments.some(a => !a.vehicle_id)} // Disable jika ada vehicle belum dipilih
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 text-sm"
                 >
                     {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : null}

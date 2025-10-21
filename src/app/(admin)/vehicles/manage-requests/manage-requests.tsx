@@ -184,7 +184,7 @@ export default function ManageVehicleRequestsPage() {
                 if (status === 'Approved') color = 'success';
                 else if (status === 'Rejected' || status === 'Canceled') color = 'error';
                 else if (status === 'In Progress') color = 'warning';
-                else if (status === 'Completed') color = 'info';
+                else if (status === 'Completed') color = 'success';
 
                 return <Badge color={color}>{status}</Badge>;
             },

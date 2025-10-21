@@ -54,6 +54,7 @@ export default function AdminVehicleRequestDetailPage() {
     const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
     const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
     const [targetStatus, setTargetStatus] = useState<'In Progress' | 'Completed' | null>(null);
+    const [adminCabId, setAdminCabId] = useState<number | null>(null);
 
     const getDetail = useCallback(async () => {
         if (!id) return;
@@ -76,6 +77,10 @@ export default function AdminVehicleRequestDetailPage() {
 
     useEffect(() => {
         getDetail();
+        const cabId = localStorage.getItem("sites");
+        if (cabId) {
+            setAdminCabId(parseInt(cabId, 10));
+        }
     }, [getDetail]);
 
     const getStatusBadge = (status: string) => {
@@ -359,7 +364,7 @@ export default function AdminVehicleRequestDetailPage() {
                     </div>
                 )}
 
-                {data.approved_by && ( // Show if already processed
+                {data.approved_by && ( 
                     <div className="mt-6">
                         <Section title="Informasi Status" icon={<FaUserCheck />}>
                             <p>Status terakhir diperbarui pada {moment(data.updated_at).format('DD MMM YYYY, HH:mm')}
@@ -389,21 +394,21 @@ export default function AdminVehicleRequestDetailPage() {
                 isOpen={isCancelModalOpen}
                 onClose={() => setIsCancelModalOpen(false)}
                 onConfirm={handleConfirmCancel}
-                vehicleRequest={data} // Pass request data
+                vehicleRequest={data} 
                 isSubmitting={isSubmittingCancel}
             />
 
-            {/* Assignment Modal (Placeholder) */}
             <AssignmentModal
                 isOpen={isAssignmentModalOpen}
                 onClose={() => setIsAssignmentModalOpen(false)}
                 requestId={data.id}
-                existingAssignments={data.detail} // Pass existing assignments
-                requiresDriver={data.requires_driver === 1} // Pass driver requirement
+                existingAssignments={data.detail} 
+                requiresDriver={data.requires_driver === 1} 
                 onSuccess={() => {
                     setIsAssignmentModalOpen(false);
-                    getDetail(); // Refresh details after assignment
+                    getDetail(); 
                 }}
+                adminCabId={adminCabId}
             />
         </>
     );
