@@ -18,6 +18,8 @@ import ChangeStatusModal from "@/components/modal/ChangeStatusVehicleRequestModa
 import CancelModal from '@/components/modal/CancelVehicleRequestModal';
 import AssignmentModal from '@/components/modal/VehicleAssignmentModal';
 import { FaPlay, FaStop } from "react-icons/fa";
+import { FaFilePdf } from "react-icons/fa"; // Import ikon PDF
+import { saveAs } from 'file-saver';
 interface AssignmentDetail {
     id: number; request_id: number; vehicle_id: number; driver_id: number | null;
     note_for_driver: string | null;
@@ -44,7 +46,7 @@ export default function AdminVehicleRequestDetailPage() {
     const params = useParams();
     const id = Number(params.id);
     moment.locale('id');
-
+    const [isGeneratingSPJ, setIsGeneratingSPJ] = useState(false);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [actionType, setActionType] = useState<'Approved' | 'Rejected' | null>(null);
     const [isSubmittingStatus, setIsSubmittingStatus] = useState(false);
@@ -156,6 +158,38 @@ export default function AdminVehicleRequestDetailPage() {
         }
     };
 
+    const handleGenerateSPJ = async () => {
+        if (!data) return;
+        setIsGeneratingSPJ(true);
+        try {
+            const response = await httpGet(
+                endpointUrl(`vehicle-requests/spj/${data.id}`),
+                true,
+                {},
+                'blob' 
+            );
+
+            const filename = `SPJ_Request_${data.id}_${moment(data.start_time).format('YYYYMMDD')}.pdf`;
+
+            saveAs(response.data, filename);
+
+            toast.success("SPJ berhasil diunduh.");
+
+        } catch (error: any) {
+            console.error("Error generating SPJ:", error);
+            try {
+                const errorText = await (error.response?.data as Blob)?.text();
+                const errorJson = JSON.parse(errorText);
+                 toast.error(errorJson.message || "Gagal mengunduh SPJ.");
+            } catch {
+                 toast.error("Gagal mengunduh SPJ. Terjadi kesalahan tidak dikenal.");
+            }
+        } finally {
+            setIsGeneratingSPJ(false);
+        }
+    };
+    
+
     if (isLoading) return (
         <div className="flex justify-center items-center h-screen">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -176,6 +210,7 @@ export default function AdminVehicleRequestDetailPage() {
     const showCancelButton = ['Approved', 'In Progress'].includes(data.status);
     const showStartButton = data.status === 'Approved' && data.detail.length > 0;
     const showCompleteButton = data.status === 'In Progress';
+    const showSPJButton = ['Approved', 'In Progress', 'Completed'].includes(data.status) && data.detail.length > 0;
     return (
         <>
             <ComponentCard title="Detail Pengajuan Kendaraan (Admin)">
@@ -217,6 +252,17 @@ export default function AdminVehicleRequestDetailPage() {
                                 className="p-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200"
                             >
                                 <CircleX className="w-4 h-4 text-red-500" />
+                            </button>
+                        )}
+                        {showSPJButton && (
+                            <button
+                                onClick={handleGenerateSPJ}
+                                title="Unduh Surat Perintah Jalan (PDF)"
+                                disabled={isGeneratingSPJ || isSubmittingStatus} 
+                                className="p-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200 flex items-center gap-1 text-xs sm:text-sm disabled:opacity-50"
+                            >
+                                {isGeneratingSPJ ? <Loader2 className="animate-spin w-4 h-4" /> : <FaFilePdf className="w-3 h-3" />}
+                                <span className="hidden sm:inline">Unduh SPJ</span>
                             </button>
                         )}
                         {/* Print SPJ Button (Conditional - e.g., show if Approved and has assignments) */}

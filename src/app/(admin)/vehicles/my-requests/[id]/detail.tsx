@@ -14,6 +14,9 @@ import {
     FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaUserCheck, FaCalendarDay, FaCar
 } from "react-icons/fa";
 import Badge from "@/components/ui/badge/Badge";
+import { FaFilePdf } from "react-icons/fa"; // Import ikon PDF
+import { saveAs } from 'file-saver';
+import { Loader2 } from "lucide-react";
 
 interface AssignmentDetail {
     id: number;
@@ -60,6 +63,7 @@ export default function VehicleRequestDetailPage() {
     const router = useRouter();
     const params = useParams();
     const id = Number(params.id);
+    const [isGeneratingSPJ, setIsGeneratingSPJ] = useState(false);
     moment.locale('id');
 
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -81,19 +85,50 @@ export default function VehicleRequestDetailPage() {
         getDetail();
     }, [getDetail]);
 
-     const getStatusBadge = (status: string) => {
-         let color: "success" | "error" | "warning" | "info" ;
-         let label = status;
-         switch (status) {
-             case 'Approved': color = 'success'; label = 'Approved'; break;
-             case 'Rejected': color = 'error'; label = 'Rejected'; break;
-             case 'Canceled': color = 'error'; label = 'Canceled'; break;
-             case 'In Progress': color = 'info'; label = 'In Progress'; break; 
-             case 'Completed': color = 'success'; label = 'Completed'; break;
-             case 'Submit': color = 'warning'; label = 'Submit'; break;
-             default: color = 'info'; break;
-         }
-         return <Badge color={color}>{label}</Badge>;
+    const getStatusBadge = (status: string) => {
+        let color: "success" | "error" | "warning" | "info";
+        let label = status;
+        switch (status) {
+            case 'Approved': color = 'success'; label = 'Approved'; break;
+            case 'Rejected': color = 'error'; label = 'Rejected'; break;
+            case 'Canceled': color = 'error'; label = 'Canceled'; break;
+            case 'In Progress': color = 'info'; label = 'In Progress'; break;
+            case 'Completed': color = 'success'; label = 'Completed'; break;
+            case 'Submit': color = 'warning'; label = 'Submit'; break;
+            default: color = 'info'; break;
+        }
+        return <Badge color={color}>{label}</Badge>;
+    };
+
+    const handleGenerateSPJ = async () => {
+        if (!data) return;
+        setIsGeneratingSPJ(true);
+        try {
+            const response = await httpGet(
+                endpointUrl(`vehicle-requests/spj/${data.id}`),
+                true,
+                {},
+                'blob'
+            );
+
+            const filename = `SPJ_Request_${data.id}_${moment(data.start_time).format('YYYYMMDD')}.pdf`;
+
+            saveAs(response.data, filename);
+
+            toast.success("SPJ berhasil diunduh.");
+
+        } catch (error: any) {
+            console.error("Error generating SPJ:", error);
+            try {
+                const errorText = await (error.response?.data as Blob)?.text();
+                const errorJson = JSON.parse(errorText);
+                toast.error(errorJson.message || "Gagal mengunduh SPJ.");
+            } catch {
+                toast.error("Gagal mengunduh SPJ. Terjadi kesalahan tidak dikenal.");
+            }
+        } finally {
+            setIsGeneratingSPJ(false);
+        }
     };
 
 
@@ -103,6 +138,7 @@ export default function VehicleRequestDetailPage() {
     const locationName = data.pickup_location_text || data.cabang?.nama_cab || 'Lokasi tidak diset';
 
     const canBeModified = data.status === 'Submit';
+    const showSPJButton = ['Approved', 'In Progress', 'Completed'].includes(data.status) && data.detail.length > 0;
 
     return (
         <>
@@ -112,7 +148,20 @@ export default function VehicleRequestDetailPage() {
                         <h1 className="text-3xl font-bold text-gray-800">{data.purpose}</h1>
                         <p className="text-gray-500">Diajukan oleh: <strong>{data.user?.nama_user}</strong> | ID: <strong>#{data.id}</strong></p>
                     </div>
-                    {getStatusBadge(data.status)}
+                    <div className="flex items-center gap-3">
+                        {getStatusBadge(data.status)}
+                        {showSPJButton && (
+                            <button
+                                onClick={handleGenerateSPJ}
+                                title="Unduh Surat Perintah Jalan (PDF)"
+                                disabled={isGeneratingSPJ}
+                                className="p-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200 flex items-center gap-1 text-xs sm:text-sm disabled:opacity-50"
+                            >
+                                {isGeneratingSPJ ? <Loader2 className="animate-spin w-4 h-4" /> : <FaFilePdf className="w-3 h-3" />}
+                                <span className="hidden sm:inline">Unduh SPJ</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
                 {canBeModified && (
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
