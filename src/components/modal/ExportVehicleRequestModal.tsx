@@ -20,10 +20,11 @@ const statusOptions = [
     { value: 'Approved', label: 'Approved' },
     { value: 'Rejected', label: 'Rejected' },
     { value: 'Canceled', label: 'Canceled' },
+    { value: 'In Progress', label: 'In Progress' },
+    { value: 'Completed', label: 'Completed' },
 ];
 
 const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => {
-    // State untuk filter di dalam modal
     const [startDate, setStartDate] = useState<string | null>(moment().startOf('month').format("YYYY-MM-DD"));
     const [endDate, setEndDate] = useState<string | null>(moment().endOf('month').format("YYYY-MM-DD"));
     const [status, setStatus] = useState<string>(''); // Default 'Semua Status'
@@ -52,7 +53,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => {
         }
 
         try {
-            const response = await fetch(endpointUrl(`/orders/export-excel?${params.toString()}`), {
+            const response = await fetch(endpointUrl(`/vehicle-requests/export-excel?${params.toString()}`), {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 }
@@ -67,7 +68,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `order_report_${moment().format('YYYY-MM-DD')}.xlsx`;
+            a.download = `vehicle_request_report_${moment().format('YYYY-MM-DD')}.xlsx`;
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -88,7 +89,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => {
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-xl">
             <div className="p-6">
-                <h3 className="text-xl font-semibold mb-5">Export Laporan Order</h3>
+                <h3 className="text-xl font-semibold mb-5">Export Laporan Pengajuan Kendaraan</h3>
                 <div className="space-y-4 grid">
                     <div>
                         <label className="block font-medium mb-2">Pilih Rentang Tanggal</label>

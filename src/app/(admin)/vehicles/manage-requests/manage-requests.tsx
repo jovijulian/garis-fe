@@ -13,6 +13,7 @@ import { FaEdit, FaTrash, FaCheck, FaTimes } from "react-icons/fa";
 import { CircleX, FileDown, Eye } from "lucide-react";
 import ChangeStatusOrderModal from "@/components/modal/ChangeStatusOrderModal";
 import CancelOrderModal from '@/components/modal/CancelOrderModal';
+import ExportVehicleRequestModal from "@/components/modal/ExportVehicleRequestModal";
 // import ExportVehicleRequestModal from '@/components/modal/ExportVehicleRequestModal'; // Example name
 
 interface VehicleRequestDataItem {
@@ -49,7 +50,7 @@ export default function ManageVehicleRequestsPage() {
     const [count, setCount] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
     const router = useRouter();
-    // const [isExportModalOpen, setIsExportModalOpen] = useState(false); // If using export modal
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     useEffect(() => {
         getData();
@@ -216,13 +217,13 @@ export default function ManageVehicleRequestsPage() {
                     className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
                 />
                 <div className="flex gap-2 flex-shrink-0">
-                    {/* <button
-                        onClick={() => setIsExportModalOpen(true)} // If using export
+                    <button
+                        onClick={() => setIsExportModalOpen(true)} 
                         className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                     >
                         <FileDown size={18} />
                         <span>Export</span>
-                    </button> */}
+                    </button>
                     <button
                         onClick={() => router.push("/vehicles/create-admin")} 
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
@@ -246,10 +247,10 @@ export default function ManageVehicleRequestsPage() {
 
             
 
-            {/* <ExportVehicleRequestModal 
+            <ExportVehicleRequestModal 
                 isOpen={isExportModalOpen}
                 onClose={() => setIsExportModalOpen(false)}
-            /> */}
+            />
         </div>
     );
 }
