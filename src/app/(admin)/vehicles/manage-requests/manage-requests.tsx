@@ -245,8 +245,6 @@ export default function ManageVehicleRequestsPage() {
                 onPerPageChange={handlePerPageChange}
             />
 
-            
-
             <ExportVehicleRequestModal 
                 isOpen={isExportModalOpen}
                 onClose={() => setIsExportModalOpen(false)}

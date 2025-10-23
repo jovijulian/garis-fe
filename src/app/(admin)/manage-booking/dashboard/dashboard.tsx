@@ -128,33 +128,26 @@ export default function BookingDashboardPage() {
                 />
             </div>
 
-            {/* Baris 1: Key Metrics (Sejajar) */}
             <KeyMetrics data={kpi} />
 
-            {/* Baris 2: Kalender (9 kolom) + Status Chart (3 kolom) */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                {/* Kalender - 9 kolom */}
                 <div className="xl:col-span-9">
                     <BookingCalendar />
                 </div>
 
-                {/* Status Distribution Chart - 3 kolom */}
                 <div className="xl:col-span-3">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 h-[400px]">
+                    <div className="rounded-2xl shadow-sm border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 h-full">
                         <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                             Status Booking
                         </h3>
-                        {/* Status Distribution Component */}
                         <StatusDistributionChart data={rankings.status_distribution} />
                     </div>
                 </div>
             </div>
 
-            {/* Baris 3: Tren Booking (6 kolom) + Top 5 Ruangan (6 kolom) */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                {/* Tren Booking Chart - 6 kolom */}
                 <div className="xl:col-span-6">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-2xl shadow-sm border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                             Tren Booking
                         </h3>
@@ -162,9 +155,8 @@ export default function BookingDashboardPage() {
                     </div>
                 </div>
 
-                {/* Top 5 Ruangan - 6 kolom */}
                 <div className="xl:col-span-6">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-2xl shadow-sm border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                             Top 5 Ruangan Digunakan
                         </h3>
@@ -173,24 +165,15 @@ export default function BookingDashboardPage() {
                 </div>
             </div>
 
-            {/* Baris 4: Top 5 Topik (6 kolom) + Top 5 Fasilitas (6 kolom) */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                {/* Top 5 Topik Meeting - 6 kolom */}
                 <div className="xl:col-span-6">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-                            Top 5 Topik Meeting
-                        </h3>
+                    <div className="h-full">
                         <TopTopicsList data={rankings.top_topics} />
                     </div>
                 </div>
 
-                {/* Top 5 Fasilitas - 6 kolom */}
                 <div className="xl:col-span-6">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-                            Top 5 Fasilitas Diminta
-                        </h3>
+                    <div className="h-full">
                         <TopAmenitiesList data={rankings.top_amenities} />
                     </div>
                 </div>

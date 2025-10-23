@@ -126,7 +126,7 @@ export default function OrderDashboardPage() {
 
             <KeyMetrics data={kpi} />
             <div className="grid grid-cols-1 gap-6">
-                <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div className="rounded-2xl shadow-sm border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                         Tren Order
                     </h3>
@@ -135,7 +135,7 @@ export default function OrderDashboardPage() {
             </div>
             <div className="grid grid-cols-2 gap-6">
                 <div className="">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 h-[400px]">
+                    <div className="rounded-2xl shadow-sm border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 h-[400px]">
                         <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                             Status Order
                         </h3>
@@ -143,10 +143,8 @@ export default function OrderDashboardPage() {
                     </div>
                 </div>
                 <div className="">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-                            Top 5 Tipe Konsumsi
-                        </h3>
+                    <div className="h-full">
+                      
                         <TopOrdersList data={rankings.top_consumption_types} />
                     </div>
                 </div>
