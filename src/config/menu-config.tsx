@@ -138,6 +138,12 @@ export const menuConfig: Record<string, NavItem[]> = {
       roles: [1, 2],
     },
     {
+      name: 'Jadwal Keberangkatan',
+      icon: <CalendarClock />,
+      path: '/vehicles/schedule',
+      roles: [1, 2],
+    },
+    {
       name: 'Daftar Supir',
       icon: <UserCog />,
       path: '/vehicles/master/drivers',
@@ -171,7 +177,7 @@ export const menuConfig: Record<string, NavItem[]> = {
       name: 'Penugasan Saya',
       icon: <Car />,
       path: '/vehicles/my-assignments',
-      roles: [3], 
+      roles: [3],
     },
     {
       name: 'Menu',

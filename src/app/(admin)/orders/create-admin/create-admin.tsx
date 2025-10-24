@@ -263,7 +263,10 @@ export default function CreateOrderAdminPage() {
                     </div>
                     <div>
                         <label className="block font-medium mb-1">Tanggal Pesanan</label>
-                        <SingleDatePicker placeholderText="Pilih tanggal pesanan" selectedDate={headerData.order_date ? new Date(headerData.order_date) : null} onChange={(date: any) => handleHeaderChange('order_date', moment(date).format('YYYY-MM-DD'))} onClearFilter={() => handleHeaderChange('order_date', '')} viewingMonthDate={viewingMonthDate} onMonthChange={setViewingMonthDate} />
+                        <SingleDatePicker placeholderText="Pilih tanggal pesanan" 
+                        selectedDate={headerData.order_date ? new Date(headerData.order_date) : null} 
+                        onChange={(date: any) => handleHeaderChange('order_date', moment(date).format('YYYY-MM-DD'))} onClearFilter={() => handleHeaderChange('order_date', '')} 
+                        viewingMonthDate={viewingMonthDate} onMonthChange={setViewingMonthDate} />
                     </div>
                     <div>
                         <label className="block font-medium mb-1">Jumlah Orang</label>
