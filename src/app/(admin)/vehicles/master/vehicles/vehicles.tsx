@@ -117,7 +117,7 @@ export default function VehiclesPage() {
                 id: "vehicle_type.name",
                 header: "Jenis Kendaraan",
                 accessorKey: "vehicle_type.name",
-                cell: ({ row }: any) => <span>{row.vehicle_type.name}</span>,
+                cell: ({ row }: any) => <span>{row.vehicle_type?.name}</span>,
             },
             {
                 id: "cabang.name",
