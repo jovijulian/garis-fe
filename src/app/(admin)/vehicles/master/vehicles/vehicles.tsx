@@ -26,6 +26,7 @@ interface TableDataItem {
     is_active: boolean;
     cabang: { id_cab: number; nama_cab: string; };
     created_at: string;
+    is_operational: boolean;
 }
 
 
@@ -130,6 +131,12 @@ export default function VehiclesPage() {
                 header: "Kapasitas",
                 accessorKey: "passenger_capacity",
                 cell: ({ row }: any) => <span>{row.passenger_capacity}</span>,
+            },
+            {
+                id: "is_operational",
+                header: "Operasional",
+                accessorKey: "is_operational",
+                cell: ({ row }: any) => <span>{row.is_operational == 1 ? 'Ya' : 'Tidak'}</span>,
             },
             {
                 id: "status",

@@ -33,7 +33,7 @@ const rolePermissions: Record<string, string[]> = {
         '/vehicles/my-requests',
         '/vehicles/create',
         '/vehicles/edit',
-        
+        '/vehicles/schedule',
     ],
     
 };

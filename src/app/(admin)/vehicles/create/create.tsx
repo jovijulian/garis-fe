@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import _ from "lodash";
@@ -12,14 +12,14 @@ import Select from '@/components/form/Select-custom';
 import Input from '@/components/form/input/InputField';
 import { Check, Loader2 } from 'lucide-react';
 import SingleDatePicker from "@/components/calendar/SingleDatePicker";
-import TimePicker from '@/components/calendar/TimePicker'; 
+import TimePicker from '@/components/calendar/TimePicker';
 
 interface VehicleRequestPayload {
   cab_id: number | null;
   pickup_location_text: string | null;
   destination: string;
-  start_time: string; 
-  end_time: string | null;   
+  start_time: string;
+  end_time: string | null;
   passenger_count: number;
   passenger_names: string;
   requested_vehicle_type_id: number | null;
@@ -33,8 +33,8 @@ interface FormState {
   cab_id: number | null;
   pickup_location_text: string;
   destination: string;
-  start_date: string; 
-  start_time: string; 
+  start_date: string;
+  start_time: string;
   end_date: string;
   end_time: string | null;
   passenger_count: number;
@@ -52,10 +52,10 @@ export default function CreateVehicleRequestPage() {
   const router = useRouter();
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const searchParams = useSearchParams();
   const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
   const [vehicleTypeOptions, setVehicleTypeOptions] = useState<SelectOption[]>([]);
-  
+
   const [viewingMonthDate, setViewingMonthDate] = useState(new Date());
 
   const [formData, setFormData] = useState<FormState>({
@@ -76,11 +76,32 @@ export default function CreateVehicleRequestPage() {
   });
 
   useEffect(() => {
+    const vehicleTypeIdParam = searchParams.get("vehicleTypeId");
+    const startTimeParam = searchParams.get("start_time");
+
+    const updates: Partial<FormState> = {};
+
+    if (startTimeParam) {
+      const startMoment = moment(startTimeParam, 'YYYY-MM-DDTHH:mm');
+      if (startMoment.isValid()) {
+        updates.start_date = startMoment.format('YYYY-MM-DD');
+        updates.start_time = startMoment.format('HH:mm');
+        updates.end_date = startMoment.format('YYYY-MM-DD');
+      }
+    }
+
+    if (vehicleTypeIdParam) {
+      updates.requested_vehicle_type_id = parseInt(vehicleTypeIdParam, 10);
+    }
+
+    if (Object.keys(updates).length > 0) {
+      setFormData(prev => ({ ...prev, ...updates }));
+    }
     const fetchInitialData = async () => {
       try {
         const [sitesRes, vehicleTypesRes] = await Promise.all([
-          httpGet(endpointUrl("/rooms/site-options"), true), 
-          httpGet(endpointUrl("/vehicle-types/options"), true), 
+          httpGet(endpointUrl("/rooms/site-options"), true),
+          httpGet(endpointUrl("/vehicle-types/options"), true),
         ]);
 
         setSiteOptions(sitesRes.data.data.map((s: any) => ({ value: s.id_cab.toString(), label: s.nama_cab })));
@@ -94,7 +115,7 @@ export default function CreateVehicleRequestPage() {
     };
 
     fetchInitialData();
-  }, []);
+  }, [searchParams]);
 
   const handleFieldChange = (field: keyof FormState, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -103,7 +124,7 @@ export default function CreateVehicleRequestPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.start_date || !formData.start_time ) {
+    if (!formData.start_date || !formData.start_time) {
       toast.error("Harap isi waktu mulai dan waktu selesai dengan lengkap.");
       return;
     }
@@ -129,9 +150,9 @@ export default function CreateVehicleRequestPage() {
     };
 
     try {
-      await httpPost(endpointUrl('/vehicle-requests'), payload, true); 
+      await httpPost(endpointUrl('/vehicle-requests'), payload, true);
       toast.success("Pengajuan kendaraan berhasil dikirim!");
-      router.push('/vehicles/my-requests'); 
+      router.push('/vehicles/my-requests');
     } catch (error: any) {
       toast.error("Gagal mengirim pengajuan.");
     } finally {
@@ -143,7 +164,18 @@ export default function CreateVehicleRequestPage() {
     <ComponentCard title="Ajukan Peminjaman Kendaraan">
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        <h3 className="text-lg font-semibold border-b pb-2">Informasi Perjalanan</h3>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-4">
+          <h3 className="text-lg font-semibold border-b pb-2 sm:pb-0 sm:border-none">
+            Informasi Perjalanan
+          </h3>
+          <button
+            type="button"
+            onClick={(e) => router.push('/vehicles/schedule')} 
+            className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
+          >
+            Lihat Jadwal Keberangkatan
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block font-medium mb-1">Keperluan<span className="text-red-400 ml-1">*</span></label>
@@ -154,9 +186,9 @@ export default function CreateVehicleRequestPage() {
             <Input defaultValue={formData.destination} onChange={(e) => handleFieldChange('destination', e.target.value)} placeholder="Contoh: Kawasan Industri Cikarang" required />
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div>
+          <div>
             <label className="block font-medium mb-1">Cabang Penjemputan<span className="text-red-400 ml-1">*</span></label>
             <Select
               options={siteOptions}
@@ -181,44 +213,44 @@ export default function CreateVehicleRequestPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div>
             <label className="block font-medium mb-1">Tanggal Mulai<span className="text-red-400 ml-1">*</span></label>
-            <SingleDatePicker 
-              placeholderText="Pilih tanggal" 
-              selectedDate={formData.start_date ? new Date(formData.start_date) : null} 
-              onChange={(date: any) => handleFieldChange('start_date', moment(date).format('YYYY-MM-DD'))} 
-              onClearFilter={() => handleFieldChange('start_date', '')} 
-              viewingMonthDate={viewingMonthDate} 
-              onMonthChange={setViewingMonthDate} 
+            <SingleDatePicker
+              placeholderText="Pilih tanggal"
+              selectedDate={formData.start_date ? new Date(formData.start_date) : null}
+              onChange={(date: any) => handleFieldChange('start_date', moment(date).format('YYYY-MM-DD'))}
+              onClearFilter={() => handleFieldChange('start_date', '')}
+              viewingMonthDate={viewingMonthDate}
+              onMonthChange={setViewingMonthDate}
             />
           </div>
           <div>
             <label className="block font-medium mb-1">Waktu Mulai<span className="text-red-400 ml-1">*</span></label>
-             <TimePicker
-                value={formData.start_time}
-                onChange={(newTime) => handleFieldChange('start_time', newTime)}
-                required={true}
-              />
+            <TimePicker
+              value={formData.start_time}
+              onChange={(newTime) => handleFieldChange('start_time', newTime)}
+              required={true}
+            />
           </div>
           <div>
             <label className="block font-medium mb-1">Tanggal Selesai</label>
-             <SingleDatePicker 
-              placeholderText="Pilih tanggal" 
-              selectedDate={formData.end_date ? new Date(formData.end_date) : null} 
-              onChange={(date: any) => handleFieldChange('end_date', moment(date).format('YYYY-MM-DD'))} 
-              onClearFilter={() => handleFieldChange('end_date', '')} 
-              viewingMonthDate={viewingMonthDate} 
-              onMonthChange={setViewingMonthDate} 
+            <SingleDatePicker
+              placeholderText="Pilih tanggal"
+              selectedDate={formData.end_date ? new Date(formData.end_date) : null}
+              onChange={(date: any) => handleFieldChange('end_date', moment(date).format('YYYY-MM-DD'))}
+              onClearFilter={() => handleFieldChange('end_date', '')}
+              viewingMonthDate={viewingMonthDate}
+              onMonthChange={setViewingMonthDate}
             />
           </div>
           <div>
             <label className="block font-medium mb-1">Waktu Selesai</label>
-             <TimePicker
-                value={formData.end_time || ''}
-                onChange={(newTime) => handleFieldChange('end_time', newTime)}
-                required={false}
-              />
+            <TimePicker
+              value={formData.end_time || ''}
+              onChange={(newTime) => handleFieldChange('end_time', newTime)}
+              required={false}
+            />
           </div>
         </div>
-        
+
         <h3 className="text-lg font-semibold border-b pb-2 pt-4">Detail Kebutuhan</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
@@ -237,7 +269,7 @@ export default function CreateVehicleRequestPage() {
             <label className="block font-medium mb-1">Jumlah Unit<span className="text-red-400 ml-1">*</span></label>
             <Input type="number" defaultValue={formData.requested_vehicle_count} onChange={(e) => handleFieldChange('requested_vehicle_count', e.target.value)} placeholder="1" required />
           </div>
-           <div>
+          <div>
             <label className="block font-medium mb-1">Jumlah Penumpang<span className="text-red-400 ml-1">*</span></label>
             <Input type="number" defaultValue={formData.passenger_count} onChange={(e) => handleFieldChange('passenger_count', e.target.value)} placeholder="1" required />
           </div>

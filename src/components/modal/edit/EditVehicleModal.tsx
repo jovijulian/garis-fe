@@ -17,6 +17,7 @@ interface Payload {
     license_plate: string;
     passenger_capacity: number;
     cab_id: number;
+    is_operational: number;
 }
 
 interface SelectOption {
@@ -43,6 +44,7 @@ const EditVehicleModal: React.FC<EditProps> = ({
         license_plate: "",
         passenger_capacity: 0,
         vehicle_type_id: 0,
+        is_operational: 1,
     });
 
     const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
@@ -101,6 +103,7 @@ const EditVehicleModal: React.FC<EditProps> = ({
                     license_plate: data.license_plate || "",
                     passenger_capacity: data.passenger_capacity || 0,
                     vehicle_type_id: data.vehicle_type_id || 0,
+                    is_operational: data.is_operational || 1,
                 });
             } catch (err: any) {
                 toast.error(err?.response?.data?.message || "Gagal mengambil data kendaraan.");
@@ -125,6 +128,7 @@ const EditVehicleModal: React.FC<EditProps> = ({
             cab_id: parseInt(formData.cab_id!.toString(), 10),
             passenger_capacity: Number(formData.passenger_capacity),
             vehicle_type_id: parseInt(formData.vehicle_type_id!.toString(), 10),
+            is_operational: formData.is_operational ? 1 : 0,
         };
 
         try {
@@ -202,6 +206,15 @@ const EditVehicleModal: React.FC<EditProps> = ({
                                     options={siteOptions}
                                     disabled={loadingSites}
                                 />
+                            </div>
+                            <div>
+                                <input
+                                    type="checkbox"
+                                    checked={formData.is_operational === 1}
+                                    onChange={(e) => handleFieldChange('is_operational', e.target.checked ? 1 : 0)}
+                                    className="form-checkbox h-5 w-5 text-blue-600"
+                                />
+                                <span className="ml-2">Kendaraan Operasional</span>
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 pt-4">

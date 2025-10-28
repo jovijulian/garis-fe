@@ -15,6 +15,7 @@ interface Payload {
     license_plate: string;
     passenger_capacity: number;
     cab_id: number;
+    is_operational: boolean;
 }
 
 interface SelectOption {
@@ -30,6 +31,7 @@ export default function CreateRoomForm() {
         license_plate: "",
         passenger_capacity: 0,
         vehicle_type_id: 0,
+        is_operational: true,
     });
 
     const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
@@ -92,6 +94,7 @@ export default function CreateRoomForm() {
                 cab_id: parseInt(cab_id!.toString(), 10),
                 passenger_capacity: Number(passenger_capacity),
                 vehicle_type_id: parseInt(vehicle_type_id!.toString(), 10),
+                is_operational: formData.is_operational ? 1 : 0,
             };
 
             await httpPost(
@@ -161,6 +164,17 @@ export default function CreateRoomForm() {
                         options={siteOptions}
                         disabled={loadingSites}
                     />
+                </div>
+                <div>
+                    <label className="inline-flex items-center">
+                        <input
+                            type="checkbox"
+                            checked={formData.is_operational}
+                            onChange={(e) => handleFieldChange('is_operational', e.target.checked)}
+                            className="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                        <span className="ml-2">Kendaraan Operasional</span>
+                    </label>
                 </div>
                 <div className="flex justify-end gap-2">
                     <button

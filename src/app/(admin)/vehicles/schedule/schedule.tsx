@@ -14,19 +14,9 @@ import Badge from "@/components/ui/badge/Badge";
 import _ from 'lodash';
 import { Tooltip } from 'react-tooltip';
 import { toast } from 'react-toastify'
-
-
-interface ScheduleItem {
-    id: number;
-    time: string;
-    destination: string;
-    purpose: string;
-    status: 'Submit' | 'Approved' | 'Rejected' | 'Completed' | 'Canceled' | 'In Progress';
-    passengers: string;
-    requester: string;
-    vehicles: string;
-    drivers: string;
-}
+import VehicleScheduleGrid, { ScheduleData } from '@/components/schedule/VehicleScheduleGrid';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { ReadonlyURLSearchParams } from 'next/navigation';
 
 interface SelectOption { value: string; label: string; }
 
@@ -35,16 +25,18 @@ export default function ScheduleDisplayPage() {
     const searchParams = useSearchParams();
     const pageRef = useRef<HTMLDivElement>(null);
     const [viewingMonthDate, setViewingMonthDate] = useState(new Date());
-    const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
+    const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<string>('');
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [role, setRole] = useState<string>('');
+    const selectedDate = searchParams.get("date") || moment().format('YYYY-MM-DD');
+    const selectedBranch = searchParams.get("cab_id") || '';
 
-    const [selectedBranch, setSelectedBranch] = useState<string>(searchParams.get("cab_id") || '');
-    const [selectedDate, setSelectedDate] = useState<string>(searchParams.get("date") || moment().format('YYYY-MM-DD'));
     const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);
     const [loadingBranches, setLoadingBranches] = useState(true);
+
 
     const fetchBranches = useCallback(async () => {
         setLoadingBranches(true);
@@ -55,6 +47,7 @@ export default function ScheduleDisplayPage() {
         } catch (err) { console.error("Failed to load branches:", err); setBranchOptions([{ value: '', label: 'Semua Cabang' }]); } finally { setLoadingBranches(false); }
     }, []);
 
+   
     const fetchSchedule = useCallback(async (isInitialLoad = false) => {
         if (!isInitialLoad) setIsLoading(true);
         setError(null);
@@ -63,36 +56,44 @@ export default function ScheduleDisplayPage() {
 
         try {
             const response = await httpGet(endpointUrl("/vehicle-requests/schedule"), true, params);
-            setSchedule(response.data.data || []);
+            console.log(response.data)
+            setScheduleData(response.data.data || { columns: [], bookings: [], timeSlots: [] });
             setLastUpdated(moment().format('HH:mm:ss'));
         } catch (err: any) {
             console.error(err);
             setError(`Gagal memuat jadwal (${err.message || 'Error Tidak Diketahui'})`);
-            setSchedule([]);
+            setScheduleData(null);
         } finally {
             setIsLoading(false);
         }
     }, [selectedDate, selectedBranch]);
 
+    const latestFetchSchedule = useRef(fetchSchedule);
+
     useEffect(() => {
         fetchBranches();
-        fetchSchedule(true);
-
-        const intervalId = setInterval(() => fetchSchedule(false), 60000);
-        return () => clearInterval(intervalId);
     }, [fetchBranches]);
 
-    const updateUrlParams = useCallback(_.debounce((date, branch) => {
-        const params = new URLSearchParams();
-        params.set('date', date);
-        if (branch) params.set('cab_id', branch);
-        router.replace(`?${params.toString()}`, { scroll: false });
-        fetchSchedule(false);
-    }, 500), [router, fetchSchedule]);
+    useEffect(() => {
+        latestFetchSchedule.current = fetchSchedule;
+    }, [fetchSchedule]);
 
     useEffect(() => {
-        updateUrlParams(selectedDate, selectedBranch);
-    }, [selectedBranch, selectedDate, updateUrlParams]);
+        fetchSchedule();
+    }, [fetchSchedule]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            latestFetchSchedule.current(false);
+        }, 60000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        const role = localStorage.getItem("role");
+        if (role) setRole(role);
+    }, []);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -102,12 +103,32 @@ export default function ScheduleDisplayPage() {
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
 
+    const updateQueryParams = (
+        searchParams: ReadonlyURLSearchParams,
+        router: AppRouterInstance,
+        paramsToUpdate: Record<string, string | null | undefined>
+    ) => {
+        const currentParams = new URLSearchParams(Array.from(searchParams.entries()));
+        Object.entries(paramsToUpdate).forEach(([key, value]) => {
+            if (value) {
+                currentParams.set(key, value);
+            } else {
+                currentParams.delete(key);
+            }
+        });
+        router.push(`?${currentParams.toString()}`, { scroll: false });
+    };
 
     const handleBranchChange = (option: SelectOption | null) => {
-        setSelectedBranch(option ? option.value : '');
+        updateQueryParams(searchParams, router, {
+            cab_id: option ? option.value : null
+        });
     };
-    const handleDateChange = (date: Date | null) => {
-        setSelectedDate(date ? moment(date).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'));
+
+    const handleDateChange = (newDate: Date | null) => {
+        updateQueryParams(searchParams, router, {
+            date: newDate ? moment(newDate).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD')
+        });
     };
 
     const toggleFullScreen = () => {
@@ -120,26 +141,14 @@ export default function ScheduleDisplayPage() {
             document.exitFullscreen();
         }
     };
-    const getStatusBadge = (status: string) => {
-        let color: "success" | "error" | "warning" | "info";
-        let label = status;
-        switch (status) {
-            case 'Approved': color = 'success'; label = 'Approved'; break;
-            case 'Rejected': color = 'error'; label = 'Rejected'; break;
-            case 'Canceled': color = 'error'; label = 'Canceled'; break;
-            case 'In Progress': color = 'info'; label = 'In Progress'; break;
-            case 'Completed': color = 'success'; label = 'Completed'; break;
-            case 'Submit': color = 'warning'; label = 'Submit'; break;
-            default: color = 'info'; break;
-        }
-        return <Badge color={color} >{label}</Badge>;
-    };
+
+
 
     return (
-        <div ref={pageRef} className="flex flex-col h-screen bg-gray-900  p-4 sm:p-6 lg:p-8">
-            <header className={`bg-gray-800 shadow-md rounded-lg p-3 sm:p-4 mb-4 flex flex-col md:flex-row justify-between items-center gap-3 transition-all duration-300 ${isFullscreen ? 'hidden' : 'flex'}`}>
+        <div ref={pageRef} className="flex flex-col h-screen  ">
+            <header className={`shadow-md rounded-lg bg-white p-3 sm:p-4 mb-4 flex flex-col md:flex-row justify-between items-center gap-3 transition-all duration-300 ${isFullscreen ? 'hidden' : 'flex'}`}>
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-100 whitespace-nowrap">
+                    <h1 className="text-xl md:text-2xl font-bold  whitespace-nowrap">
                         Jadwal Keberangkatan
                         {selectedBranch && branchOptions.length > 1 && (
                             <span className="text-lg font-normal text-blue-300 ml-2">
@@ -149,9 +158,17 @@ export default function ScheduleDisplayPage() {
                     </h1>
                 </div>
 
-                <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                    <div className="w-40 sm:w-48 ">
-                        {branchOptions.length > 0 && (
+                <div className="
+  flex flex-col sm:flex-row 
+  items-stretch sm:items-center 
+  gap-3 sm:gap-2 
+  w-full sm:w-auto 
+  justify-end
+">
+                    <div className="w-full sm:w-48">
+                        {loadingBranches ? (
+                            <div className="h-10 bg-gray-200 rounded animate-pulse" />
+                        ) : (
                             <Select
                                 options={branchOptions}
                                 value={_.find(branchOptions, { value: selectedBranch })}
@@ -160,38 +177,49 @@ export default function ScheduleDisplayPage() {
                             />
                         )}
                     </div>
-                    <div className="w-40 sm:w-48">
+
+                    <div className="w-full sm:w-48">
                         <SingleDatePicker
                             placeholderText="Pilih Tanggal"
                             selectedDate={selectedDate ? new Date(selectedDate) : new Date()}
-                            onChange={(date: any) => handleDateChange(date)}
-                            onClearFilter={() => setSelectedDate(moment().format('YYYY-MM-DD'))}
-                            viewingMonthDate={viewingMonthDate} onMonthChange={setViewingMonthDate} />
+                            onChange={handleDateChange}
+                            onClearFilter={() => handleDateChange(null)}
+                            viewingMonthDate={viewingMonthDate}
+                            onMonthChange={setViewingMonthDate}
+                        />
                     </div>
-                    
-                    <button
-                        onClick={() => fetchSchedule(false)}
-                        disabled={isLoading}
-                        className="p-2 text-gray-400 hover:text-white disabled:opacity-50"
-                        data-tooltip-id="schedule-tooltip"
-                        data-tooltip-content="Refresh Jadwal"
-                    >
-                        <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-                    </button>
-                    <button
-                        onClick={toggleFullScreen}
-                        className="p-2 text-gray-400 hover:text-white"
-                        data-tooltip-id="schedule-tooltip"
-                        data-tooltip-content={isFullscreen ? "Keluar Layar Penuh" : "Mode Layar Penuh"}
-                    >
-                        {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                    </button>
+
+                    <div className="flex sm:block justify-end">
+                        <button
+                            onClick={() => fetchSchedule(false)}
+                            disabled={isLoading}
+                            className="p-2 text-gray-400  disabled:opacity-50"
+                            data-tooltip-id="schedule-tooltip"
+                            data-tooltip-content="Refresh Jadwal"
+                        >
+                            <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+                        </button>
+
+                        <button
+                            onClick={toggleFullScreen}
+                            className="p-2 text-gray-400 "
+                            data-tooltip-id="schedule-tooltip"
+                            data-tooltip-content={isFullscreen ? "Keluar Layar Penuh" : "Mode Layar Penuh"}
+                        >
+                            {isFullscreen ? (
+                                <Minimize className="w-5 h-5" />
+                            ) : (
+                                <Maximize className="w-5 h-5" />
+                            )}
+                        </button>
+                    </div>
                 </div>
+
             </header>
 
-            <main className="flex-grow overflow-hidden bg-gray-850 shadow-inner rounded-lg relative">
+            <main className="flex-grow overflow-hidden  shadow-inner rounded-lg relative">
                 {isLoading && (
-                    <div className="absolute inset-0 bg-gray-900 bg-opacity-70 flex flex-col items-center justify-center z-10">
+                    <div className="absolute inset-0 bg-opacity-70 flex flex-col items-center justify-center z-10">
                         <Loader2 className="w-8 h-8 animate-spin text-blue-400 mb-3" />
                         <p className="text-gray-300 text-sm">Memperbarui jadwal...</p>
                     </div>
@@ -203,52 +231,21 @@ export default function ScheduleDisplayPage() {
                         <p className="text-sm">{error}</p>
                     </div>
                 )}
-                {!isLoading && !error && schedule.length === 0 && (
+                {!isLoading && !error && (!scheduleData || scheduleData.columns.length === 0) && (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500 p-4">
-                        <CalendarIcon className="w-16 h-16 mb-4" />
-                        <h3 className="text-xl font-semibold">Tidak Ada Jadwal</h3>
-                        <p className="mt-1">Tidak ada jadwal kendaraan untuk tanggal dan cabang yang dipilih.</p>
+                        <Car className="w-16 h-16 mb-4" />
+                        <h3 className="text-xl font-semibold">Tidak Ada Kendaraan</h3>
+                        <p className="mt-1">
+                            {selectedBranch
+                                ? "Tidak ada kendaraan di cabang ini."
+                                : "Tidak ada jadwal kendaraan untuk tanggal yang dipilih."
+                            }
+                        </p>
                     </div>
                 )}
 
-                {!error && schedule.length > 0 && (
-                    <div className="h-full overflow-y-auto">
-                        
-                        <table className="w-full table-fixed text-left text-gray-200">
-                            
-                            <thead className="text-sm text-gray-300 uppercase bg-gray-700 sticky top-0">
-                                <tr>
-                                    <th scope="col" className="px-4 py-3 w-[8%] text-center">Waktu</th>
-                                    <th scope="col" className="px-4 py-3 w-[20%]">Tujuan</th>
-                                    <th scope="col" className="px-4 py-3 w-[15%]">Kendaraan</th>
-                                    <th scope="col" className="px-4 py-3 w-[15%]">Supir</th>
-                                    <th scope="col" className="px-4 py-3 w-[15%]">Pemohon</th>
-                                    <th scope="col" className="px-4 py-3 w-[10%] text-center">Penumpang</th>
-                                    <th scope="col" className="px-4 py-3 w-[20%]">Keperluan</th>
-                                    <th scope="col" className="px-4 py-3 w-[12%] text-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-base">
-                                {schedule.map((item, index) => (
-                                    <tr key={item.id} className={`border-b border-gray-700 ${index % 2 === 0 ? 'bg-gray-850' : 'bg-gray-800'} hover:bg-gray-750`}>
-                                        <td className="px-4 py-4 font-bold text-lg text-center text-white">{item.time}</td>
-                                        <td className="px-4 py-4 font-medium text-white truncate" title={item.destination}>{item.destination}</td>
-                                        <td className="px-4 py-4 whitespace-pre-wrap text-gray-300 leading-tight">{item.vehicles}</td>
-                                        <td className="px-4 py-4 whitespace-pre-wrap text-gray-300 leading-tight">{item.drivers}</td>
-                                        <td className="px-4 py-4 whitespace-pre-wrap text-gray-300 leading-tight">{item.requester}</td>
-                                        <td className="px-4 py-4 text-center">
-                                            <span data-tooltip-id="schedule-tooltip" data-tooltip-html={item.passengers.replace(/\n/g, '<br />') || 'Tidak ada'} className="cursor-default">
-                                                {item.passengers?.split('\n')[0].split(',').length ?? 0} {/* Show count */}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-4 text-gray-400 text-sm truncate" title={item.purpose}>{item.purpose}</td>
-                                        <td className="px-4 py-4 text-center">{getStatusBadge(item.status)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <Tooltip id="schedule-tooltip" />
-                    </div>
+                {!error && scheduleData && scheduleData.columns.length > 0 && (
+                    <VehicleScheduleGrid data={scheduleData} selectedDate={selectedDate} role={role}/>
                 )}
             </main>
 

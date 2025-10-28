@@ -10,8 +10,16 @@ import {
     ShieldCheck,
     FileText,
     ShoppingCart,
+    Clock,
+    Loader2,
 } from "lucide-react";
 import AppHeader from "@/layout/AppHeader";
+import { endpointUrl, httpGet } from "../../../../helpers";
+interface PendingCounts {
+    pending_bookings: number;
+    pending_vehicle_requests: number;
+    pending_orders: number;
+}
 
 const colors = {
     blue: "bg-blue-500",
@@ -100,6 +108,7 @@ interface MenuCardProps {
     color: ColorKey;
     userRole: string | null;
     isDriver: boolean;
+    pendingCount?: number;
 }
 
 const MenuCard: React.FC<MenuCardProps> = ({
@@ -109,7 +118,8 @@ const MenuCard: React.FC<MenuCardProps> = ({
     href,
     color,
     userRole,
-    isDriver
+    isDriver,
+    pendingCount,
 }) => {
     const isDisabled = title === "Admin Panel" && userRole !== "1";
     let dynamicHref = href;
@@ -133,7 +143,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
     }
     const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         if (isDisabled) {
-            e.preventDefault(); // Prevent navigation if disabled
+            e.preventDefault(); 
         }
     };
 
@@ -141,14 +151,21 @@ const MenuCard: React.FC<MenuCardProps> = ({
         <Link href={dynamicHref} className="group block" onClick={handleCardClick} >
             <div
                 className={`
-                    bg-white dark:bg-gray-800 rounded-2xl shadow p-6 h-full flex flex-col justify-between
-                    transition-all duration-300 
-                    ${isDisabled
+      relative
+      bg-white dark:bg-gray-800 rounded-2xl shadow p-6 h-full flex flex-col justify-between
+      transition-all duration-300 border
+      ${isDisabled
                         ? 'opacity-50 cursor-not-allowed'
                         : 'hover:shadow-xl hover:-translate-y-1'
                     }
-                `}
+    `}
             >
+                {pendingCount !== undefined && pendingCount > 0 && (
+                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full  shadow-sm border border-red-700">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{pendingCount} pending</span>
+                    </div>
+                )}
                 <div>
                     <div
                         className={`w-14 h-14 rounded-xl flex items-center justify-center ${colors[color] ?? "bg-gray-500"
@@ -176,8 +193,8 @@ export default function MenusPage() {
     const [userEmail, setUserEmail] = useState("");
     const [userRole, setUserRole] = useState<string | null>(null);
     const [isDriver, setIsDriver] = useState(false);
-
-
+    const [pendingCounts, setPendingCounts] = useState<PendingCounts | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
     useEffect(() => {
         const name = localStorage.getItem("name");
         const email = localStorage.getItem("email");
@@ -190,6 +207,37 @@ export default function MenusPage() {
             setIsDriver(driver === "true");
         }
     }, []);
+    useEffect(() => {
+        if (userRole === "1" || userRole === "2") {
+            fetchPendingCounts();
+        }
+    }, [userRole]);
+    const fetchPendingCounts = async () => {
+        setIsLoading(true);
+        try {
+            const response = await httpGet(
+                endpointUrl("/dashboard/pending"),
+                true
+            );
+
+            const data: PendingCounts = await response.data.data
+            setPendingCounts(data);
+            setIsLoading(false);
+        } catch (error) {
+            console.error("Error fetching pending counts:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen bg-gray-50">
+                <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="min-h-screen xl:flex-center">
             <div
@@ -207,9 +255,28 @@ export default function MenusPage() {
                     </div>
 
                     <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {menuItems.map((item) => (
-                            <MenuCard key={item.href} {...item} userRole={userRole} isDriver={isDriver} />
-                        ))}
+                        {menuItems.map((item) => {
+                            let countToShow: number | undefined = undefined;
+                            if (pendingCounts) {
+                                if (item.title === "Peminjaman Ruangan") {
+                                    countToShow = pendingCounts.pending_bookings;
+                                } else if (item.title === "Pengajuan Kendaraan") {
+                                    countToShow = pendingCounts.pending_vehicle_requests;
+                                } else if (item.title === "Order") {
+                                    countToShow = pendingCounts.pending_orders;
+                                }
+                            }
+
+                            return (
+                                <MenuCard
+                                    key={item.href}
+                                    {...item}
+                                    userRole={userRole}
+                                    isDriver={isDriver}
+                                    pendingCount={countToShow}
+                                />
+                            );
+                        })}
                     </div>
                 </div>
             </div>

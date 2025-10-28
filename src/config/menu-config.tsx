@@ -141,7 +141,7 @@ export const menuConfig: Record<string, NavItem[]> = {
       name: 'Jadwal Keberangkatan',
       icon: <CalendarClock />,
       path: '/vehicles/schedule',
-      roles: [1, 2],
+      roles: [1, 2, 3],
     },
     {
       name: 'Daftar Supir',

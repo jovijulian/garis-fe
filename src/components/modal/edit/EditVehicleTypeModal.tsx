@@ -89,7 +89,7 @@ const EditVehicleTypeModal: React.FC<EditProps> = ({
             <div className="no-scrollbar relative w-full max-w-[500px] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
                 <div className="pr-10">
                     <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90 lg:text-2xl">
-                        Edit Jenis Konsumsi
+                        Edit Jenis Kendaraan
                     </h4>
                 </div>
                 <form
@@ -101,7 +101,7 @@ const EditVehicleTypeModal: React.FC<EditProps> = ({
                 >
                     <div className="space-y-5 px-2 pb-3">
                         <div>
-                            <Label htmlFor="name">Nama jenis konsumsi</Label>
+                            <Label htmlFor="name">Nama jenis kendaraan</Label>
                             <Input
                                 type="text"
                                 id="name"

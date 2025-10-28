@@ -1,25 +1,25 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import _ from "lodash";
-
+import { useRouter, useSearchParams } from 'next/navigation';
 import { endpointUrl, httpGet, httpPost, alertToast } from '@/../helpers';
 import ComponentCard from '@/components/common/ComponentCard';
 import Select from '@/components/form/Select-custom';
 import Input from '@/components/form/input/InputField';
 import { Check, Loader2 } from 'lucide-react';
 import SingleDatePicker from "@/components/calendar/SingleDatePicker";
-import TimePicker from '@/components/calendar/TimePicker'; 
+import TimePicker from '@/components/calendar/TimePicker';
+
 
 interface VehicleRequestPayload {
   cab_id: number | null;
   pickup_location_text: string | null;
   destination: string;
-  start_time: string; 
-  end_time: string | null;   
+  start_time: string;
+  end_time: string | null;
   passenger_count: number;
   passenger_names: string;
   requested_vehicle_type_id: number | null;
@@ -34,8 +34,8 @@ interface FormState {
   cab_id: number | null;
   pickup_location_text: string;
   destination: string;
-  start_date: string; 
-  start_time: string; 
+  start_date: string;
+  start_time: string;
   end_date: string;
   end_time: string | null;
   passenger_count: number;
@@ -45,7 +45,7 @@ interface FormState {
   purpose: string;
   note: string;
   requires_driver?: boolean;
-  user_id: string | null; 
+  user_id: string | null;
 }
 
 interface SelectOption { value: string; label: string; }
@@ -54,7 +54,7 @@ export default function CreateVehicleRequestAdminPage() {
   const router = useRouter();
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const searchParams = useSearchParams();
   const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
   const [vehicleTypeOptions, setVehicleTypeOptions] = useState<SelectOption[]>([]);
   const [userOptions, setUserOptions] = useState<SelectOption[]>([]);
@@ -76,11 +76,32 @@ export default function CreateVehicleRequestAdminPage() {
     requested_vehicle_count: 1,
     purpose: "",
     note: "",
-    requires_driver: true, 
-    user_id: null, 
+    requires_driver: true,
+    user_id: null,
   });
 
   useEffect(() => {
+    const vehicleTypeIdParam = searchParams.get("vehicleTypeId");
+    const startTimeParam = searchParams.get("start_time");
+
+    const updates: Partial<FormState> = {};
+
+    if (startTimeParam) {
+      const startMoment = moment(startTimeParam, 'YYYY-MM-DDTHH:mm');
+      if (startMoment.isValid()) {
+        updates.start_date = startMoment.format('YYYY-MM-DD');
+        updates.start_time = startMoment.format('HH:mm');
+        updates.end_date = startMoment.format('YYYY-MM-DD');
+      }
+    }
+
+    if (vehicleTypeIdParam) {
+      updates.requested_vehicle_type_id = parseInt(vehicleTypeIdParam, 10);
+    }
+
+    if (Object.keys(updates).length > 0) {
+      setFormData(prev => ({ ...prev, ...updates }));
+    }
     const fetchInitialData = async () => {
       setLoadingOptions(true);
       setLoadingUsers(true);
@@ -88,12 +109,12 @@ export default function CreateVehicleRequestAdminPage() {
         const [sitesRes, vehicleTypesRes, usersRes] = await Promise.all([
           httpGet(endpointUrl("/rooms/site-options"), true),
           httpGet(endpointUrl("/vehicle-types/options"), true),
-          httpGet(endpointUrl("/users/options"), true), 
+          httpGet(endpointUrl("/users/options"), true),
         ]);
 
         setSiteOptions(sitesRes.data.data.map((s: any) => ({ value: s.id_cab.toString(), label: s.nama_cab })));
         setVehicleTypeOptions(vehicleTypesRes.data.data.map((vt: any) => ({ value: vt.id.toString(), label: vt.name })));
-        setUserOptions(usersRes.data.data.map((u: any) => ({ value: u.id_user, label: u.nama_user }))); 
+        setUserOptions(usersRes.data.data.map((u: any) => ({ value: u.id_user, label: u.nama_user })));
 
       } catch (error) {
         toast.error("Gagal memuat data awal untuk form.");
@@ -104,7 +125,7 @@ export default function CreateVehicleRequestAdminPage() {
     };
 
     fetchInitialData();
-  }, []);
+  }, [searchParams]);
 
   const handleFieldChange = (field: keyof FormState, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -114,20 +135,20 @@ export default function CreateVehicleRequestAdminPage() {
     e.preventDefault();
 
     if (!formData.user_id) {
-       toast.error("Harap pilih pengguna yang mengajukan.");
-       return;
+      toast.error("Harap pilih pengguna yang mengajukan.");
+      return;
     }
     if (!formData.start_date || !formData.start_time) {
       toast.error("Harap isi tanggal dan waktu mulai dengan lengkap.");
       return;
     }
     if (formData.end_date && formData.end_time) {
-        const startMoment = moment(`${formData.start_date} ${formData.start_time}`);
-        const endMoment = moment(`${formData.end_date} ${formData.end_time}`);
-        if (!endMoment.isAfter(startMoment)) {
-            toast.error("Waktu selesai harus setelah waktu mulai.");
-            return;
-        }
+      const startMoment = moment(`${formData.start_date} ${formData.start_time}`);
+      const endMoment = moment(`${formData.end_date} ${formData.end_time}`);
+      if (!endMoment.isAfter(startMoment)) {
+        toast.error("Waktu selesai harus setelah waktu mulai.");
+        return;
+      }
     }
 
 
@@ -143,7 +164,7 @@ export default function CreateVehicleRequestAdminPage() {
       pickup_location_text: formData.pickup_location_text || null,
       destination: formData.destination,
       start_time: start_time_iso,
-      end_time: end_time_iso, 
+      end_time: end_time_iso,
       passenger_count: Number(formData.passenger_count),
       passenger_names: formData.passenger_names,
       requested_vehicle_type_id: formData.requested_vehicle_type_id ? Number(formData.requested_vehicle_type_id) : null, // Handle null type
@@ -151,15 +172,15 @@ export default function CreateVehicleRequestAdminPage() {
       purpose: formData.purpose,
       note: formData.note,
       requires_driver: formData.requires_driver,
-      id_user: formData.user_id || undefined, 
+      id_user: formData.user_id || undefined,
     };
 
     try {
       await httpPost(endpointUrl('/vehicle-requests'), payload, true);
       toast.success("Pengajuan kendaraan berhasil dibuat!");
-      router.push('/vehicles/manage-requests'); 
+      router.push('/vehicles/manage-requests');
     } catch (error: any) {
-        toast.error("Gagal mengirim pengajuan."); 
+      toast.error("Gagal mengirim pengajuan.");
     } finally {
       setIsSubmitting(false);
     }
@@ -178,10 +199,10 @@ export default function CreateVehicleRequestAdminPage() {
             placeholder={loadingUsers ? "Memuat pengguna..." : "Pilih pengguna..."}
           />
         </div>
-        <hr/>
+        <hr />
 
         <h3 className="text-lg font-semibold border-b pb-2">Informasi Perjalanan</h3>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block font-medium mb-1">Keperluan<span className="text-red-400 ml-1">*</span></label>
             <Input defaultValue={formData.purpose} onChange={(e) => handleFieldChange('purpose', e.target.value)} placeholder="Contoh: Kunjungan klien..." required />
@@ -194,7 +215,7 @@ export default function CreateVehicleRequestAdminPage() {
 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+          <div>
             <label className="block font-medium mb-1">Cabang Penjemputan</label>
             <Select
               options={siteOptions}
@@ -218,7 +239,7 @@ export default function CreateVehicleRequestAdminPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-           <div>
+          <div>
             <label className="block font-medium mb-1">Tanggal Mulai<span className="text-red-400 ml-1">*</span></label>
             <SingleDatePicker
               placeholderText="Pilih tanggal"
@@ -232,37 +253,37 @@ export default function CreateVehicleRequestAdminPage() {
           </div>
           <div>
             <label className="block font-medium mb-1">Waktu Mulai<span className="text-red-400 ml-1">*</span></label>
-             <TimePicker
-                value={formData.start_time}
-                onChange={(newTime) => handleFieldChange('start_time', newTime)}
-                required={true}
-              />
+            <TimePicker
+              value={formData.start_time}
+              onChange={(newTime) => handleFieldChange('start_time', newTime)}
+              required={true}
+            />
           </div>
           <div>
             <label className="block font-medium mb-1">Tanggal Selesai</label>
-             <SingleDatePicker
+            <SingleDatePicker
               placeholderText="Pilih tanggal"
               selectedDate={formData.end_date ? new Date(formData.end_date) : null}
               onChange={(date: any) => handleFieldChange('end_date', moment(date).format('YYYY-MM-DD'))}
               onClearFilter={() => handleFieldChange('end_date', '')}
               viewingMonthDate={viewingMonthDate}
               onMonthChange={setViewingMonthDate}
-               disabled={isSubmitting}
+              disabled={isSubmitting}
             />
           </div>
           <div>
             <label className="block font-medium mb-1">Waktu Selesai</label>
-             <TimePicker
-                value={formData.end_time || ''}
-                onChange={(newTime) => handleFieldChange('end_time', newTime)}
-                required={false} 
-              />
+            <TimePicker
+              value={formData.end_time || ''}
+              onChange={(newTime) => handleFieldChange('end_time', newTime)}
+              required={false}
+            />
           </div>
         </div>
 
         <h3 className="text-lg font-semibold border-b pb-2 pt-4">Detail Kebutuhan</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-           <div>
+          <div>
             <label className="block font-medium mb-1">Jenis Kendaraan<span className="text-red-400 ml-1">*</span></label>
             <Select
               options={vehicleTypeOptions}
@@ -276,33 +297,33 @@ export default function CreateVehicleRequestAdminPage() {
           </div>
           <div>
             <label className="block font-medium mb-1">Jumlah Unit<span className="text-red-400 ml-1">*</span></label>
-            <Input type="number" defaultValue={formData.requested_vehicle_count} onChange={(e) => handleFieldChange('requested_vehicle_count', Number(e.target.value) < 1 ? 1 : e.target.value)} placeholder="1" required disabled={isSubmitting}/>
+            <Input type="number" defaultValue={formData.requested_vehicle_count} onChange={(e) => handleFieldChange('requested_vehicle_count', Number(e.target.value) < 1 ? 1 : e.target.value)} placeholder="1" required disabled={isSubmitting} />
           </div>
-           <div>
+          <div>
             <label className="block font-medium mb-1">Jumlah Penumpang<span className="text-red-400 ml-1">*</span></label>
-            <Input type="number" defaultValue={formData.passenger_count} onChange={(e) => handleFieldChange('passenger_count', Number(e.target.value) < 1 ? 1 : e.target.value)} placeholder="1" required disabled={isSubmitting}/>
+            <Input type="number" defaultValue={formData.passenger_count} onChange={(e) => handleFieldChange('passenger_count', Number(e.target.value) < 1 ? 1 : e.target.value)} placeholder="1" required disabled={isSubmitting} />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div>
+          <div>
             <label className="block font-medium mb-1">Nama Penumpang</label>
-            <textarea value={formData.passenger_names} onChange={(e) => handleFieldChange('passenger_names', e.target.value)} rows={5} placeholder={"Contoh: Budi, Susi, dan Tamu Klien"} className="w-full border p-2 rounded-md" disabled={isSubmitting}/>
+            <textarea value={formData.passenger_names} onChange={(e) => handleFieldChange('passenger_names', e.target.value)} rows={5} placeholder={"Contoh: Budi, Susi, dan Tamu Klien"} className="w-full border p-2 rounded-md" disabled={isSubmitting} />
           </div>
           <div>
             <label className="block font-medium mb-1">Catatan Tambahan</label>
-            <textarea value={formData.note} onChange={(e) => handleFieldChange('note', e.target.value)} rows={5} placeholder={"Contoh: Mohon siapkan mobil yang bersih."} className="w-full border p-2 rounded-md" disabled={isSubmitting}/>
+            <textarea value={formData.note} onChange={(e) => handleFieldChange('note', e.target.value)} rows={5} placeholder={"Contoh: Mohon siapkan mobil yang bersih."} className="w-full border p-2 rounded-md" disabled={isSubmitting} />
           </div>
         </div>
 
         <div>
-           <label className="inline-flex items-center">
+          <label className="inline-flex items-center">
             <input
               type="checkbox"
               checked={formData.requires_driver}
               onChange={(e) => handleFieldChange('requires_driver', e.target.checked)}
               className="form-checkbox h-5 w-5 text-blue-600"
-               disabled={isSubmitting}
+              disabled={isSubmitting}
             />
             <span className="ml-2">Memerlukan Supir?</span>
           </label>
@@ -310,8 +331,8 @@ export default function CreateVehicleRequestAdminPage() {
 
 
         <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={() => router.back()} className="px-6 py-2 bg-gray-600 text-white rounded-lg">Batal</button>
-            <button type="submit" disabled={isSubmitting || loadingOptions || loadingUsers} className="px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2">
+          <button type="button" onClick={() => router.back()} className="px-6 py-2 bg-gray-600 text-white rounded-lg">Batal</button>
+          <button type="submit" disabled={isSubmitting || loadingOptions || loadingUsers} className="px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2">
             {isSubmitting ? <Loader2 className="animate-spin w-5 h-5" /> : <Check />}
             {isSubmitting ? "Mengirim..." : "Kirim Pengajuan"}
           </button>
