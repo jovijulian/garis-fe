@@ -10,9 +10,9 @@ export default function useLogout() {
     try {
       await httpPost(endpointUrl("auth/logout"), "", true);
       localStorage.clear();
-      router.push("/signin");
       deleteCookie("cookieKey");
       deleteCookie("role");
+      router.push("/signin");
     } catch (error: any) {
       const message = error.response?.data?.message || "An error occurred";
       alertToast("error", message);
