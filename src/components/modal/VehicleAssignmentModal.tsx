@@ -73,47 +73,56 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         setLoadingOptions(true);
         setVehicleOptions([]);
         setDriverOptions([]);
-
+      
         const params: any = {};
-        if (statusFilter !== 'All') {
-            params.status = statusFilter;
+        if (statusFilter !== "All") {
+          params.status = statusFilter;
         }
         if (filterByBranch && adminCabId) {
-            params.cab_id = adminCabId;
+          params.cab_id = adminCabId;
         }
-
+      
         try {
-            const [vehiclesRes, driversRes] = await Promise.all([
-                httpGet(endpointUrl('/vehicles/options'), true, params),
-                httpGet(endpointUrl('/drivers/options'), true, params),
-            ]);
-
-            const fetchedVehicleOptions = vehiclesRes.data.data.map((v: any) => ({
-                value: v.id.toString(),
-                label: `${v.name} (${v.license_plate})`
-            }));
-            const fetchedDriverOptions = driversRes.data.data.map((d: any) => ({
-                value: d.id.toString(),
-                label: d.name
-            }));
-
-            setVehicleOptions(fetchedVehicleOptions);
-            setDriverOptions(fetchedDriverOptions);
-
-            setAssignments(prevAssignments => prevAssignments.map(assign => ({
-                ...assign,
-                vehicle_id: fetchedVehicleOptions.some((opt: any) => opt.value === assign.vehicle_id) ? assign.vehicle_id : null,
-                driver_id: fetchedDriverOptions.some((opt: any) => opt.value === assign.driver_id) ? assign.driver_id : null,
-            })));
-
-
-        } catch (error) {
-            toast.error("Gagal memuat data kendaraan/supir.");
-            console.error("Option fetch error:", error);
-        } finally {
-            setLoadingOptions(false);
+          const vehiclesRes = await httpGet(endpointUrl("/vehicles/options"), true, params);
+          const fetchedVehicleOptions = vehiclesRes.data?.data?.map((v: any) => ({
+            value: v.id.toString(),
+            label: `${v.name} (${v.license_plate})`,
+          })) || [];
+      
+          setVehicleOptions(fetchedVehicleOptions);
+        } catch (err) {
+          toast.warning("Data kendaraan tidak dapat dimuat sepenuhnya.");
+          console.warn("Vehicle fetch error:", err);
         }
-    }, [statusFilter, filterByBranch, adminCabId]);
+      
+        try {
+          const driversRes = await httpGet(endpointUrl("/drivers/options"), true, params);
+          const fetchedDriverOptions = driversRes.data?.data?.map((d: any) => ({
+            value: d.id.toString(),
+            label: d.name,
+          })) || [];
+      
+          setDriverOptions(fetchedDriverOptions);
+        } catch (err) {
+          toast.warning("Data driver tidak dapat dimuat.");
+          console.warn("Driver fetch error:", err);
+        }
+      
+        setAssignments((prevAssignments) =>
+          prevAssignments.map((assign) => ({
+            ...assign,
+            vehicle_id: vehicleOptions.some((opt: any) => opt.value === assign.vehicle_id)
+              ? assign.vehicle_id
+              : null,
+            driver_id: driverOptions.some((opt: any) => opt.value === assign.driver_id)
+              ? assign.driver_id
+              : null,
+          }))
+        );
+      
+        setLoadingOptions(false);
+      }, [statusFilter, filterByBranch, adminCabId]);
+      
     // ------------------------------
 
     useEffect(() => {
