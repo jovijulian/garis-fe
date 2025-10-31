@@ -17,6 +17,7 @@ import { toast } from 'react-toastify'
 import VehicleScheduleGrid, { ScheduleData } from '@/components/schedule/VehicleScheduleGrid';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { ReadonlyURLSearchParams } from 'next/navigation';
+import MultiSelect from "@/components/form/MultiSelect-custom";
 
 interface SelectOption { value: string; label: string; }
 
@@ -33,7 +34,7 @@ export default function ScheduleDisplayPage() {
     const [role, setRole] = useState<string>('');
     const selectedDate = searchParams.get("date") || moment().format('YYYY-MM-DD');
     const selectedBranch = searchParams.get("cab_id") || '';
-
+    const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
     const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);
     const [loadingBranches, setLoadingBranches] = useState(true);
 
@@ -47,12 +48,13 @@ export default function ScheduleDisplayPage() {
         } catch (err) { console.error("Failed to load branches:", err); setBranchOptions([{ value: '', label: 'Semua Cabang' }]); } finally { setLoadingBranches(false); }
     }, []);
 
-   
+
     const fetchSchedule = useCallback(async (isInitialLoad = false) => {
         if (!isInitialLoad) setIsLoading(true);
         setError(null);
         const params: any = { date: selectedDate };
         if (selectedBranch) params.cab_id = selectedBranch;
+        if (selectedStatuses.length > 0) params.statuses = selectedStatuses.join(',');
 
         try {
             const response = await httpGet(endpointUrl("/vehicle-requests/schedule"), true, params);
@@ -66,7 +68,7 @@ export default function ScheduleDisplayPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [selectedDate, selectedBranch]);
+    }, [selectedDate, selectedBranch, selectedStatuses]);
 
     const latestFetchSchedule = useRef(fetchSchedule);
 
@@ -142,6 +144,12 @@ export default function ScheduleDisplayPage() {
         }
     };
 
+    const statusOptions = [
+        { value: '', label: 'Semua Status' },
+        { value: 'Approved', label: 'Approved' },
+        { value: 'In Progress', label: 'In Progress' },
+        { value: 'Completed', label: 'Completed' },
+    ];
 
 
     return (
@@ -159,12 +167,12 @@ export default function ScheduleDisplayPage() {
                 </div>
 
                 <div className="
-  flex flex-col sm:flex-row 
-  items-stretch sm:items-center 
-  gap-3 sm:gap-2 
-  w-full sm:w-auto 
-  justify-end
-">
+                    flex flex-col sm:flex-row 
+                    items-stretch sm:items-center 
+                    gap-3 sm:gap-2 
+                    w-full sm:w-auto 
+                    justify-end
+                    ">
                     <div className="w-full sm:w-48">
                         {loadingBranches ? (
                             <div className="h-10 bg-gray-200 rounded animate-pulse" />
@@ -187,6 +195,17 @@ export default function ScheduleDisplayPage() {
                             viewingMonthDate={viewingMonthDate}
                             onMonthChange={setViewingMonthDate}
                         />
+                    </div>
+                    <div className="w-full sm:w-48">
+                        <MultiSelect
+                            placeholder="Pilih Status"
+                            value={statusOptions.filter(opt => selectedStatuses.includes(opt.value))}
+                            options={statusOptions}
+                            onValueChange={(selectedOptions: { value: string, label: string }[]) => {
+                                setSelectedStatuses(selectedOptions.map(opt => String(opt.value)));
+                            }}
+                        />
+
                     </div>
 
                     <div className="flex sm:block justify-end">
@@ -245,7 +264,7 @@ export default function ScheduleDisplayPage() {
                 )}
 
                 {!error && scheduleData && scheduleData.columns.length > 0 && (
-                    <VehicleScheduleGrid data={scheduleData} selectedDate={selectedDate} role={role}/>
+                    <VehicleScheduleGrid data={scheduleData} selectedDate={selectedDate} role={role} />
                 )}
             </main>
 
