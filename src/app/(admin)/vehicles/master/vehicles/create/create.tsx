@@ -145,9 +145,9 @@ export default function CreateRoomForm() {
                     />
                 </div>
                 <div>
-                    <label className="block font-medium mb-1">Kapasitas<span className="text-red-400 ml-1">*</span></label>
+                    <label className="block font-medium mb-1">Maksimal Kapasitas<span className="text-red-400 ml-1">*</span></label>
                     <Input
-                        type="text"
+                        type="number"
                         defaultValue={formData.passenger_capacity}
                         onChange={(e) => handleFieldChange('passenger_capacity', e.target.value)}
                         required

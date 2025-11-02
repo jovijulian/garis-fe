@@ -128,7 +128,7 @@ export default function VehiclesPage() {
             },
             {
                 id: "passenger_capacity",
-                header: "Kapasitas",
+                header: "Maksimal Kapasitas",
                 accessorKey: "passenger_capacity",
                 cell: ({ row }: any) => <span>{row.passenger_capacity}</span>,
             },
