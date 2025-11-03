@@ -7,6 +7,7 @@ import Badge from "@/components/ui/badge/Badge";
 import { endpointUrl, httpGet } from "@/../helpers";
 import { FaUserEdit } from "react-icons/fa";
 import EditAccessModal from "@/components/modal/edit/EditAccessModal";
+import { useSearchParams } from "next/navigation";
 
 interface SiteAccess {
     id: number;
@@ -41,7 +42,12 @@ export default function UserAccessTable() {
     const [selectedUser, setSelectedUser] = useState<UserAccessItem | null>(null);
     const [pagination, setPagination] = useState({ page: 1, per_page: 20, total: 0, last_page: 1 });
     const [searchTerm, setSearchTerm] = useState('');
-
+    const searchParams = useSearchParams();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(20);
+    const [lastPage, setLastPage] = useState(1);
+    const [count, setCount] = useState(0);
+    const page = searchParams.get("page") || "1";
     const getRoleInfo = (roleId: number): { name: string; color: BadgeColor } => {
         switch (roleId) {
             case 1: return { name: "Super Admin", color: "primary" };
@@ -49,6 +55,15 @@ export default function UserAccessTable() {
             case 3: return { name: "User", color: "warning" };
             default: return { name: "Unknown", color: "error" };
         }
+    };
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    const handlePerPageChange = (newPerPage: number) => {
+        setPerPage(newPerPage);
+        setCurrentPage(1);
     };
 
 
@@ -119,14 +134,24 @@ export default function UserAccessTable() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const params = { page: pagination.page, per_page: pagination.per_page, search: searchTerm };
+            const search = searchTerm.trim();;
+            const page = searchParams.get("page");
+            const perPageParam = searchParams.get("per_page");
+
+            const params: any = {
+                ...(search ? { search } : {}),
+                per_page: perPageParam ? Number(perPageParam) : perPage,
+                page: page ? Number(page) : currentPage,
+            };
+
             const [usersRes, sitesRes] = await Promise.all([
                 httpGet(endpointUrl("user-access"), true, params),
                 httpGet(endpointUrl("user-access/sites"), true)
             ]);
 
             setData(usersRes.data.data.data);
-            setPagination(usersRes.data.data.pagination);
+            setCount(usersRes.data.data.pagination.total);
+            setLastPage(usersRes.data.data.pagination.total_pages);
             setAllSites(sitesRes.data.data);
         } catch (error) {
             toast.error("Gagal mengambil data akses pengguna.");
@@ -137,7 +162,7 @@ export default function UserAccessTable() {
 
     useEffect(() => {
         fetchData();
-    }, [pagination.page, pagination.per_page, searchTerm]);
+    }, [searchParams, currentPage, perPage, page, searchTerm]);
 
     return (
         <div className="space-y-4">
@@ -156,10 +181,10 @@ export default function UserAccessTable() {
                 columns={columns}
                 loading={isLoading}
                 pagination={true}
-                total={pagination.total}
-                lastPage={pagination.last_page}
-                onPageChange={(page) => setPagination(p => ({ ...p, page }))}
-                onPerPageChange={(per_page) => setPagination(p => ({ ...p, per_page, page: 1 }))}
+                lastPage={lastPage}
+                total={count}
+                onPageChange={handlePageChange}
+                onPerPageChange={handlePerPageChange}
             />
 
             <EditAccessModal
