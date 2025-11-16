@@ -36,7 +36,8 @@ export default function CreateOrderPage() {
   const [consumptionTypeOptions, setConsumptionTypeOptions] = useState<SelectOption[]>([]);
   const [fromBookingIdFromUrl, setFromBookingIdFromUrl] = useState<boolean>(false);
   const [viewingMonthDate, setViewingMonthDate] = useState(new Date());
-
+  const [bookingStartTime, setBookingStartTime] = useState<string | null>(null);
+  const [bookingEndTime, setBookingEndTime] = useState<string | null>(null);
   const [headerData, setHeaderData] = useState({
     booking_id: null as number | null,
     cab_id: null as number | null,
@@ -86,6 +87,8 @@ export default function CreateOrderPage() {
             order_date: moment(b.start_time).format('YYYY-MM-DD'),
             pax: b.pax || '',
           }));
+          setBookingEndTime(b.end_time);
+          setBookingStartTime(b.start_time);
 
           setDetails([{
             consumption_type_id: null,
@@ -311,6 +314,18 @@ export default function CreateOrderPage() {
                     value={item.delivery_time}
                     onChange={(newTime) => handleDetailChange(index, 'delivery_time', newTime)}
                     required={true}
+                    minTime={
+                      (fromBookingIdFromUrl && bookingStartTime && moment(headerData.order_date).isSame(moment(bookingStartTime), 'day'))
+                      ? moment(bookingStartTime).format('HH:mm')
+                      : undefined
+                    }
+                  
+                    // Waktu Selesai Booking
+                    maxTime={
+                      (fromBookingIdFromUrl && bookingEndTime && moment(headerData.order_date).isSame(moment(bookingEndTime), 'day'))
+                      ? moment(bookingEndTime).format('HH:mm')
+                      : undefined
+                    }
                   />
                 </div>
                 <div className="md:col-span-1 flex items-center justify-end">

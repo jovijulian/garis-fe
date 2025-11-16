@@ -205,19 +205,22 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
                         </div>
                     </div>
                     <div>
-                        <label className="block font-medium mb-1">Fasilitas Tambahan</label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3 border rounded-md">
-                            {loadingOptions ? <p>Memuat...</p> : amenityOptions.map(amenity => (
-                                <label key={amenity.id} className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.amenity_ids.includes(amenity.id)}
-                                        onChange={() => handleAmenityChange(amenity.id)}
-                                        className="h-4 w-4 rounded"
-                                    />
-                                    <span>{amenity.name}</span>
-                                </label>
-                            ))}
+                        <label className="block font-medium mb-1">Fasilitas yang tersedia</label>
+                        <div className="border rounded-md">
+                            {loadingOptions ? (
+                                <p className="p-4 text-gray-500">Memuat fasilitas...</p>
+                            ) : (
+                                <ul className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
+                                    {amenityOptions.map(amenity => (
+                                        <li
+                                            key={amenity.id}
+                                            className="flex items-center gap-2 p-2 bg-gray-50 rounded-md"
+                                        >
+                                            <span className="text-sm">{amenity.name}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
                     </div>
                     <div>

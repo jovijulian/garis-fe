@@ -124,7 +124,7 @@ export default function CreateVehicleRequestPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.start_date || !formData.start_time) {
+    if (!formData.start_date || !formData.start_time || !formData.end_date || !formData.end_time) {
       toast.error("Harap isi waktu mulai dan waktu selesai dengan lengkap.");
       return;
     }
@@ -231,7 +231,7 @@ export default function CreateVehicleRequestPage() {
             />
           </div>
           <div>
-            <label className="block font-medium mb-1">Tanggal Selesai</label>
+            <label className="block font-medium mb-1">Tanggal Selesai<span className="text-red-400 ml-1">*</span></label>
             <SingleDatePicker
               placeholderText="Pilih tanggal"
               selectedDate={formData.end_date ? new Date(formData.end_date) : null}
@@ -242,11 +242,11 @@ export default function CreateVehicleRequestPage() {
             />
           </div>
           <div>
-            <label className="block font-medium mb-1">Waktu Selesai</label>
+            <label className="block font-medium mb-1">Waktu Selesai<span className="text-red-400 ml-1">*</span></label>
             <TimePicker
               value={formData.end_time || ''}
               onChange={(newTime) => handleFieldChange('end_time', newTime)}
-              required={false}
+              required={true}
             />
           </div>
         </div>

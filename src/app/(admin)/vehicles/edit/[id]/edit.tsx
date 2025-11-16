@@ -130,7 +130,7 @@ export default function EditVehicleRequestPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.start_date || !formData.start_time) {
+        if (!formData.start_date || !formData.start_time || !formData.end_date || !formData.end_time) {
             toast.error("Harap isi waktu mulai dan waktu selesai dengan lengkap.");
             return;
         }
@@ -249,7 +249,7 @@ export default function EditVehicleRequestPage() {
                         <TimePicker
                             value={formData.end_time || ''}
                             onChange={(newTime) => handleFieldChange('end_time', newTime)}
-                            required={false}
+                            required={true}
                         />
                     </div>
                 </div>

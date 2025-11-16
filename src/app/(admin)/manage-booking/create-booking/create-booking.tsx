@@ -159,7 +159,7 @@ export default function CreateBookingPage() {
 
             if (!availabilityRes.data.data.is_available) {
                 // Jika bentrok, simpan detailnya dan BUKA MODAL
-                setConflictDetails(availabilityRes.data.data.conflictingBooking);
+                setConflictDetails(availabilityRes.data.data.conflictingBookings);
                 setConflictModalOpen(true);
                 setIsSubmitting(false); // Berhenti loading karena menunggu input user
                 return; // Hentikan proses submit utama
@@ -282,7 +282,7 @@ export default function CreateBookingPage() {
                             type="datetime-local"
                             value={formData.start_time}
                             onChange={e => handleFieldChange('start_time', e.target.value)}
-                            min={minDateTime}
+                            // min={minDateTime}
                             className="w-full border p-2 rounded-md dark:bg-gray-800 dark:border-gray-600"
                             required
                         />
@@ -293,26 +293,30 @@ export default function CreateBookingPage() {
                             type="datetime-local"
                             value={formData.end_time}
                             onChange={e => handleFieldChange('end_time', e.target.value)}
-                            min={formData.start_time || minDateTime}
+                            // min={formData.start_time || minDateTime}
                             className="w-full border p-2 rounded-md dark:bg-gray-800 dark:border-gray-600"
                             required
                         />
                     </div>
                 </div>
                 <div>
-                    <label className="block font-medium mb-1">Fasilitas Tambahan</label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border rounded-md">
-                        {loadingOptions ? <p>Memuat fasilitas...</p> : amenityOptions.map(amenity => (
-                            <label key={amenity.id} className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.amenity_ids.includes(amenity.id)}
-                                    onChange={() => handleAmenityChange(amenity.id)}
-                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                <span>{amenity.name}</span>
-                            </label>
-                        ))}
+                    <label className="block font-medium mb-1">Fasilitas yang tersedia</label>
+
+                    <div className="border rounded-md">
+                        {loadingOptions ? (
+                            <p className="p-4 text-gray-500">Memuat fasilitas...</p>
+                        ) : (
+                            <ul className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
+                                {amenityOptions.map(amenity => (
+                                    <li
+                                        key={amenity.id}
+                                        className="flex items-center gap-2 p-2 bg-gray-50 rounded-md"
+                                    >
+                                        <span className="text-sm">{amenity.name}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
                 <div>
@@ -321,7 +325,7 @@ export default function CreateBookingPage() {
                         value={formData.notes}
                         onChange={(e) => handleFieldChange('notes', e.target.value)}
                         rows={4}
-                        placeholder="Tuliskan permintaan atau catatan khusus di sini..."
+                        placeholder="Tuliskan permintaan fasilitas atau catatan khusus di sini..."
                         className="w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-600"
                     />
                 </div>
