@@ -11,10 +11,9 @@ import { endpointUrl, httpGet, httpPost } from '@/../helpers';
 import ComponentCard from '@/components/common/ComponentCard';
 import Select from '@/components/form/Select-custom';
 import Input from '@/components/form/input/InputField';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Info, Loader2 } from 'lucide-react';
 import ConflictConfirmationModal from '@/components/modal/ConflictConfirmationModal';
 
-// Interface untuk data form
 interface BookingFormData {
     room_id: number | null;
     topic_id: number | null;
@@ -23,7 +22,6 @@ interface BookingFormData {
     start_time: string;
     end_time: string;
     notes: string;
-    amenity_ids: number[];
 }
 
 // Interface untuk pilihan dropdown
@@ -42,6 +40,12 @@ interface TopicOption {
     name: string;
 }
 
+interface RoomData {
+    id: number;
+    name: string;
+    capacity: number;
+    amenities: AmenityOption[]; 
+}
 
 export default function CreateBookingPage() {
     const router = useRouter();
@@ -53,13 +57,12 @@ export default function CreateBookingPage() {
         start_time: '',
         end_time: '',
         notes: '',
-        amenity_ids: [],
     });
-
+    const [rawRooms, setRawRooms] = useState<RoomData[]>([]);
+    const [availableAmenities, setAvailableAmenities] = useState<AmenityOption[]>([]);
     const [roomOptions, setRoomOptions] = useState<SelectOption[]>([]);
     const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
     const [topicOptions, setTopicOptions] = useState<TopicOption[]>([]);
-    const [amenityOptions, setAmenityOptions] = useState<AmenityOption[]>([]);
     const [loadingOptions, setLoadingOptions] = useState(true);
     const [loadingRoomOptions, setLoadingRoomOptions] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,9 +76,8 @@ export default function CreateBookingPage() {
 
     const fetchOptions = async () => {
         try {
-            const [siteRes, amenitiesRes, topicRes] = await Promise.all([
+            const [siteRes, topicRes] = await Promise.all([
                 httpGet(endpointUrl("/rooms/site-options"), true),
-                httpGet(endpointUrl("/amenities/options"), true),
                 httpGet(endpointUrl("/topics/options"), true),
             ]);
 
@@ -85,7 +87,6 @@ export default function CreateBookingPage() {
             }));
 
             setSiteOptions(formattedSite);
-            setAmenityOptions(amenitiesRes.data.data || []);
             setTopicOptions(topicRes.data.data || []);
         } catch (error) {
             console.log(error)
@@ -99,15 +100,6 @@ export default function CreateBookingPage() {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleAmenityChange = (amenityId: number) => {
-        setFormData(prev => {
-            const newAmenityIds = prev.amenity_ids.includes(amenityId)
-                ? prev.amenity_ids.filter(id => id !== amenityId)
-                : [...prev.amenity_ids, amenityId];
-            return { ...prev, amenity_ids: newAmenityIds };
-        });
-    };
-
     const handleConfirmSubmit = async () => {
         setIsSubmitting(true);
         try {
@@ -117,7 +109,7 @@ export default function CreateBookingPage() {
                 end_time: moment(formData.end_time).utc().toISOString(),
             };
 
-            const response = await httpPost(endpointUrl("/bookings"), payload, true);
+            const response = await httpPost(endpointUrl("/bookings1"), payload, true);
             const newBooking = response.data.data;
             toast.success("Pengajuan booking berhasil dikirim!");
             setConflictModalOpen(false);
@@ -134,7 +126,6 @@ export default function CreateBookingPage() {
         }
     };
 
-    // Fungsi ini dipanggil saat form di-submit pertama kali
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const { room_id, purpose, start_time, end_time } = formData;
@@ -158,21 +149,18 @@ export default function CreateBookingPage() {
             });
 
             if (!availabilityRes.data.data.is_available) {
-                // Jika bentrok, simpan detailnya dan BUKA MODAL
                 setConflictDetails(availabilityRes.data.data.conflictingBookings);
                 setConflictModalOpen(true);
-                setIsSubmitting(false); // Berhenti loading karena menunggu input user
-                return; // Hentikan proses submit utama
+                setIsSubmitting(false);
+                return; 
             }
 
-            // Jika tidak bentrok, langsung kirim
             await handleConfirmSubmit();
 
         } catch (error: any) {
             toast.error(error?.response?.data?.message || "Gagal memeriksa ketersediaan.");
             setIsSubmitting(false);
         }
-        // finally tidak perlu di sini karena sudah dihandle di handleConfirmSubmit
     };
 
     const handleSiteChange = async (siteId: any) => {
@@ -181,20 +169,44 @@ export default function CreateBookingPage() {
 
         handleFieldChange("room_id", null);
         setRoomOptions([]);
+        setRawRooms([]); 
+        setAvailableAmenities([]);
+
         try {
             const roomsRes = await httpGet(endpointUrl("/rooms/options"), true, { site: siteId.value });
-            const formattedRooms = roomsRes.data.data.map((room: any) => ({
+            
+            const roomsData: RoomData[] = roomsRes.data.data;
+            setRawRooms(roomsData);
+
+            const formattedRooms = roomsData.map((room: any) => ({
                 value: room.id.toString(),
                 label: `${room.name} (Kapasitas: ${room.capacity} orang)`,
             }));
             setRoomOptions(formattedRooms);
         } catch (error) {
             setRoomOptions([]);
+            setRawRooms([]);
         } finally {
             setLoadingRoomOptions(false);
         }
     };
 
+    const handleRoomChange = (selectedOption: SelectOption | null) => {
+        if (selectedOption) {
+            const roomId = parseInt(selectedOption.value);
+            handleFieldChange('room_id', roomId);
+            const selectedRoom = rawRooms.find(r => r.id === roomId);
+            
+            if (selectedRoom && selectedRoom.amenities) {
+                setAvailableAmenities(selectedRoom.amenities);
+            } else {
+                setAvailableAmenities([]);
+            }
+        } else {
+            handleFieldChange('room_id', null);
+            setAvailableAmenities([]);
+        }
+    };
     const minDateTime = moment().format('YYYY-MM-DDTHH:mm');
 
     return (
@@ -214,7 +226,7 @@ export default function CreateBookingPage() {
                 <div>
                     <label className="block font-medium mb-1">Ruangan<span className="text-red-500 ml-1">*</span></label>
                     <Select
-                        onValueChange={(opt) => handleFieldChange('room_id', parseInt(opt.value))}
+                       onValueChange={handleRoomChange}
                         placeholder={loadingRoomOptions ? "Memuat ruangan..." : "Pilih Ruangan"}
                         value={roomOptions.find(opt => opt.value === formData.room_id?.toString()) || null}
                         options={roomOptions}
@@ -282,7 +294,7 @@ export default function CreateBookingPage() {
                             type="datetime-local"
                             value={formData.start_time}
                             onChange={e => handleFieldChange('start_time', e.target.value)}
-                            // min={minDateTime}
+                            min={minDateTime}
                             className="w-full border p-2 rounded-md dark:bg-gray-800 dark:border-gray-600"
                             required
                         />
@@ -293,26 +305,31 @@ export default function CreateBookingPage() {
                             type="datetime-local"
                             value={formData.end_time}
                             onChange={e => handleFieldChange('end_time', e.target.value)}
-                            // min={formData.start_time || minDateTime}
+                            min={formData.start_time || minDateTime}
                             className="w-full border p-2 rounded-md dark:bg-gray-800 dark:border-gray-600"
                             required
                         />
                     </div>
                 </div>
-                <div>
-                    <label className="block font-medium mb-1">Fasilitas yang tersedia</label>
-
-                    <div className="border rounded-md">
-                        {loadingOptions ? (
-                            <p className="p-4 text-gray-500">Memuat fasilitas...</p>
+                <div className="animate-fade-in">
+                    <label className="block font-medium mb-1">Fasilitas Ruangan Ini</label>
+                    <div className="border rounded-md bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+                        {!formData.room_id ? (
+                            <p className="p-4 text-gray-500 italic flex items-center gap-2">
+                                <Info className="w-4 h-4" />
+                                Silakan pilih ruangan untuk melihat fasilitas tersedia.
+                            </p>
+                        ) : availableAmenities.length === 0 ? (
+                             <p className="p-4 text-gray-500 italic">Tidak ada fasilitas khusus terdaftar di ruangan ini.</p>
                         ) : (
-                            <ul className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
-                                {amenityOptions.map(amenity => (
+                            <ul className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">
+                                {availableAmenities.map(amenity => (
                                     <li
                                         key={amenity.id}
-                                        className="flex items-center gap-2 p-2 bg-gray-50 rounded-md"
+                                        className="flex items-center gap-2 p-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-md shadow-sm text-sm"
                                     >
-                                        <span className="text-sm">{amenity.name}</span>
+                                        <Check className="w-4 h-4 text-green-500" />
+                                        <span>{amenity.name}</span>
                                     </li>
                                 ))}
                             </ul>

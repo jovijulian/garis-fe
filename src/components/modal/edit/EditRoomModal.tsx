@@ -6,8 +6,8 @@ import { toast } from "react-toastify";
 import { endpointUrl, httpGet, httpPut } from "@/../helpers";
 
 import { Modal } from "@/components/ui/modal";
-import ComponentCard from "@/components/common/ComponentCard";
 import Select from "@/components/form/Select-custom";
+import MultiSelect from "@/components/form/MultiSelect-custom";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 
@@ -17,6 +17,7 @@ interface RoomFormData {
     capacity: string; 
     location: string;
     description: string;
+    amenity_ids: number[];
 }
 
 interface SelectOption {
@@ -43,32 +44,41 @@ const EditRoomModal: React.FC<EditProps> = ({
         capacity: "",
         location: "",
         description: "",
+        amenity_ids: [], 
     });
 
     const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
-    const [loadingSites, setLoadingSites] = useState(true);
+    const [amenityOptions, setAmenityOptions] = useState<SelectOption[]>([]); 
+    const [loadingOptions, setLoadingOptions] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState("");
 
     const handleFieldChange = (field: keyof RoomFormData, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     useEffect(() => {
-        const fetchSites = async () => {
-            setLoadingSites(true);
+        const fetchOptions = async () => {
+            setLoadingOptions(true);
             try {
-                const response = await httpGet(endpointUrl("/rooms/site-options"), true);
-                const formattedOptions = response.data.data.map((site: any) => ({
+                const siteResponse = await httpGet(endpointUrl("/rooms/site-options"), true);
+                const formattedSites = siteResponse.data.data.map((site: any) => ({
                     value: site.id_cab.toString(),
                     label: site.nama_cab,
                 }));
-                setSiteOptions(formattedOptions);
+                setSiteOptions(formattedSites);
+
+                const amenityResponse = await httpGet(endpointUrl("/amenities/options"), true);
+                const formattedAmenities = amenityResponse.data.data.map((item: any) => ({
+                    value: item.id.toString(),
+                    label: item.name,
+                }));
+                setAmenityOptions(formattedAmenities);
+
             } catch (error) {
-                toast.error("Gagal memuat data lokasi.");
+                toast.error("Gagal memuat data opsi.");
             } finally {
-                setLoadingSites(false);
+                setLoadingOptions(false);
             }
         };
 
@@ -78,12 +88,17 @@ const EditRoomModal: React.FC<EditProps> = ({
             try {
                 const response = await httpGet(endpointUrl(`rooms/${selectedId}`), true);
                 const roomData = response.data.data;
+                const existingAmenityIds = roomData.amenities 
+                    ? roomData.amenities.map((a: any) => a.id) 
+                    : [];
+
                 setFormData({
                     name: roomData.name || "",
                     cab_id: roomData.cab_id || null,
                     capacity: roomData.capacity?.toString() || "",
                     location: roomData.location || "",
                     description: roomData.description || "",
+                    amenity_ids: existingAmenityIds,
                 });
             } catch (err: any) {
                 toast.error(err?.response?.data?.message || "Gagal mengambil data ruangan.");
@@ -93,7 +108,7 @@ const EditRoomModal: React.FC<EditProps> = ({
         };
 
         if (isOpen) {
-            fetchSites();
+            fetchOptions();
             fetchRoomData();
         }
     }, [isOpen, selectedId]);
@@ -106,6 +121,7 @@ const EditRoomModal: React.FC<EditProps> = ({
             ...formData,
             cab_id: parseInt(formData.cab_id!.toString(), 10),
             capacity: parseInt(formData.capacity, 10),
+            // amenity_ids sudah array, dikirim langsung
         };
 
         try {
@@ -118,6 +134,12 @@ const EditRoomModal: React.FC<EditProps> = ({
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const getSelectedAmenities = () => {
+        return amenityOptions.filter((opt) => 
+            formData.amenity_ids.includes(parseInt(opt.value))
+        );
     };
 
     return (
@@ -149,13 +171,28 @@ const EditRoomModal: React.FC<EditProps> = ({
                                 <Label>Lokasi (Cabang)</Label>
                                 <Select
                                     onValueChange={(opt) => handleFieldChange('cab_id', parseInt(opt.value, 10))}
-                                    placeholder={loadingSites ? "Memuat..." : "Pilih Lokasi"}
+                                    placeholder={loadingOptions ? "Memuat..." : "Pilih Lokasi"}
                                     value={_.find(siteOptions, { value: formData.cab_id?.toString() })}
                                     options={siteOptions}
-                                    disabled={loadingSites}
+                                    disabled={loadingOptions}
                                 />
                             </div>
-                            {/* Field Kapasitas */}
+
+                             <div>
+                                <Label>Fasilitas (Amenities)</Label>
+                                <MultiSelect
+                                    options={amenityOptions}
+                                    value={getSelectedAmenities()}
+                                    isLoading={loadingOptions}
+                                    placeholder={loadingOptions ? "Memuat fasilitas..." : "Pilih fasilitas..."}
+                                    onValueChange={(selectedOptions: any) => {
+                                        const ids = selectedOptions.map((opt: any) => parseInt(opt.value, 10));
+                                        handleFieldChange('amenity_ids', ids);
+                                    }}
+                                    isClearable={true}
+                                />
+                            </div>
+
                             <div>
                                 <Label htmlFor="capacity">Kapasitas</Label>
                                 <Input

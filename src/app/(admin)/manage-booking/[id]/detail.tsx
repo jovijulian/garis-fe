@@ -26,6 +26,7 @@ interface Room {
     id: number;
     name: string;
     location: string;
+    amenities: { id: number; name: string }[];
 }
 
 interface Topic {
@@ -249,11 +250,11 @@ export default function BookingDetailPage() {
             {/* --- Detail Fasilitas dan Catatan --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaClipboardList /> Fasilitas Dipesan</h4>
+                    <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaClipboardList />Fasilitas pada ruangan</h4>
                     <div className="bg-white border rounded-lg p-5">
-                        {data.amenities.length > 0 ? (
+                    {data.room.amenities && data.room.amenities.length > 0 ? (
                             <ul className="space-y-3">
-                                {data.amenities.map(item => (
+                                {data.room.amenities.map(item => (
                                     <li key={item.id} className="flex items-center gap-3 text-gray-800">
                                         <FaChair className="text-gray-400" />
                                         <span>{item.name}</span>
@@ -261,7 +262,7 @@ export default function BookingDetailPage() {
                                 ))}
                             </ul>
                         ) : (
-                            <p className="text-gray-500 italic">Tidak ada fasilitas tambahan yang dipesan.</p>
+                            <p className="text-gray-500 italic">Tidak ada fasilitas pada ruangan yang dipesan.</p>
                         )}
                     </div>
                 </div>

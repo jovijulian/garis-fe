@@ -30,7 +30,7 @@ interface BookingData {
     status: 'Submit' | 'Approved' | 'Rejected' | 'Canceled';
     notes: string | null;
     user: { nama_user: string; };
-    room: { id: number; name: string; };
+    room: { id: number; name: string;  amenities: { id: number; name: string }[];};
     topic: { id: number; name: string; };
     amenities: AmenityItem[];
 }
@@ -140,11 +140,11 @@ export default function MyBookingDetailPage() {
                 {/* --- Detail Fasilitas dan Catatan --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                        <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaClipboardList /> Fasilitas Dipesan</h4>
+                        <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaClipboardList /> Fasilitas pada ruangan</h4>
                         <div className="bg-white border rounded-lg p-5">
-                            {data.amenities && data.amenities.length > 0 ? (
+                            {data.room.amenities && data.room.amenities.length > 0 ? (
                                 <ul className="space-y-3">
-                                    {data.amenities.map(item => (
+                                    {data.room.amenities.map(item => (
                                         <li key={item.id} className="flex items-center gap-3 text-gray-800">
                                             <FaChair className="text-gray-400" />
                                             <span>{item.name}</span>
@@ -152,7 +152,7 @@ export default function MyBookingDetailPage() {
                                     ))}
                                 </ul>
                             ) : (
-                                <p className="text-gray-500 italic">Tidak ada fasilitas tambahan yang dipesan.</p>
+                                <p className="text-gray-500 italic">Tidak ada fasilitas pada ruangan yang dipesan.</p>
                             )}
                         </div>
                     </div>

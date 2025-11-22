@@ -104,28 +104,33 @@ export default function VehicleRequestDetailPage() {
         if (!data) return;
         setIsGeneratingSPJ(true);
         try {
-            const response = await httpGet(
-                endpointUrl(`vehicle-requests/spj/${data.id}`),
-                true,
-                {},
-                'blob'
-            );
+            const response = await httpGet(endpointUrl(`vehicle-requests/spj/${data.id}`), true);
+            const htmlContent = response.data;
 
-            const filename = `SPJ_Request_${data.id}_${moment(data.start_time).format('YYYYMMDD')}.pdf`;
-
-            saveAs(response.data, filename);
-
-            toast.success("SPJ berhasil diunduh.");
-
-        } catch (error: any) {
-            console.error("Error generating SPJ:", error);
-            try {
-                const errorText = await (error.response?.data as Blob)?.text();
-                const errorJson = JSON.parse(errorText);
-                toast.error(errorJson.message || "Gagal mengunduh SPJ.");
-            } catch {
-                toast.error("Gagal mengunduh SPJ. Terjadi kesalahan tidak dikenal.");
+            if (!htmlContent) {
+                toast.error('Gagal mendapatkan data spj untuk dicetak.');
+                return;
             }
+
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+
+            iframe.contentDocument?.open();
+            iframe.contentDocument?.write(htmlContent);
+            iframe.contentDocument?.close();
+
+            iframe.onload = function () {
+                iframe.contentWindow?.print();
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
+            };
+
+        } catch (error) {
+            setIsGeneratingSPJ(false);
+            console.error('Gagal mencetak nota:', error);
+            toast.error('Terjadi kesalahan saat menyiapkan nota.');
         } finally {
             setIsGeneratingSPJ(false);
         }

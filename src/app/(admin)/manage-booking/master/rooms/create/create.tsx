@@ -2,11 +2,12 @@
 
 import ComponentCard from "@/components/common/ComponentCard";
 import Select from "@/components/form/Select-custom";
+import MultiSelect from "@/components/form/MultiSelect-custom"; 
 import Input from "@/components/form/input/InputField";
 import React, { useEffect, useState } from "react";
-import _, { set } from "lodash";
+import _ from "lodash";
 import { useRouter } from "next/navigation";
-import { alertToast, endpointUrl, httpGet, httpPost } from "@/../helpers"; 
+import { endpointUrl, httpGet, httpPost } from "@/../helpers"; 
 import { toast } from "react-toastify";
 
 interface RoomFormData {
@@ -15,6 +16,7 @@ interface RoomFormData {
     capacity: string; 
     location: string;
     description: string;
+    amenity_ids: number[];
 }
 
 interface SelectOption {
@@ -30,29 +32,41 @@ export default function CreateRoomForm() {
         capacity: "",
         location: "",
         description: "",
+        amenity_ids: [], 
     });
 
     const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
+    const [amenityOptions, setAmenityOptions] = useState<SelectOption[]>([]); 
     const [loadingSites, setLoadingSites] = useState(true);
+    const [loadingAmenities, setLoadingAmenities] = useState(true);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const fetchSites = async () => {
+        const fetchData = async () => {
             try {
-                const response = await httpGet(endpointUrl("/rooms/site-options"), true); 
-                const formattedOptions = response.data.data.map((site: any) => ({
+                const siteRes = await httpGet(endpointUrl("/rooms/site-options"), true); 
+                const formattedSites = siteRes.data.data.map((site: any) => ({
                     value: site.id_cab.toString(),
                     label: site.nama_cab,
                 }));
-                setSiteOptions(formattedOptions);
-            } catch (error) {
-                toast.error("Failed to load location data.");
-            } finally {
+                setSiteOptions(formattedSites);
                 setLoadingSites(false);
+                const amenityRes = await httpGet(endpointUrl("/amenities/options"), true);
+                const formattedAmenities = amenityRes.data.data.map((item: any) => ({
+                    value: item.id.toString(),
+                    label: item.name,
+                }));
+                setAmenityOptions(formattedAmenities);
+                setLoadingAmenities(false);
+
+            } catch (error) {
+                toast.error("Gagal memuat data opsi.");
+                setLoadingSites(false);
+                setLoadingAmenities(false);
             }
         };
 
-        fetchSites();
+        fetchData();
     }, []);
 
     const handleFieldChange = (field: keyof RoomFormData, value: any) => {
@@ -90,6 +104,12 @@ export default function CreateRoomForm() {
         }
     };
 
+    const getSelectedAmenities = () => {
+        return amenityOptions.filter((opt) => 
+            formData.amenity_ids.includes(parseInt(opt.value))
+        );
+    };
+
     return (
         <ComponentCard title="Create New Room">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -113,6 +133,21 @@ export default function CreateRoomForm() {
                         value={_.find(siteOptions, { value: formData.cab_id?.toString() })}
                         options={siteOptions}
                         disabled={loadingSites}
+                    />
+                </div>
+
+                <div>
+                    <label className="block font-medium mb-1">Fasilitas</label>
+                    <MultiSelect
+                        options={amenityOptions}
+                        value={getSelectedAmenities()}
+                        isLoading={loadingAmenities}
+                        placeholder={loadingAmenities ? "Memuat fasilitas..." : "Pilih fasilitas..."}
+                        onValueChange={(selectedOptions: any) => {
+                            const ids = selectedOptions.map((opt: any) => parseInt(opt.value, 10));
+                            handleFieldChange('amenity_ids', ids);
+                        }}
+                        isClearable={true}
                     />
                 </div>
                 

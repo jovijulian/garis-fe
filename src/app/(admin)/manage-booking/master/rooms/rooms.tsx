@@ -21,6 +21,7 @@ interface TableDataItem {
     description: string;
     created_at: string;
     updated_at: string;
+    amenities: [];
 }
 
 
@@ -126,6 +127,21 @@ export default function RoomsPage() {
                 cell: ({ row }: any) => <span>{row.location}</span>,
             },
             {
+                id: "amenities",
+                header: "Fasilitas pada ruangan",
+                accessorKey: "amenities",
+                cell: ({ row }: any) => {
+                    const amenities = row.amenities;
+                    return (
+                        <span>
+                            {amenities && amenities.length > 0
+                                ? amenities.map((a: any) => a.name).join(", ")
+                                : "-"}
+                        </span>
+                    );
+                }
+            },
+            {
                 id: "created_at",
                 header: "Created At",
                 accessorKey: "created_at",
@@ -137,6 +153,7 @@ export default function RoomsPage() {
                 accessorKey: "updated_at",
                 cell: ({ row }: any) => <span>{moment(row.updated_at).format("DD MMM YYYY, HH:mm")}</span>,
             },
+           
         ];
         return [...defaultColumns, ...columns.filter((col) => col.field !== "id" && col.field !== "hide_this_column_field")];
     }, [columns]);

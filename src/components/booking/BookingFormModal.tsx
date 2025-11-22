@@ -8,11 +8,18 @@ import 'moment/locale/id';
 import _ from "lodash";
 import Select from '@/components/form/Select-custom';
 import Input from '@/components/form/input/InputField';
-import { Loader2 } from 'lucide-react';
+import { Check, Info, Loader2 } from 'lucide-react';
 
 // --- Interface Disesuaikan ---
 interface AmenityItem {
     id: number; name: string;
+}
+
+interface RoomData {
+    id: number;
+    name: string;
+    capacity: number;
+    amenities: AmenityItem[]; 
 }
 interface BookingData {
     id: number;
@@ -23,7 +30,6 @@ interface BookingData {
     room: { id: number; name: string; };
     topic: { id: number; name: string; };
     notes: string | null;
-    amenities: AmenityItem[];
 }
 interface BookingFormModalProps {
     isOpen: boolean;
@@ -46,7 +52,6 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
         start_time: '',
         end_time: '',
         notes: '',
-        amenity_ids: [] as number[],
     });
 
     const [roomOptions, setRoomOptions] = useState<SelectOption[]>([]);
@@ -54,8 +59,8 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
     const [topicOptions, setTopicOptions] = useState<SelectOption[]>([]);
     const [loadingOptions, setLoadingOptions] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Mengisi form saat mode edit
+    const [rawRooms, setRawRooms] = useState<RoomData[]>([]); 
+    const [availableAmenities, setAvailableAmenities] = useState<AmenityItem[]>([]);
     useEffect(() => {
         if (isOpen) {
             // Fetch options setiap kali modal dibuka
@@ -67,6 +72,8 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
                         httpGet(endpointUrl("/amenities/options"), true),
                         httpGet(endpointUrl("/topics/options"), true),
                     ]);
+                    const roomsData: RoomData[] = roomsRes.data.data;
+                    setRawRooms(roomsData);
                     const formattedRooms = roomsRes.data.data.map((room: any) => ({
                         value: room.id.toString(),
                         label: `${room.name} (Kapasitas: ${room.capacity})`,
@@ -78,6 +85,7 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
                         label: `${topic.name}`,
                     }));
                     setTopicOptions(formattedTopics);
+                    
                 } catch (error) {
                     toast.error("Gagal memuat data ruangan / fasilitas / topik.");
                 } finally {
@@ -95,12 +103,15 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
                     start_time: moment(bookingData.start_time).format('YYYY-MM-DDTHH:mm'),
                     end_time: moment(bookingData.end_time).format('YYYY-MM-DDTHH:mm'),
                     notes: bookingData.notes || '',
-                    amenity_ids: bookingData.amenities.map(item => item.id),
                 });
+                const currentRoom = rawRooms.find(r => r.id === bookingData.room.id);
+                        if (currentRoom && currentRoom.amenities) {
+                            setAvailableAmenities(currentRoom.amenities);
+                        }
             } else {
                 // Reset form untuk mode create
                 setFormData({
-                    room_id: null, topic_id: null, purpose: '', start_time: '', end_time: '', notes: '', amenity_ids: [],
+                    room_id: null, topic_id: null, purpose: '', start_time: '', end_time: '', notes: '',
                 });
             }
         }
@@ -110,14 +121,7 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleAmenityChange = (amenityId: number) => {
-        setFormData(prev => {
-            const newAmenityIds = prev.amenity_ids.includes(amenityId)
-                ? prev.amenity_ids.filter(id => id !== amenityId)
-                : [...prev.amenity_ids, amenityId];
-            return { ...prev, amenity_ids: newAmenityIds };
-        });
-    };
+   
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -128,6 +132,7 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
             ...formData,
             start_time: moment(formData.start_time).utc().toISOString(),
             end_time: moment(formData.end_time).utc().toISOString(),
+            amenity_ids: [],
         };
 
         try {
@@ -148,6 +153,23 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
         }
     };
 
+    const handleRoomChange = (selectedOption: any) => {
+        if (selectedOption) {
+            const roomId = parseInt(selectedOption.value);
+            handleFieldChange('room_id', roomId);
+
+            const selectedRoom = rawRooms.find(r => r.id === roomId);
+            if (selectedRoom && selectedRoom.amenities) {
+                setAvailableAmenities(selectedRoom.amenities);
+            } else {
+                setAvailableAmenities([]);
+            }
+        } else {
+            handleFieldChange('room_id', null);
+            setAvailableAmenities([]);
+        }
+    };
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-xl m-6">
             <div className="no-scrollbar relative w-full rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
@@ -156,7 +178,7 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
                     <div>
                         <label className="block font-medium mb-1">Ruangan</label>
                         <Select
-                            onValueChange={(opt) => handleFieldChange('room_id', parseInt(opt.value))}
+                           onValueChange={handleRoomChange}
                             placeholder={loadingOptions ? "Memuat..." : "Pilih Ruangan"}
                             value={_.find(roomOptions, { value: formData.room_id?.toString() })}
                             options={roomOptions}
@@ -204,19 +226,25 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
                             />
                         </div>
                     </div>
-                    <div>
+                    <div className="animate-fade-in">
                         <label className="block font-medium mb-1">Fasilitas yang tersedia</label>
-                        <div className="border rounded-md">
-                            {loadingOptions ? (
-                                <p className="p-4 text-gray-500">Memuat fasilitas...</p>
+                        <div className="border rounded-md bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+                            {!formData.room_id ? (
+                                <p className="p-4 text-gray-500 italic flex items-center gap-2 text-sm">
+                                    <Info className="w-4 h-4" />
+                                    Pilih ruangan untuk melihat fasilitas.
+                                </p>
+                            ) : availableAmenities.length === 0 ? (
+                                <p className="p-4 text-gray-500 italic text-sm">Tidak ada fasilitas khusus di ruangan ini.</p>
                             ) : (
-                                <ul className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
-                                    {amenityOptions.map(amenity => (
+                                <ul className="grid grid-cols-2 gap-3 p-4">
+                                    {availableAmenities.map(amenity => (
                                         <li
                                             key={amenity.id}
-                                            className="flex items-center gap-2 p-2 bg-gray-50 rounded-md"
+                                            className="flex items-center gap-2 p-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-md shadow-sm text-xs md:text-sm"
                                         >
-                                            <span className="text-sm">{amenity.name}</span>
+                                            <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                            <span>{amenity.name}</span>
                                         </li>
                                     ))}
                                 </ul>
