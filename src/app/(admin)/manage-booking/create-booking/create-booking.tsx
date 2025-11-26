@@ -109,7 +109,7 @@ export default function CreateBookingPage() {
                 end_time: moment(formData.end_time).utc().toISOString(),
             };
 
-            const response = await httpPost(endpointUrl("/bookings1"), payload, true);
+            const response = await httpPost(endpointUrl("/bookings"), payload, true);
             const newBooking = response.data.data;
             toast.success("Pengajuan booking berhasil dikirim!");
             setConflictModalOpen(false);
