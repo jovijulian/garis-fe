@@ -33,7 +33,7 @@ const SignIn: React.FC = () => {
     },
     validate: {
       password: (value: any) =>
-        value.length < 6
+        value.length < 4
           ? "Password should include at least 6 characters"
           : null,
     },
@@ -94,7 +94,7 @@ const SignIn: React.FC = () => {
   const renderAccountForm = () => (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">NIK (6 Digit Terakhir)</label>
+        <label className="block text-sm font-medium text-slate-700 mb-1">USER ID HRIS</label>
         <div className="relative">
           <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input {...form.getInputProps("nik")} type="text" placeholder="232009" className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
@@ -134,9 +134,9 @@ const SignIn: React.FC = () => {
               {/* <button type="button" onClick={() => setLoginMethod(loginMethod === 'account' ? 'meter' : 'account')} className="text-blue-600 hover:underline font-medium">
                 {loginMethod === 'account' ? 'Login dengan Nomor Meter' : 'Login dengan Akun'}
               </button> */}
-              <Link href="/forgot-password" className="text-blue-600 hover:underline">
+              {/* <Link href="/forgot-password" className="text-blue-600 hover:underline">
                 Lupa Password?
-              </Link>
+              </Link> */}
             </div>
 
             <button
