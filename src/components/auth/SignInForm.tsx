@@ -121,7 +121,7 @@ const SignIn: React.FC = () => {
           <div className="mb-8">
           
             <h1 className="font-bold text-2xl text-slate-800 mt-4">Log in</h1>
-            <p className="text-slate-500 text-sm">Silakan masuk menggunakan akun yang terdaftar.</p>
+            <p className="text-slate-500 text-sm">Silakan masuk menggunakan akun HRIS yang terdaftar.</p>
           </div>
 
           <form onSubmit={form.onSubmit(onSubmit)} className="space-y-5">

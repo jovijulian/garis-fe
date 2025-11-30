@@ -294,7 +294,7 @@ export default function CreateBookingPage() {
                             type="datetime-local"
                             value={formData.start_time}
                             onChange={e => handleFieldChange('start_time', e.target.value)}
-                            min={minDateTime}
+                            // min={minDateTime}
                             className="w-full border p-2 rounded-md dark:bg-gray-800 dark:border-gray-600"
                             required
                         />
@@ -305,7 +305,7 @@ export default function CreateBookingPage() {
                             type="datetime-local"
                             value={formData.end_time}
                             onChange={e => handleFieldChange('end_time', e.target.value)}
-                            min={formData.start_time || minDateTime}
+                            min={formData.start_time}
                             className="w-full border p-2 rounded-md dark:bg-gray-800 dark:border-gray-600"
                             required
                         />
