@@ -3,7 +3,9 @@ import { jwtVerify } from 'jose';
 
 const publicRoutes = [
     '/signin',
-    '/menus' 
+    '/menus',
+    '/support', 
+    '/support/[slug]',
 ];
 
 const rolePermissions: Record<string, string[]> = {
@@ -24,6 +26,7 @@ const rolePermissions: Record<string, string[]> = {
         '/vehicles',
     ],
     '3': [
+        '/support',
         '/manage-booking/my-bookings',
         '/manage-booking/create-booking',
         '/profile',
@@ -43,6 +46,7 @@ const homeRoutes: Record<string, string> = {
     '1': '/menus',
     '2': '/menus',
     '3': '/menus',
+
 };
 
 const getJwtSecret = () => {
