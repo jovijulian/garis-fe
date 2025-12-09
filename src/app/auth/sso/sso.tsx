@@ -6,7 +6,7 @@ import { endpointUrl, httpGet } from "@/../helpers";
 import { setCookie } from "cookies-next";
 import { Loader2 } from "lucide-react";
 
-const SSOHandler: React.FC = () => {
+export default function SSO() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState("Memproses otentikasi...");
@@ -78,5 +78,3 @@ const SSOHandler: React.FC = () => {
     </div>
   );
 };
-
-export default SSOHandler;

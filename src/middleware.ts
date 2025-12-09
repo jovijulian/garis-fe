@@ -6,6 +6,7 @@ const publicRoutes = [
     '/menus',
     '/support', 
     '/support/[slug]',
+    '/auth/sso',
 ];
 
 const rolePermissions: Record<string, string[]> = {

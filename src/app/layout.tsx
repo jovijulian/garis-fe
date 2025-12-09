@@ -22,8 +22,7 @@ export default function RootLayout({
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-
-    const publicPaths = ["/signin", "/signup", "/public-page"];
+    const publicPaths = ["/signin", "/signup", "/public-page", "/auth/sso"];
 
     if (!token && !publicPaths.includes(pathname)) {
       router.replace("/signin");
