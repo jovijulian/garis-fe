@@ -143,12 +143,12 @@ const MenuCard: React.FC<MenuCardProps> = ({
     }
     const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         if (isDisabled) {
-            e.preventDefault(); 
+            e.preventDefault();
         }
     };
 
     return (
-        <Link href={dynamicHref} className="group block" onClick={handleCardClick} >
+        <Link href={dynamicHref} className="group block" onClick={handleCardClick} prefetch={false}>
             <div
                 className={`
       relative
