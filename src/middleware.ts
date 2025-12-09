@@ -62,7 +62,7 @@ export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const tokenCookie = request.cookies.get('cookieKey');
     const token = tokenCookie?.value;
-    const role = request.cookies.get('role');
+    const role = request.cookies.get('role')?.value;
     if (!token) {
         if (!publicRoutes.includes(pathname)) {
             return NextResponse.redirect(new URL('/signin', request.url));
