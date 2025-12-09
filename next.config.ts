@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   env: {
-    BASE_URL: "https://booking-be-v49x.vercel.app/api/v1/",
+    BASE_URL: "https://api-garis.cisangkan.co.id/api/v1/",
     IMAGE_URL: "https://f38qmrhd9kdkwje8.public.blob.vercel-storage.com/",
 
   },
@@ -22,6 +22,7 @@ const nextConfig: NextConfig = {
       "@mantine/form",
     ],
   },
+  output: "standalone",
 };
 
 export default nextConfig;

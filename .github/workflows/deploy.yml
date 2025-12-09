@@ -1,0 +1,63 @@
+name: Deploy Frontend NextJS 15
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  CONTAINER_NAME: frontend-garis
+  HOST_PORT: 3001
+  CONTAINER_PORT: 3001
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            
+            docker stop ${{ env.CONTAINER_NAME }} || true
+            docker rm ${{ env.CONTAINER_NAME }} || true
+            
+            # MAPPING PENTING DI BAWAH INI:
+            # File server: /www/upload/docker/fe-garis/.env
+            # Masuk ke container jadi: /app/.env.production (Agar dibaca NextJS)
+            docker run -d \
+              --name ${{ env.CONTAINER_NAME }} \
+              --restart always \
+              -p ${{ env.HOST_PORT }}:${{ env.CONTAINER_PORT }} \
+              -v /www/upload/docker/fe-garis/.env:/app/.env.production \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            
+            docker image prune -f
