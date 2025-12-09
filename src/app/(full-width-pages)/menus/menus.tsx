@@ -153,12 +153,12 @@ const MenuCard: React.FC<MenuCardProps> = ({
         className="group block" 
         prefetch={false} // Wajib false
         onClick={(e) => {
-             if (isDisabled) {
+            if (isDisabled) {
                 e.preventDefault();
                 return;
-             }
-             e.preventDefault(); 
-             window.location.href = dynamicHref; 
+            }
+            e.preventDefault(); 
+            window.location.href = dynamicHref; 
         }}
     >
             <div

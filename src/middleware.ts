@@ -63,6 +63,8 @@ export async function middleware(request: NextRequest) {
     const tokenCookie = request.cookies.get('cookieKey');
     const token = tokenCookie?.value;
     const role = request.cookies.get('role')?.value;
+
+    // 1. Cek Token
     if (!token) {
         if (!publicRoutes.includes(pathname)) {
             return NextResponse.redirect(new URL('/signin', request.url));
@@ -70,27 +72,21 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // let payload;
-    // try {
-    //     const verified = await jwtVerify(token, getJwtSecret());
-    //     payload = verified.payload;
-    // } catch (err) {
-    //     const response = NextResponse.redirect(new URL('/signin', request.url));
-    //     response.cookies.delete('cookieKey');
-    //     return response;
-    // }
     const userRole = String(role || ''); 
-
     const userHomeRoute = homeRoutes[userRole] || '/signin';
 
+    // 2. Redirect Login/Root ke Home
     if (pathname === '/signin' || pathname === '/') {
         return NextResponse.redirect(new URL(userHomeRoute, request.url));
     }
 
+    // 3. Allow Access to Menus (PENTING)
+    // Pastikan request ke /menus selalu lolos jika sudah punya token
     if (pathname.startsWith('/menus')) {
         return NextResponse.next();
     }
 
+    // 4. Cek Permission Role
     if (!publicRoutes.includes(pathname)) {
         const allowedRoutes = rolePermissions[userRole] || [];
         const isAuthorized = allowedRoutes.some(route => pathname.startsWith(route));
@@ -98,6 +94,9 @@ export async function middleware(request: NextRequest) {
         if (isAuthorized) {
             return NextResponse.next();
         } else {
+            if (pathname === userHomeRoute) {
+                 return NextResponse.next(); 
+            }
             return NextResponse.redirect(new URL(userHomeRoute, request.url));
         }
     }
@@ -106,5 +105,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/((?!api|_next/static|_next/image|images|favicon.ico).*)'],
+    matcher: '/((?!api|_next/static|_next/image|images|favicon.ico|.*\\..*).*)',
 };
