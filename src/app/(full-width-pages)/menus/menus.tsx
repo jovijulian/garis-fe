@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import AppHeader from "@/layout/AppHeader";
 import { endpointUrl, httpGet } from "../../../../helpers";
+
 interface PendingCounts {
     pending_bookings: number;
     pending_vehicle_requests: number;
@@ -109,6 +110,7 @@ interface MenuCardProps {
     userRole: string | null;
     isDriver: boolean;
     pendingCount?: number;
+    isLoading?: boolean; // Tambahan prop untuk handle loading state di card
 }
 
 const MenuCard: React.FC<MenuCardProps> = ({
@@ -120,6 +122,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
     userRole,
     isDriver,
     pendingCount,
+    isLoading, // Terima prop isLoading
 }) => {
     const isDisabled = title === "Admin Panel" && userRole !== "1";
     let dynamicHref = href;
@@ -144,23 +147,26 @@ const MenuCard: React.FC<MenuCardProps> = ({
     const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         if (isDisabled) {
             e.preventDefault();
+            return;
         }
+        // Force refresh logic yang Anda minta sebelumnya
+        e.preventDefault();
+        window.location.href = dynamicHref;
     };
 
+    // Logic untuk menentukan apakah card ini perlu cek pending count
+    const shouldCheckPending = 
+        title === "Peminjaman Ruangan" || 
+        title === "Pengajuan Kendaraan" || 
+        title === "Order";
+
     return (
-        <Link 
-        href={dynamicHref} 
-        className="group block" 
-        prefetch={false} // Wajib false
-        onClick={(e) => {
-            if (isDisabled) {
-                e.preventDefault();
-                return;
-            }
-            e.preventDefault(); 
-            window.location.href = dynamicHref; 
-        }}
-    >
+        <Link
+            href={dynamicHref}
+            className="group block"
+            prefetch={false}
+            onClick={handleCardClick}
+        >
             <div
                 className={`
       relative
@@ -172,12 +178,24 @@ const MenuCard: React.FC<MenuCardProps> = ({
                     }
     `}
             >
-                {pendingCount !== undefined && pendingCount > 0 && (
-                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full  shadow-sm border border-red-700">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>{pendingCount} pending</span>
+                {/* --- BAGIAN LOADING / PENDING COUNT --- */}
+                {/* Jika sedang loading dan menu ini termasuk yang punya notifikasi, tampilkan skeleton/loader kecil */}
+                {isLoading && shouldCheckPending && (userRole === "1" || userRole === "2") ? (
+                     <div className="absolute top-3 right-3 flex items-center gap-1 bg-gray-100 dark:bg-gray-700 animate-pulse px-2.5 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
+                        <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                        <div className="w-10 h-3 bg-gray-300 rounded"></div>
                     </div>
+                ) : (
+                    /* Jika selesai loading dan ada pending count, tampilkan badge */
+                    pendingCount !== undefined && pendingCount > 0 && (
+                        <div className="absolute top-3 right-3 flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm border border-red-700 animate-in fade-in zoom-in duration-300">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>{pendingCount} pending</span>
+                        </div>
+                    )
                 )}
+                {/* --------------------------------------- */}
+
                 <div>
                     <div
                         className={`w-14 h-14 rounded-xl flex items-center justify-center ${colors[color] ?? "bg-gray-500"
@@ -206,7 +224,8 @@ export default function MenusPage() {
     const [userRole, setUserRole] = useState<string | null>(null);
     const [isDriver, setIsDriver] = useState(false);
     const [pendingCounts, setPendingCounts] = useState<PendingCounts | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false); // State ini tetap ada untuk kontrol badge, bukan kontrol halaman
+
     useEffect(() => {
         const name = localStorage.getItem("name");
         const email = localStorage.getItem("email");
@@ -219,13 +238,15 @@ export default function MenusPage() {
             setIsDriver(driver === "true");
         }
     }, []);
+
     useEffect(() => {
         if (userRole === "1" || userRole === "2") {
             fetchPendingCounts();
         }
     }, [userRole]);
+
     const fetchPendingCounts = async () => {
-        setIsLoading(true);
+        setIsLoading(true); // Mulai loading badge
         try {
             const response = await httpGet(
                 endpointUrl("/dashboard/pending"),
@@ -234,26 +255,21 @@ export default function MenusPage() {
 
             const data: PendingCounts = await response.data.data
             setPendingCounts(data);
-            setIsLoading(false);
         } catch (error) {
             console.error("Error fetching pending counts:", error);
         } finally {
-            setIsLoading(false);
+            setIsLoading(false); // Selesai loading badge
         }
     };
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center h-screen bg-gray-50">
-                <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                </div>
-            </div>
-        );
-    }
+
+    // --- DIHAPUS: BLOCKING LOADER ---
+    // if (isLoading) { return <Loader2 ... /> } 
+    // --------------------------------
+
     return (
         <div className="min-h-screen xl:flex-center">
             <div
-                className={`flex-1 transition-all  duration-300 ease-in-out `}
+                className={`flex-1 transition-all duration-300 ease-in-out `}
             >
                 <AppHeader />
                 <div className="p-4 md:p-8 space-y-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -269,6 +285,8 @@ export default function MenusPage() {
                     <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {menuItems.map((item) => {
                             let countToShow: number | undefined = undefined;
+                            
+                            // Logic mapping pending count
                             if (pendingCounts) {
                                 if (item.title === "Peminjaman Ruangan") {
                                     countToShow = pendingCounts.pending_bookings;
@@ -286,6 +304,7 @@ export default function MenusPage() {
                                     userRole={userRole}
                                     isDriver={isDriver}
                                     pendingCount={countToShow}
+                                    isLoading={isLoading} // Oper status loading ke card
                                 />
                             );
                         })}
