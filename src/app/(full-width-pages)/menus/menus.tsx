@@ -148,7 +148,19 @@ const MenuCard: React.FC<MenuCardProps> = ({
     };
 
     return (
-        <Link href={dynamicHref} className="group block" onClick={handleCardClick} prefetch={false}>
+        <Link 
+        href={dynamicHref} 
+        className="group block" 
+        prefetch={false} // Wajib false
+        onClick={(e) => {
+             if (isDisabled) {
+                e.preventDefault();
+                return;
+             }
+             e.preventDefault(); 
+             window.location.href = dynamicHref; 
+        }}
+    >
             <div
                 className={`
       relative
