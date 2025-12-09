@@ -45,27 +45,17 @@ export default function SSO() {
 
   const getMe = async () => {
     setStatus("Mengambil data pengguna...");
-    const response = await httpGet(endpointUrl(`auth/me`), true); 
+    const response = await httpGet(endpointUrl(`auth/me`), true);
     const user = response.data.data;
-    setCookie("role", user.role_id, {});
-    localStorage.setItem("role", user.role_id);
+    localStorage.setItem("role", user.role);
     localStorage.setItem("name", user.name);
     localStorage.setItem("email", user.email);
-    localStorage.setItem("id", user.id);
-    if (user.role_id == "1" || user.role_id == "8") {
-      window.location.href = "/menus";
-    } else if (
-      user.role_id == "2" ||
-      user.role_id == "4" ||
-      user.role_id == "6" ||
-      user.role_id == "7"
-    ) {
-      window.location.href = "/dashboard";
-    } else if (user.role_id == "3" || user.role_id == "5") {
-      window.location.href = "/purchasing/dashboard";
-    } else {
-        window.location.href = "/menus";
-    }
+    localStorage.setItem("id_user", user.id_user);
+    localStorage.setItem("sites", user.sites)
+    localStorage.setItem("is_driver", user.is_driver)
+
+    setCookie("role", user.role);
+    window.location.href = "/menus";
   };
 
   return (
