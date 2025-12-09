@@ -62,7 +62,7 @@ export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const tokenCookie = request.cookies.get('cookieKey');
     const token = tokenCookie?.value;
-
+    const role = request.cookies.get('role');
     if (!token) {
         if (!publicRoutes.includes(pathname)) {
             return NextResponse.redirect(new URL('/signin', request.url));
@@ -70,16 +70,16 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    let payload;
-    try {
-        const verified = await jwtVerify(token, getJwtSecret());
-        payload = verified.payload;
-    } catch (err) {
-        const response = NextResponse.redirect(new URL('/signin', request.url));
-        response.cookies.delete('cookieKey');
-        return response;
-    }
-    const userRole = String(payload.role || ''); 
+    // let payload;
+    // try {
+    //     const verified = await jwtVerify(token, getJwtSecret());
+    //     payload = verified.payload;
+    // } catch (err) {
+    //     const response = NextResponse.redirect(new URL('/signin', request.url));
+    //     response.cookies.delete('cookieKey');
+    //     return response;
+    // }
+    const userRole = String(role || ''); 
 
     const userHomeRoute = homeRoutes[userRole] || '/signin';
 
