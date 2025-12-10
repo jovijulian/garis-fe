@@ -75,18 +75,14 @@ export async function middleware(request: NextRequest) {
     const userRole = String(role || ''); 
     const userHomeRoute = homeRoutes[userRole] || '/signin';
 
-    // 2. Redirect Login/Root ke Home
     if (pathname === '/signin' || pathname === '/') {
         return NextResponse.redirect(new URL(userHomeRoute, request.url));
     }
 
-    // 3. Allow Access to Menus (PENTING)
-    // Pastikan request ke /menus selalu lolos jika sudah punya token
     if (pathname.startsWith('/menus')) {
         return NextResponse.next();
     }
 
-    // 4. Cek Permission Role
     if (!publicRoutes.includes(pathname)) {
         const allowedRoutes = rolePermissions[userRole] || [];
         const isAuthorized = allowedRoutes.some(route => pathname.startsWith(route));

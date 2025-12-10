@@ -22,7 +22,6 @@ const nextConfig: NextConfig = {
       "@mantine/form",
     ],
   },
-  output: "standalone",
 };
 
 export default nextConfig;
