@@ -83,7 +83,9 @@ const SignIn: React.FC = () => {
       localStorage.setItem("is_driver", user.is_driver)
 
       setCookie("role", user.role);
-      window.location.href = "/menus";
+      setTimeout(() => {
+        window.location.href = "/menus";
+      }, 1000);
 
     } catch (error) {
       console.log(error);

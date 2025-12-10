@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; 
+import { useRouter, useSearchParams } from "next/navigation";
 import { endpointUrl, httpGet } from "@/../helpers";
 import { setCookie } from "cookies-next";
 import { Loader2 } from "lucide-react";
@@ -19,7 +19,7 @@ export default function SSO() {
     } else {
       setStatus("Token tidak ditemukan. Mengalihkan ke login...");
       setTimeout(() => {
-        window.location.href = "/auth/login"; 
+        window.location.href = "/auth/login";
       }, 2000);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -28,7 +28,7 @@ export default function SSO() {
   const handleTokenProcessing = async (token: string) => {
     try {
       localStorage.setItem("token", token);
-      setCookie("cookieKey", token, {}); 
+      setCookie("cookieKey", token, {});
 
       await getMe();
 
@@ -36,7 +36,7 @@ export default function SSO() {
       console.error("SSO Error:", error);
       setStatus("Gagal memverifikasi sesi. Mengalihkan ke login...");
       localStorage.removeItem("token");
-      
+
       setTimeout(() => {
         window.location.href = "/";
       }, 2000);
@@ -55,7 +55,9 @@ export default function SSO() {
     localStorage.setItem("is_driver", user.is_driver)
 
     setCookie("role", user.role);
-    window.location.href = "/menus";
+    setTimeout(() => {
+      window.location.href = "/menus";
+    }, 1000);
   };
 
   return (
