@@ -5,13 +5,13 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy hanya dependencies terlebih dahulu
-COPY app/package*.json ./
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install --legacy-peer-deps
 
 # Copy seluruh source code
-COPY app .
+COPY . .
 
 # Build Next.js
 RUN npm run build
