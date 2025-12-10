@@ -153,7 +153,7 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="hidden md:flex w-1/2 bg-blue-50 items-center justify-center relative">
-          <Image src="/images/ga-illustration.png" alt="Illustration of general affair" fill style={{ objectFit: 'cover' }} />
+          <Image src="/images/ga-illustration.png" alt="Illustration of general affairr" fill style={{ objectFit: 'cover' }} />
         </div>
       </div>
     </div>
