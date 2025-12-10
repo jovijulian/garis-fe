@@ -1,25 +1,23 @@
-FROM node:22-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+FROM node:20.18-alpine
 
-FROM node:22-alpine AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+RUN apk add --no-cache libc6-compat
 
+WORKDIR /app
+
+# Copy hanya dependencies terlebih dahulu
+COPY app/package*.json ./
+
+# Install dependencies
+RUN npm install --legacy-peer-deps
+
+# Copy seluruh source code
+COPY app .
+
+# Build Next.js
 RUN npm run build
 
-FROM node:22-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=3001
-ENV HOSTNAME="0.0.0.0"
-
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-
+# Expose port
 EXPOSE 3001
 
-CMD ["node", "server.js"]
+# Start App
+CMD ["npm", "start"]
