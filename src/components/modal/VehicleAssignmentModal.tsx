@@ -44,6 +44,8 @@ interface AssignmentModalProps {
     existingAssignments: any[];
     requiresDriver: boolean;
     adminCabId: number | null;
+    startTime?: string | null;
+    endTime?: string | null;
 }
 
 const statusOptions: SelectOption[] = [
@@ -60,6 +62,8 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     existingAssignments = [],
     requiresDriver,
     adminCabId,
+    startTime,
+    endTime,
 }) => {
     const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
     const [vehicleOptions, setVehicleOptions] = useState<SelectOption[]>([]);
@@ -73,56 +77,55 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         setLoadingOptions(true);
         setVehicleOptions([]);
         setDriverOptions([]);
-      
+
         const params: any = {};
-        if (statusFilter !== "All") {
-          params.status = statusFilter;
-        }
         if (filterByBranch && adminCabId) {
-          params.cab_id = adminCabId;
+            params.cab_id = adminCabId;
         }
-      
+        params.start_time = startTime || null;
+        params.end_time = endTime || null;
+
         try {
-          const vehiclesRes = await httpGet(endpointUrl("/vehicles/options"), true, params);
-          const fetchedVehicleOptions = vehiclesRes.data?.data?.map((v: any) => ({
-            value: v.id.toString(),
-            label: `${v.name} (${v.license_plate})`,
-          })) || [];
-      
-          setVehicleOptions(fetchedVehicleOptions);
+            const vehiclesRes = await httpGet(endpointUrl("/vehicles/options"), true, params);
+            const fetchedVehicleOptions = vehiclesRes.data?.data?.map((v: any) => ({
+                value: v.id.toString(),
+                label: `${v.name} (${v.license_plate})`,
+            })) || [];
+
+            setVehicleOptions(fetchedVehicleOptions);
         } catch (err) {
-          toast.warning("Data kendaraan tidak dapat dimuat sepenuhnya.");
-          console.warn("Vehicle fetch error:", err);
+            toast.warning("Data kendaraan tidak dapat dimuat sepenuhnya.");
+            console.warn("Vehicle fetch error:", err);
         }
-      
+
         try {
-          const driversRes = await httpGet(endpointUrl("/drivers/options"), true, params);
-          const fetchedDriverOptions = driversRes.data?.data?.map((d: any) => ({
-            value: d.id.toString(),
-            label: d.name,
-          })) || [];
-      
-          setDriverOptions(fetchedDriverOptions);
+            const driversRes = await httpGet(endpointUrl("/drivers/options"), true, params);
+            const fetchedDriverOptions = driversRes.data?.data?.map((d: any) => ({
+                value: d.id.toString(),
+                label: d.name,
+            })) || [];
+
+            setDriverOptions(fetchedDriverOptions);
         } catch (err) {
-          toast.warning("Data driver tidak dapat dimuat.");
-          console.warn("Driver fetch error:", err);
+            toast.warning("Data driver tidak dapat dimuat.");
+            console.warn("Driver fetch error:", err);
         }
-      
+
         setAssignments((prevAssignments) =>
-          prevAssignments.map((assign) => ({
-            ...assign,
-            vehicle_id: vehicleOptions.some((opt: any) => opt.value === assign.vehicle_id)
-              ? assign.vehicle_id
-              : null,
-            driver_id: driverOptions.some((opt: any) => opt.value === assign.driver_id)
-              ? assign.driver_id
-              : null,
-          }))
+            prevAssignments.map((assign) => ({
+                ...assign,
+                vehicle_id: vehicleOptions.some((opt: any) => opt.value === assign.vehicle_id)
+                    ? assign.vehicle_id
+                    : null,
+                driver_id: driverOptions.some((opt: any) => opt.value === assign.driver_id)
+                    ? assign.driver_id
+                    : null,
+            }))
         );
-      
+
         setLoadingOptions(false);
-      }, [statusFilter, filterByBranch, adminCabId]);
-      
+    }, [statusFilter, filterByBranch, adminCabId]);
+
     // ------------------------------
 
     useEffect(() => {
@@ -195,22 +198,8 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-3xl">
-            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-start gap-4">
-
-                    {/* Bagian kiri - Label dan dropdown filter */}
-                    <div className="flex flex-col md:flex-row md:items-center gap-3">
-                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                            Filter Status Aset
-                        </label>
-                        <Select
-                            options={statusOptions}
-                            value={_.find(statusOptions, { value: statusFilter })}
-                            onValueChange={(opt) => setStatusFilter(opt ? opt.value : 'Available')}
-                        />
-                    </div>
-
-                    {/* Bagian kanan - Checkbox filter cabang */}
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-start gap-4 mb-8">
                     <div className="flex items-center">
                         <label className="inline-flex items-center cursor-pointer">
                             <input

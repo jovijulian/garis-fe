@@ -414,6 +414,8 @@ export default function AdminVehicleRequestDetailPage() {
                     getDetail(); 
                 }}
                 adminCabId={adminCabId}
+                startTime={data.start_time}
+                endTime={data.end_time}
             />
         </>
     );
