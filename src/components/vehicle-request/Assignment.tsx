@@ -115,7 +115,7 @@ const AssignmentCard: React.FC<AssignmentCardProps> = ({
             </div>
 
             <div className="bg-gray-50 p-4 flex justify-end gap-3 border-t">
-                {showStartButton && (
+                {/* {showStartButton && (
                     <button
                         onClick={() => onTriggerStatus(req.id, 'In Progress')}
                         disabled={isCurrentActionLoading}
@@ -134,7 +134,7 @@ const AssignmentCard: React.FC<AssignmentCardProps> = ({
                         {isCurrentActionLoading && targetStatus === 'Completed' ? <Loader2 className="animate-spin w-4 h-4" /> : <Ban className="w-3 h-3" />}
                         Selesai
                     </button>
-                )}
+                )} */}
                 <button
                     onClick={onDetailClick}
                     title="Lihat Detail Lengkap Permintaan"

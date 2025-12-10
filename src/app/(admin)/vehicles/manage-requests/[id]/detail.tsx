@@ -149,12 +149,12 @@ export default function AdminVehicleRequestDetailPage() {
 
     const handleTriggerStatus = async (newStatus: 'In Progress' | 'Completed') => {
         if (!data) return;
-        setIsSubmittingStatus(true); 
+        setIsSubmittingStatus(true);
         setTargetStatus(newStatus);
         try {
             await httpPut(endpointUrl(`vehicle-requests/status/${data.id}`), { status: newStatus }, true);
             toast.success(`Status pengajuan berhasil diubah menjadi "${newStatus}"`);
-            getDetail(); 
+            getDetail();
         } catch (error: any) {
             toast.error(error?.response?.data?.message || `Gagal mengubah status.`);
         } finally {
@@ -198,7 +198,7 @@ export default function AdminVehicleRequestDetailPage() {
             setIsGeneratingSPJ(false);
         }
     };
-    
+
 
     if (isLoading) return (
         <div className="flex justify-center items-center h-screen">
@@ -233,7 +233,7 @@ export default function AdminVehicleRequestDetailPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         {getStatusBadge(data.status)}
-                        {showStartButton && (
+                        {/* {showStartButton && (
                             <button
                                 onClick={() => handleTriggerStatus('In Progress')}
                                 title="Mulai Perjalanan"
@@ -254,7 +254,7 @@ export default function AdminVehicleRequestDetailPage() {
                                 {isSubmittingStatus && targetStatus === 'Completed' ? <Loader2 className="animate-spin w-4 h-4" /> : <FaStop className="w-3 h-3" />}
                                 <span className="hidden sm:inline">Selesai</span>
                             </button>
-                        )}
+                        )} */}
                         {showCancelButton && (
                             <button
                                 onClick={() => handleOpenCancelModal(data)}
@@ -268,7 +268,7 @@ export default function AdminVehicleRequestDetailPage() {
                             <button
                                 onClick={handleGenerateSPJ}
                                 title="Unduh Surat Perintah Jalan (PDF)"
-                                disabled={isGeneratingSPJ || isSubmittingStatus} 
+                                disabled={isGeneratingSPJ || isSubmittingStatus}
                                 className="p-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200 flex items-center gap-1 text-xs sm:text-sm disabled:opacity-50"
                             >
                                 {isGeneratingSPJ ? <Loader2 className="animate-spin w-4 h-4" /> : <FaFilePdf className="w-3 h-3" />}
@@ -325,7 +325,7 @@ export default function AdminVehicleRequestDetailPage() {
                                 ) : (
                                     <p className="text-gray-500 italic text-sm">Belum ada penugasan.</p>
                                 )}
-                                {data.status === 'Approved' && (
+                                {data.status === 'Approved' || data.status === 'In Progress' || data.status === 'Completed' && (
                                     <div className="mt-4 flex justify-end">
                                         <button
                                             onClick={handleOpenAssignmentModal}
@@ -369,7 +369,7 @@ export default function AdminVehicleRequestDetailPage() {
                     </div>
                 )}
 
-                {data.approved_by && ( 
+                {data.approved_by && (
                     <div className="mt-6">
                         <Section title="Informasi Status" icon={<FaUserCheck />}>
                             <p>Status terakhir diperbarui pada {moment(data.updated_at).format('DD MMM YYYY, HH:mm')}
@@ -399,7 +399,7 @@ export default function AdminVehicleRequestDetailPage() {
                 isOpen={isCancelModalOpen}
                 onClose={() => setIsCancelModalOpen(false)}
                 onConfirm={handleConfirmCancel}
-                vehicleRequest={data} 
+                vehicleRequest={data}
                 isSubmitting={isSubmittingCancel}
             />
 
@@ -407,11 +407,11 @@ export default function AdminVehicleRequestDetailPage() {
                 isOpen={isAssignmentModalOpen}
                 onClose={() => setIsAssignmentModalOpen(false)}
                 requestId={data.id}
-                existingAssignments={data.detail} 
-                requiresDriver={data.requires_driver === 1} 
+                existingAssignments={data.detail}
+                requiresDriver={data.requires_driver === 1}
                 onSuccess={() => {
                     setIsAssignmentModalOpen(false);
-                    getDetail(); 
+                    getDetail();
                 }}
                 adminCabId={adminCabId}
                 startTime={data.start_time}

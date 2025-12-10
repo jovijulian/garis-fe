@@ -159,7 +159,7 @@ export default function DriverAssignmentDetailPage() {
                 </div>
                 <div className="flex items-center gap-3">
                     {getStatusBadge(data.status)}
-                    {showStartButton && (
+                    {/* {showStartButton && (
                          <button
                              onClick={() => handleTriggerStatus('In Progress')}
                              title="Mulai Perjalanan"
@@ -180,7 +180,7 @@ export default function DriverAssignmentDetailPage() {
                              {isSubmittingStatus && targetStatus === 'Completed' ? <Loader2 className="animate-spin w-4 h-4" /> : <FaStop className="w-3 h-3" />}
                              <span className="hidden sm:inline">Selesai</span>
                          </button>
-                     )}
+                     )} */}
                      {showSPJButton && (
                             <button
                                 onClick={handleGenerateSPJ}
