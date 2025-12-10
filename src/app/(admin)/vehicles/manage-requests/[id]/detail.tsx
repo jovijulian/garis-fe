@@ -325,7 +325,7 @@ export default function AdminVehicleRequestDetailPage() {
                                 ) : (
                                     <p className="text-gray-500 italic text-sm">Belum ada penugasan.</p>
                                 )}
-                                {data.status === 'Approved' || data.status === 'In Progress' || data.status === 'Completed' && (
+                                {data.status === 'Approved' && (
                                     <div className="mt-4 flex justify-end">
                                         <button
                                             onClick={handleOpenAssignmentModal}
