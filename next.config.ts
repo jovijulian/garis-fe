@@ -11,8 +11,7 @@ const nextConfig: NextConfig = {
   },
   env: {
     BASE_URL: "https://api-garis.cisangkan.co.id/api/v1/",
-    IMAGE_URL: "https://f38qmrhd9kdkwje8.public.blob.vercel-storage.com/",
-
+    IMAGE_URL: "https://api-garis.cisangkan.co.id/",
   },
   experimental: {
     optimizePackageImports: [

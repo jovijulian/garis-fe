@@ -23,17 +23,28 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
     // Cek apakah URL mengandung salah satu ekstensi video (case-insensitive)
     const isVideoContent = videoExtensions.some(ext => imageUrl.toLowerCase().endsWith(ext));
 
-    const handleDownload = () => {
-        const link = document.createElement('a');
-        link.href = imageUrl;
-        // Ambil ekstensi dari URL
-        let ext = imageUrl.substring(imageUrl.lastIndexOf('.'));
-        if (!ext) ext = isVideoContent ? '.mp4' : '.jpg';
-        link.download = `${imageTitle.replace(/\s+/g, '_')}_${Date.now()}${ext}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const handleDownload = async () => {
+        try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = url;
+
+            const ext = blob.type.split("/")[1] || "file";
+            link.download = `${imageTitle.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Download error:", error);
+        }
     };
+
 
     const toggleFullscreen = () => {
         setIsFullscreen(!isFullscreen);
@@ -55,7 +66,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                     }`}
                 onClick={(e) => e.stopPropagation()}
             >
-                <ComponentCard title={imageTitle}  className="h-full flex flex-col">
+                <ComponentCard title={imageTitle} className="h-full flex flex-col">
                     {/* Modal Header with Actions */}
                     <div className="flex items-center justify-between mb-4 pb-3 border-b">
                         <div className="flex items-center gap-2">
@@ -93,7 +104,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                                 controls
                                 autoPlay
                                 // #3: Biarkan gambar mengisi parent-nya yang sekarang sudah fleksibel
-                                className="object-contain w-full h-[48vh]" 
+                                className="object-contain w-full h-[48vh]"
                             />
                         ) : (
                             <img

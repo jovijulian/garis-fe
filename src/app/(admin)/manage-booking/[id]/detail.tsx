@@ -180,7 +180,6 @@ export default function BookingDetailPage() {
     if (!data) return <p className="text-center mt-10 text-red-500">Data booking tidak ditemukan.</p>;
 
     const duration = moment.duration(moment(data.end_time).diff(moment(data.start_time))).humanize();
-
     return (
         <ComponentCard title="Detail Booking">
             {/* --- Bagian Informasi Utama --- */}

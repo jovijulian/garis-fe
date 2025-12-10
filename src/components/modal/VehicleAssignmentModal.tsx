@@ -5,35 +5,17 @@ import { Modal } from '@/components/ui/modal';
 import Select from '@/components/form/Select-custom';
 import Input from '@/components/form/input/InputField';
 import { toast } from 'react-toastify';
-import { endpointUrl, httpGet, httpPost, alertToast, httpPut } from '@/../helpers';
+import { endpointUrl, httpGet, httpPut, alertToast } from '@/../helpers';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import { Loader2 } from 'lucide-react';
 import _ from 'lodash';
 
-
 interface SelectOption { value: string; label: string; }
-
 interface AssignmentRow {
     vehicle_id: string | null;
     driver_id: string | null;
     note_for_driver?: string | null;
-    _key?: number;
-}
-
-interface AssignmentPayloadDetail {
-    request_id: number;
-    vehicle_id: number;
-    driver_id: number | null;
-    note_for_driver?: string | null;
-}
-
-interface AssignmentModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSuccess: () => void;
-    requestId: number;
-    existingAssignments: any[];
-    requiresDriver: boolean;
+    _key: number;
 }
 
 interface AssignmentModalProps {
@@ -47,12 +29,6 @@ interface AssignmentModalProps {
     startTime?: string | null;
     endTime?: string | null;
 }
-
-const statusOptions: SelectOption[] = [
-    { value: 'Available', label: 'Tersedia' },
-    { value: 'Not Available', label: 'Tidak Tersedia' },
-    { value: 'All', label: 'Semua Status' },
-];
 
 const AssignmentModal: React.FC<AssignmentModalProps> = ({
     isOpen,
@@ -70,13 +46,9 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     const [driverOptions, setDriverOptions] = useState<SelectOption[]>([]);
     const [loadingOptions, setLoadingOptions] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const [statusFilter, setStatusFilter] = useState<string>('Available');
     const [filterByBranch, setFilterByBranch] = useState<boolean>(true);
     const fetchOptions = useCallback(async () => {
         setLoadingOptions(true);
-        setVehicleOptions([]);
-        setDriverOptions([]);
 
         const params: any = {};
         if (filterByBranch && adminCabId) {
@@ -87,71 +59,87 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
         try {
             const vehiclesRes = await httpGet(endpointUrl("/vehicles/options"), true, params);
-            const fetchedVehicleOptions = vehiclesRes.data?.data?.map((v: any) => ({
+            let fetchedVehicleOptions = vehiclesRes.data?.data?.map((v: any) => ({
                 value: v.id.toString(),
                 label: `${v.name} (${v.license_plate})`,
             })) || [];
 
+            if (existingAssignments.length > 0) {
+                existingAssignments.forEach(assign => {
+                    if (assign.vehicle) {
+                        const existingOpt = {
+                            value: assign.vehicle.id.toString(),
+                            label: `${assign.vehicle.name} (${assign.vehicle.license_plate})`
+                        };
+                        if (!fetchedVehicleOptions.some((opt: any) => opt.value === existingOpt.value)) {
+                            fetchedVehicleOptions.push(existingOpt);
+                        }
+                    }
+                });
+            }
+            fetchedVehicleOptions = _.sortBy(fetchedVehicleOptions, 'label');
             setVehicleOptions(fetchedVehicleOptions);
-        } catch (err) {
-            toast.warning("Data kendaraan tidak dapat dimuat sepenuhnya.");
-            console.warn("Vehicle fetch error:", err);
-        }
 
-        try {
             const driversRes = await httpGet(endpointUrl("/drivers/options"), true, params);
-            const fetchedDriverOptions = driversRes.data?.data?.map((d: any) => ({
+            let fetchedDriverOptions = driversRes.data?.data?.map((d: any) => ({
                 value: d.id.toString(),
                 label: d.name,
             })) || [];
 
+            if (existingAssignments.length > 0) {
+                existingAssignments.forEach(assign => {
+                    if (assign.driver) {
+                        const existingOpt = {
+                            value: assign.driver.id.toString(),
+                            label: assign.driver.name
+                        };
+                        if (!fetchedDriverOptions.some((opt: any) => opt.value === existingOpt.value)) {
+                            fetchedDriverOptions.push(existingOpt);
+                        }
+                    }
+                });
+            }
+            fetchedDriverOptions = _.sortBy(fetchedDriverOptions, 'label');
             setDriverOptions(fetchedDriverOptions);
+
         } catch (err) {
-            toast.warning("Data driver tidak dapat dimuat.");
-            console.warn("Driver fetch error:", err);
+            console.warn("Fetch options error:", err);
+            toast.warning("Gagal memuat data opsi kendaraan/driver.");
+        } finally {
+            setLoadingOptions(false);
         }
-
-        setAssignments((prevAssignments) =>
-            prevAssignments.map((assign) => ({
-                ...assign,
-                vehicle_id: vehicleOptions.some((opt: any) => opt.value === assign.vehicle_id)
-                    ? assign.vehicle_id
-                    : null,
-                driver_id: driverOptions.some((opt: any) => opt.value === assign.driver_id)
-                    ? assign.driver_id
-                    : null,
-            }))
-        );
-
-        setLoadingOptions(false);
-    }, [statusFilter, filterByBranch, adminCabId]);
-
-    // ------------------------------
+    }, [filterByBranch, adminCabId, startTime, endTime, existingAssignments]);
 
     useEffect(() => {
         if (isOpen) {
-            const initialAssignments = existingAssignments.map((detail, index) => ({
-                vehicle_id: detail.vehicle_id?.toString() || null,
-                driver_id: detail.driver_id?.toString() || null,
-                note_for_driver: detail.note_for_driver || '',
-                _key: Date.now() + index
-            }));
-            setAssignments(initialAssignments.length > 0 ? initialAssignments : [{ vehicle_id: null, driver_id: null, note_for_driver: '', _key: Date.now() }]);
             fetchOptions();
+            if (existingAssignments.length > 0) {
+                const mappedData = existingAssignments.map((detail, index) => ({
+                    vehicle_id: detail.vehicle_id?.toString() || null,
+                    driver_id: detail.driver_id?.toString() || null,
+                    note_for_driver: detail.note_for_driver || '',
+                    _key: Date.now() + index
+                }));
+                setAssignments(mappedData);
+            } else {
+                setAssignments([{ vehicle_id: null, driver_id: null, note_for_driver: '', _key: Date.now() }]);
+            }
         } else {
             setAssignments([]);
-            setVehicleOptions([]);
-            setDriverOptions([]);
         }
     }, [isOpen, existingAssignments, fetchOptions]);
 
     const addAssignmentRow = () => {
-        setAssignments(prev => [...prev, { vehicle_id: null, driver_id: null, note_for_driver: '', _key: Date.now() }]);
+        setAssignments(prev => [
+            ...prev,
+            { vehicle_id: null, driver_id: null, note_for_driver: '', _key: Date.now() + Math.random() }
+        ]);
     };
 
     const removeAssignmentRow = (keyToRemove: number) => {
         setAssignments(prev => prev.filter(row => row._key !== keyToRemove));
     };
+
     const handleAssignmentChange = (keyToUpdate: number, field: keyof AssignmentRow, value: any) => {
         setAssignments(prev =>
             prev.map(row =>
@@ -162,18 +150,17 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
-
         const invalidRow = assignments.find(row =>
             !row.vehicle_id || (requiresDriver && !row.driver_id)
         );
 
         if (invalidRow) {
-            toast.error(`Harap pilih ${!invalidRow.vehicle_id ? 'kendaraan' : 'supir'} untuk semua baris penugasan.`);
+            toast.error(`Harap lengkapi data ${!invalidRow.vehicle_id ? 'kendaraan' : 'supir'} pada baris yang tersedia.`);
             setIsSubmitting(false);
             return;
         }
 
-        const payloadDetails: AssignmentPayloadDetail[] = assignments.map(row => ({
+        const payloadDetails = assignments.map(row => ({
             request_id: requestId,
             vehicle_id: Number(row.vehicle_id),
             driver_id: row.driver_id ? Number(row.driver_id) : null,
@@ -186,128 +173,135 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
         try {
             await httpPut(endpointUrl(`/vehicle-requests/assignment/${requestId}`), payload, true);
+
             toast.success("Penugasan berhasil disimpan!");
             onSuccess();
         } catch (error: any) {
             alertToast(error, "Gagal menyimpan penugasan");
-            console.error("Assignment error:", error);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} className="max-w-3xl">
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-start gap-4 mb-8">
-                    <div className="flex items-center">
-                        <label className="inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={filterByBranch}
-                                onChange={(e) => setFilterByBranch(e.target.checked)}
-                                disabled={loadingOptions || isSubmitting || !adminCabId}
-                                className="form-checkbox h-5 w-5 text-blue-600 rounded disabled:opacity-50"
-                            />
-                            <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                                Hanya tampilkan aset dari cabang saya
-                            </span>
-                        </label>
-                    </div>
-
+        <Modal isOpen={isOpen} onClose={onClose} className="max-w-4xl">
+            <div className="p-6">
+                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 className="text-lg font-bold text-gray-800">Kelola Penugasan Kendaraan</h2>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">&times;</button>
                 </div>
-                {loadingOptions ? (
-                    <div className="flex justify-center items-center py-10">
-                        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                        <span className="ml-2 text-gray-500">Memuat pilihan...</span>
-                    </div>
-                ) : (
-                    assignments.map((assignment, index) => (
-                        <div key={assignment._key} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 items-end">
-                            <div className="md:col-span-4">
-                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Kendaraan <span className="text-red-500">*</span></label>
-                                <Select
-                                    options={vehicleOptions}
-                                    value={assignment.vehicle_id ? _.find(vehicleOptions, { value: assignment.vehicle_id }) : null}
-                                    onValueChange={(opt) => handleAssignmentChange(assignment._key!, 'vehicle_id', opt ? opt.value : null)}
-                                    placeholder="Pilih Kendaraan"
-                                />
-                            </div>
 
-                            <div className="md:col-span-4">
-                                <label className={`block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1 ${!requiresDriver ? 'opacity-50' : ''}`}>
-                                    Supir {requiresDriver && <span className="text-red-500">*</span>}
-                                </label>
-                                <Select
-                                    options={driverOptions}
-                                    value={assignment.driver_id ? _.find(driverOptions, { value: assignment.driver_id }) : null}
-                                    onValueChange={(opt) => handleAssignmentChange(assignment._key!, 'driver_id', opt ? opt.value : null)}
-                                    placeholder={requiresDriver ? "Pilih Supir" : "Supir (Opsional)"}
-                                />
-                            </div>
+                <div className="flex items-center mb-6">
+                    <label className="inline-flex items-center cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            checked={filterByBranch}
+                            onChange={(e) => setFilterByBranch(e.target.checked)}
+                            disabled={loadingOptions || isSubmitting || !adminCabId}
+                            className="form-checkbox h-4 w-4 text-blue-600 rounded cursor-pointer"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">
+                            Filter aset berdasarkan cabang saya
+                        </span>
+                    </label>
+                </div>
 
-                            <div className="md:col-span-3">
-                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Catatan u/ Supir</label>
-                                <Input
-                                    defaultValue={assignment.note_for_driver || ''}
-                                    onChange={(e) => handleAssignmentChange(assignment._key!, 'note_for_driver', e.target.value)}
-                                    placeholder="Instruksi khusus..."
-                                    disabled={isSubmitting || !assignment.driver_id}
-                                />
-                            </div>
-
-                            <div className="md:col-span-1 flex items-center justify-end">
-                                {assignments.length > 0 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => removeAssignmentRow(assignment._key!)}
-                                        className="p-2 text-red-500 hover:bg-red-100 rounded-full disabled:opacity-30 disabled:cursor-not-allowed"
-                                        title="Hapus baris"
-                                        disabled={isSubmitting || assignments.length <= 1}
-                                    >
-                                        <FaTrash size={14} />
-                                    </button>
-                                )}
-                            </div>
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 mb-4">
+                    {loadingOptions ? (
+                        <div className="flex flex-col justify-center items-center py-10 space-y-2">
+                            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                            <span className="text-gray-500 text-sm">Mencari kendaraan & supir yang tersedia...</span>
                         </div>
-                    ))
-                )}
-                {!loadingOptions && vehicleOptions.length === 0 && driverOptions.length === 0 && (
-                    <p className="text-center text-gray-500 italic py-5">Tidak ada kendaraan atau supir yang cocok dengan filter.</p>
-                )}
+                    ) : (
+                        <>
+                            {assignments.map((assignment, index) => (
+                                <div key={assignment._key} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 border rounded-lg bg-gray-50 relative group">
+                                    <div className="md:col-span-4">
+                                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                                            Kendaraan <span className="text-red-500">*</span>
+                                        </label>
+                                        <Select
+                                            options={vehicleOptions}
+                                            value={assignment.vehicle_id ? (_.find(vehicleOptions, { value: assignment.vehicle_id }) || null) : null}
+                                            onValueChange={(opt) => handleAssignmentChange(assignment._key, 'vehicle_id', opt ? opt.value : null)}
+                                            placeholder="Pilih Kendaraan..."
+                                        />
+                                    </div>
 
+                                    <div className="md:col-span-4">
+                                        <label className={`block text-xs font-semibold text-gray-600 mb-1 ${!requiresDriver ? 'opacity-70' : ''}`}>
+                                            Supir {requiresDriver && <span className="text-red-500">*</span>}
+                                        </label>
+                                        <Select
+                                            options={driverOptions}
+                                            value={assignment.driver_id ? (_.find(driverOptions, { value: assignment.driver_id }) || null) : null}
+                                            onValueChange={(opt) => handleAssignmentChange(assignment._key, 'driver_id', opt ? opt.value : null)}
+                                            placeholder={requiresDriver ? "Pilih Supir..." : "Tanpa Supir (Opsional)"}
+                                            isClearable={!requiresDriver}
+                                        />
+                                    </div>
 
-                {!loadingOptions && (
+                                    <div className="md:col-span-3">
+                                        <label className="block text-xs font-semibold text-gray-600 mb-1">Catatan Supir</label>
+                                        <Input
+                                            defaultValue={assignment.note_for_driver || ''}
+                                            onChange={(e) => handleAssignmentChange(assignment._key, 'note_for_driver', e.target.value)}
+                                            placeholder="Info penjemputan dll..."
+                                            className="text-sm"
+                                        />
+                                    </div>
+
+                                    <div className="md:col-span-1 flex items-end justify-center pb-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeAssignmentRow(assignment._key)}
+                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                            title="Hapus baris ini"
+                                        >
+                                            <FaTrash size={16} />
+                                        </button>
+                                    </div>
+
+                                    <div className="absolute top-2 right-2 text-xs text-gray-300 font-bold select-none">#{index + 1}</div>
+                                </div>
+                            ))}
+
+                            {assignments.length === 0 && (
+                                <div className="text-center py-8 border-2 border-dashed rounded-lg bg-gray-50 text-gray-400">
+                                    Belum ada aset yang ditugaskan.
+                                </div>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={addAssignmentRow}
+                                className="w-full py-3 border-2 border-dashed border-blue-200 rounded-lg text-blue-600 font-semibold hover:bg-blue-50 hover:border-blue-400 transition-all flex items-center justify-center gap-2"
+                            >
+                                <FaPlus size={14} /> Tambah Kendaraan Lain
+                            </button>
+                        </>
+                    )}
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t">
                     <button
                         type="button"
-                        onClick={addAssignmentRow}
-                        className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 disabled:opacity-50"
-                        disabled={isSubmitting || loadingOptions}
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                        className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors"
                     >
-                        <FaPlus size={14} />
-                        Tambah Baris Penugasan
+                        Batal
                     </button>
-                )}
-            </div>
-
-            <div className="flex justify-end gap-3 p-4 border-t dark:border-gray-700">
-                <button
-                    type="button"
-                    onClick={onClose}
-                    disabled={isSubmitting}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500 text-sm"
-                >
-                    Batal
-                </button>
-                <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={isSubmitting || loadingOptions || assignments.length === 0 || assignments.some(a => !a.vehicle_id)} // Disable jika ada vehicle belum dipilih
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 text-sm"
-                >
-                    {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : null}
-                    {isSubmitting ? "Menyimpan..." : "Simpan Semua Penugasan"}
-                </button>
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || loadingOptions || assignments.length === 0}
+                        className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium text-sm transition-colors shadow-sm"
+                    >
+                        {isSubmitting && <Loader2 className="animate-spin w-4 h-4" />}
+                        {isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
+                    </button>
+                </div>
             </div>
         </Modal>
     );
