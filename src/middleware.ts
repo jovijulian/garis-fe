@@ -32,6 +32,8 @@ const rolePermissions: Record<string, string[]> = {
         '/manage-booking/create-booking',
         '/profile',
         '/orders/my-orders',
+        '/orders/create-accommodation',
+        '/orders/choose',
         '/orders/create',
         '/orders/edit',
         '/vehicles/my-assignments',

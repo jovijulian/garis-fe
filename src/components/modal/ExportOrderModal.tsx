@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import moment from 'moment';
 import { endpointUrl } from '@/../helpers';
 import { FileDown, Loader2 } from 'lucide-react';
+import _ from 'lodash';
 
 interface ExportModalProps {
     isOpen: boolean;
@@ -103,7 +104,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => {
                         <Select
                             options={statusOptions}
                             onValueChange={(opt) => setStatus(opt ? opt.value : '')}
-                            value={statusOptions[0]}
+                            value={_.find(statusOptions, { value: status })}
                         />
                     </div>
                 </div>

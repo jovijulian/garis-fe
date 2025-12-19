@@ -1,26 +1,25 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, AlertTriangle, Plus, Info, Router, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { endpointUrl, httpGet } from '../../../../../helpers';
+import { endpointUrl, httpGet } from '@/../helpers';
 import { toast } from 'react-toastify';
-import OrderCard from '@/components/order/OrderCard';
+import OrderCard from '@/components/accommodation/AccommodationCard';
 import DeactiveModal from "@/components/modal/deactive/Deactive";
 import { useRouter, useSearchParams } from 'next/navigation';
 
-interface Order {
+interface Accommodation {
     id: number;
-    purpose: string;
-    pax: number;
-    location_text: string;
-    order_date: string;
+    check_in_date: string;
+    check_out_date: string;
+    room_needed: string;
+    total_pax: number;
     status: 'Submit' | 'Approved' | 'Rejected';
-    room: { name: string };
 }
 
 export default function MyOrdersPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [orders, setOrders] = useState<Order[]>([]);
+    const [orders, setOrders] = useState<Accommodation[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +30,7 @@ export default function MyOrdersPage() {
 
     const [isFormModalOpen, setFormModalOpen] = useState(false);
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [selectedOrder, setSelectedOrder] = useState<Accommodation | null>(null);
 
     const fetchUserOrders = async () => {
         const page = searchParams.get("page") || Number(currentPage);
@@ -44,7 +43,7 @@ export default function MyOrdersPage() {
         try {
             setError(null);
             setIsLoading(true);
-            const response = await httpGet(endpointUrl("/orders/user"), true, params);
+            const response = await httpGet(endpointUrl("/accommodations/user"), true, params);
             const responseData = response.data.data;
             setOrders(responseData.data || []);
             setCount(responseData.pagination.total);
@@ -69,11 +68,11 @@ export default function MyOrdersPage() {
         setFormModalOpen(true);
     };
 
-    const handleOpenEditModal = (order: Order) => {
-        router.push(`/orders/edit/${order.id}`);
+    const handleOpenEditModal = (order: Accommodation) => {
+        router.push(`/orders/my-orders/accommodation/edit/${order.id}`);
     };
 
-    const handleOpenDeleteModal = (order: Order) => {
+    const handleOpenDeleteModal = (order: Accommodation) => {
         setSelectedOrder(order);
         setDeleteModalOpen(true);
     };
@@ -106,23 +105,23 @@ export default function MyOrdersPage() {
         <>
             <div className="p-4 md:p-6 space-y-6 bg-gray-50 min-h-screen">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-800">Pesanan Konsumsi</h3>
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-800">Pesanan Akomodasi</h3>
                     <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
-
                         <button
-                            onClick={(e) => router.push('/orders/create')}
+                            onClick={(e) => router.push('/orders/create-accommodation')}
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow"
                         >
                             <Plus className="w-5 h-5" />
                             <span>Ajukan Pemesanan</span>
                         </button>
                         <button
-                            onClick={(e) => router.push('/orders/my-orders/accommodation')}
+                            onClick={(e) => router.push('/orders/my-orders')}
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow"
                         >
-                            <span>Pesanan Akomodasi</span>
+                            <span>Pesanan Konsumsi</span>
                             <ArrowRight className="w-5 h-5" />
                         </button>
+
                     </div>
                 </div>
 
@@ -132,7 +131,7 @@ export default function MyOrdersPage() {
                             {orders.map(order => (
                                 <OrderCard
                                     key={order.id}
-                                    order={order}
+                                    accommodation={order}
                                     onEdit={() => handleOpenEditModal(order)}
                                     onDelete={() => handleOpenDeleteModal(order)}
                                 />
@@ -181,8 +180,8 @@ export default function MyOrdersPage() {
                     setDeleteModalOpen(false);
                     setSelectedOrder(null);
                 }}
-                url={`orders/${selectedOrder?.id}`}
-                itemName={selectedOrder?.purpose || ""}
+                url={`accommodations/${selectedOrder?.id}`}
+                itemName={selectedOrder?.room_needed || ""}
                 selectedData={selectedOrder}
                 onSuccess={fetchUserOrders}
                 message="Order berhasil dibatalkan!"

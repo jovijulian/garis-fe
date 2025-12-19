@@ -1,25 +1,21 @@
-// components/booking/BookingCard.tsx
+// components/order/BookingCard.tsx
 
 import React from 'react';
 import moment from 'moment';
 import 'moment/locale/id';
-import { Calendar, Clock, Edit, Trash2, Building, CheckCircle, XCircle, Hourglass, Info, Pin } from 'lucide-react';
+import { Calendar, Clock, Edit, Trash2, Building, CheckCircle, XCircle, Hourglass, Info, Pin, Users } from 'lucide-react';
 import Link from 'next/link';
-
-// Definisikan interface yang akurat sesuai respons API
-interface Booking {
+interface Accommodation {
     id: number;
-    purpose: string;
-    detail_topic: string;
-    start_time: string;
-    end_time: string;
+    check_in_date: string;
+    check_out_date: string;
+    room_needed: string;
+    total_pax: number;
     status: 'Submit' | 'Approved' | 'Rejected';
-    room: { name: string };
-    topic: { name: string };
 }
 
-interface BookingCardProps {
-    booking: Booking;
+interface OrderCardProps {
+    accommodation: Accommodation;
     onEdit: () => void;
     onDelete: () => void;
 }
@@ -47,16 +43,16 @@ const statusConfig = {
     },
 };
 
-const BookingCard: React.FC<BookingCardProps> = ({ booking, onEdit, onDelete }) => {
+const OrderCard: React.FC<OrderCardProps> = ({ accommodation, onEdit, onDelete }) => {
     moment.locale('id');
-    const { label, icon, style } = statusConfig[booking.status];
-    const canBeModified = booking.status === 'Submit';
+    const { label, icon, style } = statusConfig[accommodation.status];
+    const canBeModified = accommodation.status === 'Submit';
 
     return (
 
         <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col h-full transition-all hover:shadow-lg">
             <Link
-                href={`/manage-booking/my-bookings/${booking.id}`}
+                href={`/orders/my-orders/accommodation/${accommodation.id}`}
                 className="block h-full group"
             >
                 <div className="p-5 flex-grow">
@@ -66,27 +62,26 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onEdit, onDelete }) 
                         <span>{label}</span>
                     </div>
 
-                    {/* Judul Keperluan */}
-                    <h3 className="text-lg font-bold text-gray-800 mt-3">{booking.purpose}</h3>
+                    <h3 className="text-lg font-bold text-gray-800 mt-3">{accommodation.room_needed}</h3>
 
-                    {/* Detail Ruangan & Waktu */}
                     <div className="space-y-3 mt-4 text-sm text-gray-600">
                         <div className="flex items-center gap-3">
-                            <Pin className="w-4 h-4 text-gray-400" />
-                            <span>{booking.topic.name} {booking.detail_topic ? `(${booking.detail_topic})` : ''}</span>
+                            <Users className="w-4 h-4 text-gray-400" />
+                            <span>{accommodation.total_pax} orang</span>
                         </div>
-                        <div className="flex items-center gap-3">
+                        {/* <div className="flex items-center gap-3">
                             <Building className="w-4 h-4 text-gray-400" />
-                            <span>{booking.room.name}</span>
+                            <span>{accommodation.room ? accommodation.room.name : accommodation.location_text}</span>
+                        </div> */}
+                        <div className="flex items-center gap-3">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <span>Check-in: {moment(accommodation.check_in_date).format('DD MMMM YYYY')}</span>
                         </div>
                         <div className="flex items-center gap-3">
                             <Calendar className="w-4 h-4 text-gray-400" />
-                            <span>{moment(booking.start_time).format('dddd, DD MMMM YYYY')}</span>
+                            <span>Check-out: {moment(accommodation.check_in_date).format('DD MMMM YYYY')}</span>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <Clock className="w-4 h-4 text-gray-400" />
-                            <span>{moment(booking.start_time).format('HH:mm')} - {moment(booking.end_time).format('HH:mm')}</span>
-                        </div>
+
                     </div>
                 </div>
             </Link>
@@ -96,7 +91,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onEdit, onDelete }) 
                 <button
                     onClick={onDelete}
                     disabled={!canBeModified}
-                    title={canBeModified ? "Batalkan Booking" : "Tidak dapat dibatalkan"}
+                    title={canBeModified ? "Batalkan Order" : "Tidak dapat dibatalkan"}
                     className="p-2 text-gray-500 rounded-full hover:bg-red-100 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
                     <Trash2 className="w-4 h-4" />
@@ -104,7 +99,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onEdit, onDelete }) 
                 <button
                     onClick={onEdit}
                     disabled={!canBeModified}
-                    title={canBeModified ? "Ubah Booking" : "Tidak dapat diubah"}
+                    title={canBeModified ? "Ubah Order" : "Tidak dapat diubah"}
                     className="p-2 text-gray-500 rounded-full hover:bg-blue-100 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
                     <Edit className="w-4 h-4" />
@@ -114,4 +109,4 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onEdit, onDelete }) 
     );
 };
 
-export default BookingCard;
+export default OrderCard;

@@ -53,7 +53,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => {
         }
 
         try {
-            const response = await fetch(endpointUrl(`/bookings/export-excel?${params.toString()}`), {
+            const response = await fetch(endpointUrl(`/accommodations/export-excel?${params.toString()}`), {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 }
@@ -68,7 +68,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `booking_report_${moment().format('YYYY-MM-DD')}.xlsx`;
+            a.download = `order_report_${moment().format('YYYY-MM-DD')}.xlsx`;
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -89,7 +89,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => {
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-xl">
             <div className="p-6">
-                <h3 className="text-xl font-semibold mb-5">Export Laporan Booking</h3>
+                <h3 className="text-xl font-semibold mb-5">Export Laporan Order</h3>
                 <div className="space-y-4 grid">
                     <div>
                         <label className="block font-medium mb-2">Pilih Rentang Tanggal</label>
@@ -104,6 +104,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => {
                         <Select
                             options={statusOptions}
                             onValueChange={(opt) => setStatus(opt ? opt.value : '')}
+                            // value={statusOptions.find(opt => opt.value === status) || null}
                             value={_.find(statusOptions, { value: status })}
                         />
                     </div>

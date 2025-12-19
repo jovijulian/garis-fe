@@ -31,27 +31,27 @@ const statusConfig = {
         style: 'bg-yellow-100 text-yellow-800 border-yellow-300',
     },
     Approved: {
-        label: 'Disetujui',
+        label: 'Approved',
         icon: <CheckCircle className="w-4 h-4 text-green-600" />,
         style: 'bg-green-100 text-green-800 border-green-300',
     },
     Rejected: {
-        label: 'Ditolak',
+        label: 'Rejected',
         icon: <XCircle className="w-4 h-4 text-red-600" />,
         style: 'bg-red-100 text-red-800 border-red-300',
     },
     Canceled: {
-        label: 'Dibatalkan',
+        label: 'Canceled',
         icon: <Info className="w-4 h-4 text-gray-600" />,
         style: 'bg-gray-200 text-gray-800 border-gray-300',
     },
     "In Progress": {
-        label: 'Dalam Proses',
+        label: 'In Progress',
         icon: <Clock className="w-4 h-4 text-blue-600" />,
         style: 'bg-blue-100 text-blue-800 border-blue-300',
     },
     Completed: {
-        label: 'Selesai',
+        label: 'Completed',
         icon: <CheckCircle className="w-4 h-4 text-green-600" />,
         style: 'bg-green-100 text-green-800 border-green-300',
     },

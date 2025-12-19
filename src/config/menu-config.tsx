@@ -20,7 +20,8 @@ import {
   ClipboardList,
   UserCog,
   Truck,
-  Settings2
+  Settings2,
+  CookingPot
 } from 'lucide-react';
 
 export type NavItem = {
@@ -93,9 +94,15 @@ export const menuConfig: Record<string, NavItem[]> = {
       roles: [1, 2],
     },
     {
-      name: 'List Pesanan',
-      icon: <BaggageClaim />,
+      name: 'List Pesanan Konsumsi',
+      icon: <CookingPot />,
       path: '/orders/manage-order',
+      roles: [1, 2],
+    },
+    {
+      name: 'List Pesanan Akomodasi',
+      icon: <BaggageClaim />,
+      path: '/orders/manage-order-accommodation',
       roles: [1, 2],
     },
     {
@@ -107,7 +114,7 @@ export const menuConfig: Record<string, NavItem[]> = {
     {
       name: 'Buat Pesanan',
       icon: <PlusCircle />,
-      path: '/orders/create',
+      path: '/orders/choose',
       roles: [3],
     },
     {
