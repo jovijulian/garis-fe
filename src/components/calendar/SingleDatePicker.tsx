@@ -113,12 +113,17 @@ export default function SingleDatePicker({
   const showClearDateFilterButton = selectedDate !== null && selectedDate !== undefined;
 
   const currentYear = new Date().getFullYear();
-  const years = useMemo(() =>
-    Array.from(
-      { length: currentYear - 1900 },
-      (_, i) => currentYear - i
-    ), [currentYear]
+  const maxYear = currentYear + 2;
+  
+  const years = useMemo(
+    () =>
+      Array.from(
+        { length: maxYear - 1900 + 1 },
+        (_, i) => maxYear - i
+      ),
+    [currentYear]
   );
+  
 
   const months = useMemo(() => [
     "January", "February", "March", "April", "May", "June",
