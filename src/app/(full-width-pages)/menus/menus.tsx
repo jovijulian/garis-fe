@@ -332,7 +332,7 @@ export default function MenusPage() {
                     
                     <div className={`max-w-5xl mx-auto transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-5'}`}>
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white tracking-tight">
-                            Selamat Datang, <span className="text-blue-600">{userName}</span>!
+                            Selamat Datangg, <span className="text-blue-600">{userName}</span>!
                         </h1>
                         <p className="text-gray-500 dark:text-gray-400 mt-2 text-lg">
                             Silakan pilih menu yang ingin Anda akses di bawah ini.
