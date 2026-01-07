@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  generateEtags: false,
+  generateBuildId: async () => {
+    // Bisa pakai commit hash atau timestamp
+    return `build-${Date.now()}`;
+  },
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
