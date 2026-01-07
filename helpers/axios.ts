@@ -35,14 +35,16 @@ axiosInstance.defaults.maxRedirects = 0; // Set to 0 to prevent automatic redire
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    const trace = error?.response?.data?.errors?.trace || [];
-    const isTokenExpired = trace.includes("Token has expired") || trace.includes("Wrong number of segments");
-    console.log(isTokenExpired)
-    if (isTokenExpired) {
+    const trace = error?.response;
+    const originalRequest = error.config; 
+    const isLoginEndpoint = originalRequest.url.includes('/auth/login'); 
+    const isTokenExpired = trace && trace.status === 401;
+    if (isTokenExpired && !isLoginEndpoint) {
       toast.error("Session has expired. Please log back in.");
       localStorage.clear();
       deleteCookie("cookieKey");
       deleteCookie("role");
+      deleteCookie("token");
       window.location.href = "/signin";
       document.cookie = "cookieKey=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
      return;
