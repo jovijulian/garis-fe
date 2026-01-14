@@ -18,6 +18,7 @@ interface VehicleRequest {
     cabang: { id_cab: number; nama_cab: string; };
     vehicle_type: { id: number; name: string; } | null;
     pickup_location_text: string | null;
+    requested_vehicle_count: number;
 }
 
 export default function MyVehicleRequestsPage() {

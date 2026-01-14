@@ -3,7 +3,7 @@
 import React from 'react';
 import moment from 'moment';
 import 'moment/locale/id';
-import { Calendar, Clock, Edit, Trash2, Building, CheckCircle, XCircle, Hourglass, Info, Pin, Users, MapPin } from 'lucide-react';
+import { Calendar, Clock, Edit, Trash2, Building, CheckCircle, XCircle, Hourglass, Info, Pin, Users, MapPin, Send } from 'lucide-react';
 import Link from 'next/link';
 interface VehicleRequest {
     id: number;
@@ -16,6 +16,7 @@ interface VehicleRequest {
     cabang: { id_cab: number; nama_cab: string; };
     vehicle_type: { id: number; name: string; } | null;
     pickup_location_text: string | null;
+    requested_vehicle_count: number;
 }
 
 interface VehicleRequestCardProps {
@@ -95,12 +96,16 @@ const VehicleRequestCard: React.FC<VehicleRequestCardProps> = ({ vehicleRequest,
                             <Users className="w-4 h-4 text-gray-400" />
                             <span>{vehicleRequest.passenger_count} Penumpang</span>
                         </div>
+                        <div className="flex items-center gap-2">
+                            <Send className="w-4 h-4 text-gray-400" />
+                            <span>{vehicleRequest.requested_vehicle_count > 0 ? "Peminjaman Kendaraan" : "Peminjaman Supir"} </span>
+                        </div>
                     </div>
                 </div>
-            </Link>
+            </Link >
 
             {/* Tombol Aksi */}
-            <div className="bg-gray-50 p-4 flex justify-end gap-3 border-t">
+            <div className="bg-gray-50 p-4 flex justify-end gap-3 border-t" >
                 <button
                     onClick={onDelete}
                     disabled={!canBeModified}
@@ -117,8 +122,8 @@ const VehicleRequestCard: React.FC<VehicleRequestCardProps> = ({ vehicleRequest,
                 >
                     <Edit className="w-4 h-4" />
                 </button>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

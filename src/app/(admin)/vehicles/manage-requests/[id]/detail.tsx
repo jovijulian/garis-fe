@@ -221,16 +221,38 @@ export default function AdminVehicleRequestDetailPage() {
     const showStartButton = data.status === 'Approved' && data.detail.length > 0;
     const showCompleteButton = data.status === 'In Progress';
     const showSPJButton = ['Approved', 'In Progress', 'Completed'].includes(data.status) && data.detail.length > 0;
+    const count = data.requested_vehicle_count;
+    const isVehicle = count > 0;
     return (
         <>
             <ComponentCard title="Detail Pengajuan Kendaraan (Admin)">
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 pb-4 border-b">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-800">{data.purpose}</h1>
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-bold text-gray-800">
+                                {data.purpose}
+                            </h1>
+
+                            <span
+                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+            ${isVehicle
+                                        ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                        : "bg-green-100 text-green-700 border border-green-300"
+                                    }`}
+                            >
+                                {isVehicle ? "Peminjaman Kendaraan" : "Peminjaman Pengemudi"}
+                            </span>
+                        </div>
+
                         <p className="text-sm text-gray-500">
-                            Diajukan oleh: <strong className="text-gray-700">{data.user?.nama_user}</strong> | ID: <strong className="text-gray-700">#{data.id}</strong>
+                            Diajukan oleh
+                            <strong className="text-gray-700"> {data.user?.nama_user}</strong>
+                            <span className="mx-1">•</span>
+                            ID:
+                            <strong className="text-gray-700"> #{data.id}</strong>
                         </p>
                     </div>
+
                     <div className="flex items-center gap-3">
                         {getStatusBadge(data.status)}
                         {/* {showStartButton && (
@@ -312,7 +334,7 @@ export default function AdminVehicleRequestDetailPage() {
                                         {data.detail.map((assignment, index) => (
                                             <div key={assignment.id} className={`p-3 rounded-md bg-gray-50 ${index > 0 ? 'mt-3' : ''}`}>
                                                 <p className="font-semibold text-gray-800">
-                                                    {assignment.vehicle.name} ({assignment.vehicle.license_plate})
+                                                    {assignment.vehicle ? assignment.vehicle?.name : <span className="italic text-gray-400">Tidak ada kendaraan</span>} {assignment.vehicle ? (assignment.vehicle?.license_plate) : ""}
                                                 </p>
                                                 <p className="text-sm text-gray-600">
                                                     Supir: {assignment.driver ? assignment.driver.name : <span className="italic text-gray-400">Tidak ada supir</span>}
@@ -416,6 +438,7 @@ export default function AdminVehicleRequestDetailPage() {
                 adminCabId={adminCabId}
                 startTime={data.start_time}
                 endTime={data.end_time}
+                onlyDriver={!isVehicle}
             />
         </>
     );

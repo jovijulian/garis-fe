@@ -55,7 +55,7 @@ export default function CreateVehicleRequestPage() {
   const searchParams = useSearchParams();
   const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
   const [vehicleTypeOptions, setVehicleTypeOptions] = useState<SelectOption[]>([]);
-
+  const [requestType, setRequestType] = useState<'vehicle' | 'driver'>('vehicle');
   const [viewingMonthDate, setViewingMonthDate] = useState(new Date());
 
   const [formData, setFormData] = useState<FormState>({
@@ -129,6 +129,17 @@ export default function CreateVehicleRequestPage() {
       return;
     }
 
+    if (requestType === 'vehicle') {
+      if (!formData.requested_vehicle_type_id) {
+        toast.error("Harap pilih jenis kendaraan yang diminta.");
+        return;
+      }
+      if (formData.requested_vehicle_count < 1) {
+        toast.error("Jumlah unit kendaraan harus minimal 1.");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     const start_time_iso = moment(`${formData.start_date} ${formData.start_time}`, 'YYYY-MM-DD HH:mm').toISOString();
@@ -142,11 +153,14 @@ export default function CreateVehicleRequestPage() {
       end_time: end_time_iso || null,
       passenger_count: Number(formData.passenger_count),
       passenger_names: formData.passenger_names,
-      requested_vehicle_type_id: Number(formData.requested_vehicle_type_id),
-      requested_vehicle_count: Number(formData.requested_vehicle_count),
+      // requested_vehicle_type_id: Number(formData.requested_vehicle_type_id),
+      // requested_vehicle_count: Number(formData.requested_vehicle_count),
       purpose: formData.purpose,
       note: formData.note,
-      requires_driver: formData.requires_driver || false,
+      // requires_driver: formData.requires_driver || false,
+      requested_vehicle_type_id: requestType === 'vehicle' ? Number(formData.requested_vehicle_type_id) : null,
+      requested_vehicle_count: requestType === 'vehicle' ? Number(formData.requested_vehicle_count) : 0,
+      requires_driver: requestType === 'vehicle' ? (formData.requires_driver || false) : true,
     };
 
     try {
@@ -162,6 +176,28 @@ export default function CreateVehicleRequestPage() {
 
   return (
     <ComponentCard title="Ajukan Peminjaman Kendaraan">
+      <div className="flex gap-4 mb-6 border-b pb-4">
+        <button
+          type="button"
+          onClick={() => setRequestType('vehicle')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${requestType === 'vehicle'
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+        >
+          Peminjaman Kendaraan
+        </button>
+        <button
+          type="button"
+          onClick={() => setRequestType('driver')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${requestType === 'driver'
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+        >
+          Peminjaman Pengemudi
+        </button>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-6">
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-4">
@@ -170,7 +206,7 @@ export default function CreateVehicleRequestPage() {
           </h3>
           <button
             type="button"
-            onClick={(e) => router.push('/vehicles/schedule')} 
+            onClick={(e) => router.push('/vehicles/schedule')}
             className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
           >
             Lihat Jadwal Keberangkatan
@@ -252,29 +288,43 @@ export default function CreateVehicleRequestPage() {
         </div>
 
         <h3 className="text-lg font-semibold border-b pb-2 pt-4">Detail Kebutuhan</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label className="block font-medium mb-1">Jenis Kendaraan<span className="text-red-400 ml-1">*</span></label>
-            <Select
-              options={vehicleTypeOptions}
-              value={_.find(vehicleTypeOptions, { value: formData.requested_vehicle_type_id?.toString() })}
-              onValueChange={(opt) =>
-                handleFieldChange('requested_vehicle_type_id', opt ? parseInt(opt.value) : null)
-              }
-              placeholder="Pilih jenis kendaraan..."
-              disabled={loadingOptions}
-            />
+        {requestType === 'vehicle' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in zoom-in duration-300">
+            <div>
+              <label className="block font-medium mb-1">Jenis Kendaraan<span className="text-red-400 ml-1">*</span></label>
+              <Select
+                options={vehicleTypeOptions}
+                value={_.find(vehicleTypeOptions, { value: formData.requested_vehicle_type_id?.toString() })}
+                onValueChange={(opt) =>
+                  handleFieldChange('requested_vehicle_type_id', opt ? parseInt(opt.value) : null)
+                }
+                placeholder="Pilih jenis kendaraan..."
+                disabled={loadingOptions}
+              />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Jumlah Unit<span className="text-red-400 ml-1">*</span></label>
+              <Input type="number" defaultValue={formData.requested_vehicle_count} onChange={(e) => handleFieldChange('requested_vehicle_count', e.target.value)} placeholder="1" required />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Jumlah Penumpang<span className="text-red-400 ml-1">*</span></label>
+              <Input type="number" defaultValue={formData.passenger_count} onChange={(e) => handleFieldChange('passenger_count', e.target.value)} placeholder="1" required />
+            </div>
           </div>
-          <div>
-            <label className="block font-medium mb-1">Jumlah Unit<span className="text-red-400 ml-1">*</span></label>
-            <Input type="number" defaultValue={formData.requested_vehicle_count} onChange={(e) => handleFieldChange('requested_vehicle_count', e.target.value)} placeholder="1" required />
-          </div>
-          <div>
-            <label className="block font-medium mb-1">Jumlah Penumpang<span className="text-red-400 ml-1">*</span></label>
-            <Input type="number" defaultValue={formData.passenger_count} onChange={(e) => handleFieldChange('passenger_count', e.target.value)} placeholder="1" required />
-          </div>
-        </div>
+        )}
 
+        {requestType === 'driver' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in zoom-in duration-300">
+            <div className="p-4 bg-blue-50 text-blue-800 rounded-lg border border-blue-200">
+              <p className="font-semibold text-sm">Mode Permohonan Pengemudi</p>
+              <p className="text-xs mt-1">Sistem akan mencatat pengajuan ini khusus untuk permintaan tenaga pengemudi tanpa unit kendaraan.</p>
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Jumlah Penumpang<span className="text-red-400 ml-1">*</span></label>
+              <Input type="number" defaultValue={formData.passenger_count} onChange={(e) => handleFieldChange('passenger_count', e.target.value)} placeholder="1" required />
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block font-medium mb-1">Nama Penumpang</label>
@@ -286,17 +336,20 @@ export default function CreateVehicleRequestPage() {
           </div>
         </div>
 
-        <div>
-          <label className="inline-flex items-center">
-            <input
-              type="checkbox"
-              checked={formData.requires_driver || false}
-              onChange={(e) => handleFieldChange('requires_driver', e.target.checked)}
-              className="form-checkbox h-5 w-5 text-blue-600"
-            />
-            <span className="ml-2">Memerlukan Sopir?</span>
-          </label>
-        </div>
+        {requestType === 'vehicle' && (
+          <div>
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.requires_driver || false}
+                onChange={(e) => handleFieldChange('requires_driver', e.target.checked)}
+                className="form-checkbox h-5 w-5 text-blue-600"
+              />
+              <span className="ml-2">Memerlukan Sopir?</span>
+            </label>
+          </div>
+        )}
+
 
 
         <div className="flex justify-end gap-3 pt-4">

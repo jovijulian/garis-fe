@@ -28,6 +28,7 @@ interface AssignmentModalProps {
     adminCabId: number | null;
     startTime?: string | null;
     endTime?: string | null;
+    onlyDriver?: boolean;
 }
 
 const AssignmentModal: React.FC<AssignmentModalProps> = ({
@@ -40,6 +41,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     adminCabId,
     startTime,
     endTime,
+    onlyDriver,
 }) => {
     const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
     const [vehicleOptions, setVehicleOptions] = useState<SelectOption[]>([]);
@@ -150,19 +152,20 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
-        const invalidRow = assignments.find(row =>
-            !row.vehicle_id || (requiresDriver && !row.driver_id)
-        );
+        // const invalidRow = assignments.find(row =>
+        //     !row.vehicle_id || !row.driver_id
+        // );
+        // console.log("Invalid Row:", invalidRow);
 
-        if (invalidRow) {
-            toast.error(`Harap lengkapi data ${!invalidRow.vehicle_id ? 'kendaraan' : 'supir'} pada baris yang tersedia.`);
-            setIsSubmitting(false);
-            return;
-        }
+        // if (invalidRow) {
+        //     toast.error(`Harap lengkapi data ${!invalidRow.vehicle_id ? 'kendaraan' : 'supir'} pada baris yang tersedia.`);
+        //     setIsSubmitting(false);
+        //     return;
+        // }
 
         const payloadDetails = assignments.map(row => ({
             request_id: requestId,
-            vehicle_id: Number(row.vehicle_id),
+            vehicle_id: row.vehicle_id ? Number(row.vehicle_id) : null,
             driver_id: row.driver_id ? Number(row.driver_id) : null,
             note_for_driver: row.note_for_driver || null,
         }));
@@ -187,7 +190,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-4xl">
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6 border-b pb-4">
-                    <h2 className="text-lg font-bold text-gray-800">Kelola Penugasan Kendaraan</h2>
+                    <h2 className="text-lg font-bold text-gray-800">Kelola Penugasan</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-700">&times;</button>
                 </div>
 
@@ -218,19 +221,20 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                                 <div key={assignment._key} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 border rounded-lg bg-gray-50 relative group">
                                     <div className="md:col-span-4">
                                         <label className="block text-xs font-semibold text-gray-600 mb-1">
-                                            Kendaraan <span className="text-red-500">*</span>
+                                            Kendaraan
                                         </label>
                                         <Select
                                             options={vehicleOptions}
                                             value={assignment.vehicle_id ? (_.find(vehicleOptions, { value: assignment.vehicle_id }) || null) : null}
                                             onValueChange={(opt) => handleAssignmentChange(assignment._key, 'vehicle_id', opt ? opt.value : null)}
                                             placeholder="Pilih Kendaraan..."
+                                            disabled={onlyDriver}
                                         />
                                     </div>
 
                                     <div className="md:col-span-4">
                                         <label className={`block text-xs font-semibold text-gray-600 mb-1 ${!requiresDriver ? 'opacity-70' : ''}`}>
-                                            Supir {requiresDriver && <span className="text-red-500">*</span>}
+                                            Supir
                                         </label>
                                         <Select
                                             options={driverOptions}
@@ -242,7 +246,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                                     </div>
 
                                     <div className="md:col-span-3">
-                                        <label className="block text-xs font-semibold text-gray-600 mb-1">Catatan Supir</label>
+                                        <label className="block text-xs font-semibold text-gray-600 mb-1">Catatan</label>
                                         <Input
                                             defaultValue={assignment.note_for_driver || ''}
                                             onChange={(e) => handleAssignmentChange(assignment._key, 'note_for_driver', e.target.value)}
@@ -277,7 +281,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                                 onClick={addAssignmentRow}
                                 className="w-full py-3 border-2 border-dashed border-blue-200 rounded-lg text-blue-600 font-semibold hover:bg-blue-50 hover:border-blue-400 transition-all flex items-center justify-center gap-2"
                             >
-                                <FaPlus size={14} /> Tambah Kendaraan Lain
+                                <FaPlus size={14} /> Tambah Kendaraan / Supir Lain
                             </button>
                         </>
                     )}

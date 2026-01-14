@@ -1,10 +1,10 @@
 "use client";
 
 // --- Imports ---
-import Table from "@/components/tables/Table"; 
+import Table from "@/components/tables/Table";
 import React, { useState, useEffect, useMemo } from "react";
-import Badge from "@/components/ui/badge/Badge"; 
-import { endpointUrl, httpGet, httpPut } from "@/../helpers"; 
+import Badge from "@/components/ui/badge/Badge";
+import { endpointUrl, httpGet, httpPut } from "@/../helpers";
 import { useRouter, useSearchParams } from "next/navigation";
 import moment from "moment";
 import 'moment/locale/id';
@@ -75,7 +75,7 @@ export default function ManageVehicleRequestsPage() {
 
         const params: any = {
             ...(search && { search }),
-            ...(statusFilter && { status: statusFilter }), 
+            ...(statusFilter && { status: statusFilter }),
             per_page: perPageParam,
             page: page,
         };
@@ -84,13 +84,13 @@ export default function ManageVehicleRequestsPage() {
             const response = await httpGet(endpointUrl("vehicle-requests"), true, params);
 
             const responseData = response.data.data.data;
-            setRequests(responseData); 
+            setRequests(responseData);
             setCount(response.data.data.pagination.total);
             setLastPage(response.data.data.pagination.total_pages);
         } catch (error) {
             console.error(error);
             toast.error("Gagal mengambil data pengajuan kendaraan");
-            setRequests([]); 
+            setRequests([]);
         } finally {
             setIsLoading(false);
         }
@@ -108,7 +108,7 @@ export default function ManageVehicleRequestsPage() {
             cell: ({ row }: { row: any }) => {
                 const request = row;
                 return (
-                    <div className="flex items-center justify-center"> 
+                    <div className="flex items-center justify-center">
                         <button
                             onClick={() => router.push(`/vehicles/manage-requests/${request.id}`)}
                             title="Lihat Detail & Proses"
@@ -136,15 +136,37 @@ export default function ManageVehicleRequestsPage() {
             },
         },
         {
+            id: "requested_vehicle_count",
+            header: "Tipe",
+            accessorFn: (row: any) => row.requested_vehicle_count,
+            cell: ({ row }: { row: any }) => {
+                const count = row.requested_vehicle_count;
+
+                const isVehicle = count > 0;
+
+                return (
+                    <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                        ${isVehicle
+                                ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                : "bg-green-100 text-green-700 border border-green-300"
+                            }`}
+                    >
+                        {isVehicle ? "Peminjaman Kendaraan" : "Peminjaman Pengemudi"}
+                    </span>
+                );
+            }
+        },
+        {
             id: "cabang",
-            header: "Cabang Pemohon", 
+            header: "Cabang Pemohon",
             accessorFn: (row: any) => row.cabang?.nama_cab,
             cell: ({ row }: { row: any }) => <span>{row.cabang?.nama_cab}</span>,
         },
         {
-            id: "pickup_location", 
-            header: "Lokasi Jemput", 
-            accessorFn: (row: any) => row.pickup_location_text || row.cabang?.nama_cab, 
+            id: "pickup_location",
+            header: "Lokasi Jemput",
+            accessorFn: (row: any) => row.pickup_location_text || row.cabang?.nama_cab,
             cell: ({ row }: { row: any }) => <span>{row.pickup_location_text || row.cabang?.nama_cab}</span>,
         },
         {
@@ -157,15 +179,15 @@ export default function ManageVehicleRequestsPage() {
             id: "start_time",
             header: "Waktu Mulai",
             accessorFn: (row: any) => row.start_time,
-            cell: ({ row }: { row: any}) => (
-                <span>{moment(row.start_time).format("DD MMM YYYY, HH:mm")}</span> 
+            cell: ({ row }: { row: any }) => (
+                <span>{moment(row.start_time).format("DD MMM YYYY, HH:mm")}</span>
             ),
         },
         {
             id: "passenger_count",
             header: "Penumpang",
             accessorKey: "passenger_count",
-            cell: ({ row }: { row: any}) => <span>{row.passenger_count}</span>,
+            cell: ({ row }: { row: any }) => <span>{row.passenger_count}</span>,
         },
         {
             id: "requires_driver",
@@ -179,7 +201,7 @@ export default function ManageVehicleRequestsPage() {
             id: "status",
             header: "Status",
             accessorKey: "status",
-            cell: ({ row }: { row: any}) => {
+            cell: ({ row }: { row: any }) => {
                 const status = row.status;
                 let color: "success" | "error" | "warning" | "info" | "warning" = "warning";
                 if (status === 'Approved') color = 'success';
@@ -194,17 +216,17 @@ export default function ManageVehicleRequestsPage() {
             id: "created_at",
             header: "Diajukan pada",
             accessorFn: (row: any) => row.created_at,
-            cell: ({ row }: { row: any}) => (
+            cell: ({ row }: { row: any }) => (
                 <span>{moment(row.created_at).format("DD MMM YYYY, HH:mm")}</span>
             ),
         },
-    ], [router]); 
+    ], [router]);
 
-   
 
-   
-  
-   
+
+
+
+
 
     return (
         <div className="space-y-4">
@@ -213,19 +235,19 @@ export default function ManageVehicleRequestsPage() {
                     type="text"
                     value={searchTerm}
                     onChange={handleSearch}
-                    placeholder="Cari..." 
+                    placeholder="Cari..."
                     className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
                 />
                 <div className="flex gap-2 flex-shrink-0">
                     <button
-                        onClick={() => setIsExportModalOpen(true)} 
+                        onClick={() => setIsExportModalOpen(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                     >
                         <FileDown size={18} />
                         <span>Export</span>
                     </button>
                     <button
-                        onClick={() => router.push("/vehicles/create-admin")} 
+                        onClick={() => router.push("/vehicles/create-admin")}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
                     >
                         <span>+</span>
@@ -235,7 +257,7 @@ export default function ManageVehicleRequestsPage() {
             </div>
 
             <Table
-                data={requests} 
+                data={requests}
                 columns={columns}
                 pagination={true}
                 lastPage={lastPage}
@@ -245,7 +267,7 @@ export default function ManageVehicleRequestsPage() {
                 onPerPageChange={handlePerPageChange}
             />
 
-            <ExportVehicleRequestModal 
+            <ExportVehicleRequestModal
                 isOpen={isExportModalOpen}
                 onClose={() => setIsExportModalOpen(false)}
             />
