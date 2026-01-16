@@ -104,7 +104,7 @@ export default function CreateAccommodationPage() {
         try {
             await httpPost(endpointUrl('/accommodations'), payload, true);
             toast.success("Pengajuan akomodasi berhasil dikirim!");
-            router.push('/orders/my-orders/accommodation');
+            router.push('/orders/my-orders');
         } catch (error: any) {
             toast.error(error?.response?.data?.message || "Gagal mengirim pengajuan.");
         } finally {

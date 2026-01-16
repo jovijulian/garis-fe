@@ -58,7 +58,6 @@ export default function ScheduleDisplayPage() {
 
         try {
             const response = await httpGet(endpointUrl("/vehicle-requests/schedule"), true, params);
-            console.log(response.data)
             setScheduleData(response.data.data || { columns: [], bookings: [], timeSlots: [] });
             setLastUpdated(moment().format('HH:mm:ss'));
         } catch (err: any) {

@@ -21,7 +21,9 @@ import {
   UserCog,
   Truck,
   Settings2,
-  CookingPot
+  CookingPot,
+  Layers,
+  BusFront
 } from 'lucide-react';
 
 export type NavItem = {
@@ -106,9 +108,21 @@ export const menuConfig: Record<string, NavItem[]> = {
       roles: [1, 2],
     },
     {
+      name: 'List Pesanan Transportasi',
+      icon: <BusFront />,
+      path: '/orders/manage-order-transport',
+      roles: [1, 2],
+    },
+    {
       name: 'Daftar Tipe Konsumsi',
       icon: <LayoutList />,
       path: '/orders/master/consumption-types',
+      roles: [1, 2],
+    },
+    {
+      name: 'Daftar Jenis Transportasi',
+      icon: <Layers />,
+      path: '/orders/master/transport-types',
       roles: [1, 2],
     },
     {

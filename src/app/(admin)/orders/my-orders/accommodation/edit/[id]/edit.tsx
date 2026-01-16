@@ -124,7 +124,7 @@ export default function EditAccommodationPage() {
     try {
       await httpPut(endpointUrl(`/accommodations/${id}`), payload, true);
       toast.success("Pesanan akomodasi berhasil diperbarui!");
-      router.push('/orders/my-orders/accommodation');
+      router.push('/orders/my-orders');
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Gagal memperbarui pesanan.");
     } finally {

@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import moment from "moment";
 import 'moment/locale/id';
-import { endpointUrl, httpGet, httpPut } from "@/../helpers";
+import { endpointUrl, httpGet, httpPut, getBadgeStatus } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import {
     FaUsers, FaBuilding, FaMapMarkerAlt, FaClipboardList, FaStickyNote,
@@ -83,20 +83,20 @@ export default function AdminVehicleRequestDetailPage() {
         }
     }, [getDetail]);
 
-    const getStatusBadge = (status: string) => {
-        let color: "success" | "error" | "warning" | "info";
-        let label = status;
-        switch (status) {
-            case 'Approved': color = 'success'; label = 'Approved'; break;
-            case 'Rejected': color = 'error'; label = 'Rejected'; break;
-            case 'Canceled': color = 'error'; label = 'Canceled'; break;
-            case 'In Progress': color = 'info'; label = 'In Progress'; break;
-            case 'Completed': color = 'success'; label = 'Completed'; break;
-            case 'Submit': color = 'warning'; label = 'Submit'; break;
-            default: color = 'info'; break;
-        }
-        return <Badge color={color}>{label}</Badge>;
-    };
+    // const getStatusBadge = (status: string) => {
+    //     let color: "success" | "error" | "warning" | "info";
+    //     let label = status;
+    //     switch (status) {
+    //         case 'Approved': color = 'success'; label = 'Approved'; break;
+    //         case 'Rejected': color = 'error'; label = 'Rejected'; break;
+    //         case 'Canceled': color = 'error'; label = 'Canceled'; break;
+    //         case 'In Progress': color = 'info'; label = 'In Progress'; break;
+    //         case 'Completed': color = 'success'; label = 'Completed'; break;
+    //         case 'Submit': color = 'warning'; label = 'Submit'; break;
+    //         default: color = 'info'; break;
+    //     }
+    //     return <Badge color={color}>{label}</Badge>;
+    // };
 
     const handleOpenStatusModal = (reqData: VehicleRequestData, action: 'Approved' | 'Rejected') => {
         setData(reqData);
@@ -254,7 +254,7 @@ export default function AdminVehicleRequestDetailPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {getStatusBadge(data.status)}
+                        <Badge {...getBadgeStatus(data.status)} />
                         {/* {showStartButton && (
                             <button
                                 onClick={() => handleTriggerStatus('In Progress')}

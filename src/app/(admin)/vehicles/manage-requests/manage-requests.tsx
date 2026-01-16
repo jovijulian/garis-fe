@@ -4,7 +4,7 @@
 import Table from "@/components/tables/Table";
 import React, { useState, useEffect, useMemo } from "react";
 import Badge from "@/components/ui/badge/Badge";
-import { endpointUrl, httpGet, httpPut } from "@/../helpers";
+import { endpointUrl, getBadgeStatus, httpGet, httpPut } from "@/../helpers";
 import { useRouter, useSearchParams } from "next/navigation";
 import moment from "moment";
 import 'moment/locale/id';
@@ -202,14 +202,7 @@ export default function ManageVehicleRequestsPage() {
             header: "Status",
             accessorKey: "status",
             cell: ({ row }: { row: any }) => {
-                const status = row.status;
-                let color: "success" | "error" | "warning" | "info" | "warning" = "warning";
-                if (status === 'Approved') color = 'success';
-                else if (status === 'Rejected' || status === 'Canceled') color = 'error';
-                else if (status === 'In Progress') color = 'warning';
-                else if (status === 'Completed') color = 'success';
-
-                return <Badge color={color}>{status}</Badge>;
+                return <Badge {...getBadgeStatus(row.status)} />
             },
         },
         {
