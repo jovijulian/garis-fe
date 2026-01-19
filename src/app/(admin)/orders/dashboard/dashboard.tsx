@@ -135,7 +135,7 @@ export default function OrderDashboardPage() {
             </div>
             <div className="grid grid-cols-2 gap-6">
                 <div className="">
-                    <div className="rounded-2xl shadow-sm border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 h-[400px]">
+                    <div className="rounded-2xl shadow-sm border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 h-full">
                         <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                             Status Order
                         </h3>

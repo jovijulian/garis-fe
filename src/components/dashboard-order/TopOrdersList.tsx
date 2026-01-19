@@ -1,4 +1,4 @@
-import { IdCard, Utensils } from 'lucide-react';
+import { IdCard, List, Utensils } from 'lucide-react';
 import React from 'react';
 
 export const TopOrdersList = ({ data }: { data: any[] }) => (
@@ -6,16 +6,16 @@ export const TopOrdersList = ({ data }: { data: any[] }) => (
         <div className="mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-green-100 text-green-600 rounded-lg">
-                    <Utensils className="w-5 h-5" />
+                    <List className="w-5 h-5" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white"> Top 5 Tipe Konsumsi</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Komposisi Order</h3>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 ml-12">
-                Tipe konsumsi dengan jumlah order terbanyak dalam periode terakhir
+                Jumlah order berdasarkan kategori layanan
             </p>
         </div>
 
-        <div className="space-y-4 max-h-48 overflow-y-auto pr-2">
+        <div className="space-y-2  overflow-y-auto pr-2">
             {data && data.length > 0 ? (
                 data.map((type, index) => (
                     <div key={type.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-slate-100 hover:border-slate-200 transition-all duration-200 transition-colors">

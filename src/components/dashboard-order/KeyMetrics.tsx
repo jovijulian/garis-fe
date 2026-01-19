@@ -1,5 +1,5 @@
 "use client";
-import { ShoppingCart, Hourglass, Utensils, UserCheck } from 'lucide-react';
+import { ShoppingCart, Hourglass, Utensils, UserCheck, Layers } from 'lucide-react';
 import React from 'react';
 import { useRouter } from 'next/navigation'; 
 
@@ -19,8 +19,8 @@ const KeyMetrics = ({ data }: { data: any }) => {
             href: "/orders/manage-order" 
         },
         { 
-            icon: Utensils, 
-            label: "Tipe Konsumsi Terpopuler", 
+            icon: Layers, 
+            label: "Kategori Terpopuler", 
             value: data.most_popular_consumption_type, 
             color: "green" 
         },
