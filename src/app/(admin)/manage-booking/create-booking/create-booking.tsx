@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import 'moment/locale/id';
@@ -22,6 +22,7 @@ interface BookingFormData {
     start_time: string;
     end_time: string;
     notes: string;
+    cab_id: number | null;
 }
 
 // Interface untuk pilihan dropdown
@@ -44,7 +45,7 @@ interface RoomData {
     id: number;
     name: string;
     capacity: number;
-    amenities: AmenityOption[]; 
+    amenities: AmenityOption[];
 }
 
 export default function CreateBookingPage() {
@@ -57,6 +58,7 @@ export default function CreateBookingPage() {
         start_time: '',
         end_time: '',
         notes: '',
+        cab_id: null,
     });
     const [rawRooms, setRawRooms] = useState<RoomData[]>([]);
     const [availableAmenities, setAvailableAmenities] = useState<AmenityOption[]>([]);
@@ -70,9 +72,47 @@ export default function CreateBookingPage() {
     const [isConflictModalOpen, setConflictModalOpen] = useState(false);
     const [conflictDetails, setConflictDetails] = useState(null);
     const [wantsToOrderConsumption, setWantsToOrderConsumption] = useState(false);
+    const searchParams = useSearchParams();
     useEffect(() => {
-        fetchOptions();
-    }, []);
+        const roomIdParams = searchParams.get("room_id");
+        const cabIdParams = searchParams.get("cab_id");
+        const startTimeParam = searchParams.get("start_time");
+
+        const updates: Partial<BookingFormData> = {};
+
+        if (startTimeParam) {
+            const startMoment = moment(startTimeParam); 
+            if (startMoment.isValid()) {
+                updates.start_time = startMoment.format('YYYY-MM-DDTHH:mm');
+            }
+        }
+
+        let currentCabId = null;
+        let currentRoomId = null;
+
+        if (cabIdParams) {
+            currentCabId = parseInt(cabIdParams, 10);
+            updates.cab_id = currentCabId;
+
+            setSelectedSite(cabIdParams);
+        }
+
+        if (roomIdParams) {
+            currentRoomId = parseInt(roomIdParams, 10);
+            updates.room_id = currentRoomId;
+        }
+
+        if (Object.keys(updates).length > 0) {
+            setFormData(prev => ({ ...prev, ...updates }));
+        }
+
+        fetchOptions(); 
+
+        if (currentCabId) {
+            fetchRooms(currentCabId.toString(), currentRoomId);
+        }
+
+    }, [searchParams]);
 
     const fetchOptions = async () => {
         try {
@@ -152,7 +192,7 @@ export default function CreateBookingPage() {
                 setConflictDetails(availabilityRes.data.data.conflictingBookings);
                 setConflictModalOpen(true);
                 setIsSubmitting(false);
-                return; 
+                return;
             }
 
             await handleConfirmSubmit();
@@ -163,18 +203,12 @@ export default function CreateBookingPage() {
         }
     };
 
-    const handleSiteChange = async (siteId: any) => {
+    const fetchRooms = async (siteIdValue: string, preselectedRoomId: number | null = null) => {
         setLoadingRoomOptions(true);
-        setSelectedSite(siteId);
-
-        handleFieldChange("room_id", null);
         setRoomOptions([]);
-        setRawRooms([]); 
-        setAvailableAmenities([]);
 
         try {
-            const roomsRes = await httpGet(endpointUrl("/rooms/options"), true, { site: siteId.value });
-            
+            const roomsRes = await httpGet(endpointUrl("/rooms/options"), true, { site: siteIdValue });
             const roomsData: RoomData[] = roomsRes.data.data;
             setRawRooms(roomsData);
 
@@ -183,11 +217,35 @@ export default function CreateBookingPage() {
                 label: `${room.name} (Kapasitas: ${room.capacity} orang)`,
             }));
             setRoomOptions(formattedRooms);
+            if (preselectedRoomId) {
+                const selectedRoom = roomsData.find(r => r.id === preselectedRoomId);
+                if (selectedRoom && selectedRoom.amenities) {
+                    setAvailableAmenities(selectedRoom.amenities);
+                }
+            }
+
         } catch (error) {
+            console.error(error);
             setRoomOptions([]);
-            setRawRooms([]);
         } finally {
             setLoadingRoomOptions(false);
+        }
+    };
+
+    const handleSiteChange = (selectedOption: SelectOption | null) => {
+        if (selectedOption) {
+            setSelectedSite(selectedOption.value);
+            handleFieldChange("cab_id", parseInt(selectedOption.value));
+            handleFieldChange("room_id", null);
+            setAvailableAmenities([]);
+
+            fetchRooms(selectedOption.value);
+        } else {
+            setSelectedSite(null);
+            handleFieldChange("cab_id", null);
+            handleFieldChange("room_id", null);
+            setRoomOptions([]);
+            setAvailableAmenities([]);
         }
     };
 
@@ -196,7 +254,7 @@ export default function CreateBookingPage() {
             const roomId = parseInt(selectedOption.value);
             handleFieldChange('room_id', roomId);
             const selectedRoom = rawRooms.find(r => r.id === roomId);
-            
+
             if (selectedRoom && selectedRoom.amenities) {
                 setAvailableAmenities(selectedRoom.amenities);
             } else {
@@ -217,7 +275,7 @@ export default function CreateBookingPage() {
                     <Select
                         onValueChange={(value) => handleSiteChange(value)}
                         placeholder={loadingOptions ? "Memuat cabang..." : "Pilih Cabang"}
-                        value={_.find(siteOptions, { value: selectedSite })}
+                        value={siteOptions.find(opt => opt.value == selectedSite)}
                         options={siteOptions}
                         isClearable
                         disabled={loadingOptions}
@@ -226,7 +284,7 @@ export default function CreateBookingPage() {
                 <div>
                     <label className="block font-medium mb-1">Ruangan<span className="text-red-500 ml-1">*</span></label>
                     <Select
-                       onValueChange={handleRoomChange}
+                        onValueChange={handleRoomChange}
                         placeholder={loadingRoomOptions ? "Memuat ruangan..." : "Pilih Ruangan"}
                         value={roomOptions.find(opt => opt.value === formData.room_id?.toString()) || null}
                         options={roomOptions}
@@ -320,7 +378,7 @@ export default function CreateBookingPage() {
                                 Silakan pilih ruangan untuk melihat fasilitas tersedia.
                             </p>
                         ) : availableAmenities.length === 0 ? (
-                             <p className="p-4 text-gray-500 italic">Tidak ada fasilitas khusus terdaftar di ruangan ini.</p>
+                            <p className="p-4 text-gray-500 italic">Tidak ada fasilitas khusus terdaftar di ruangan ini.</p>
                         ) : (
                             <ul className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">
                                 {availableAmenities.map(amenity => (

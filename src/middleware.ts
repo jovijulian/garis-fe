@@ -29,6 +29,7 @@ const rolePermissions: Record<string, string[]> = {
     '3': [
         '/support',
         '/manage-booking/my-bookings',
+        '/manage-booking/schedule',
         '/manage-booking/create-booking',
         '/profile',
         '/orders/my-orders',

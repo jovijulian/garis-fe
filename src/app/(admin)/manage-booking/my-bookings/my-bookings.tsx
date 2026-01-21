@@ -124,8 +124,14 @@ export default function MyBookingsPage() {
     return (
         <>
             <div className="p-4 md:p-6 space-y-6 bg-gray-50 min-h-screen">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-800"></h1>
+                    <button
+                        onClick={(e) => router.push('/manage-booking/schedule')}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow"
+                    >
+                        <span>Lihat Jadwal Peminjaman</span>
+                    </button>
                     <button
                         onClick={(e) => router.push('/manage-booking/create-booking')}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow"
