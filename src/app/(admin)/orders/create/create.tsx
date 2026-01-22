@@ -304,7 +304,7 @@ export default function CreateOrderPage() {
                   <label className="text-xs text-gray-500">Nama Menu</label>
                   <Input defaultValue={item.menu} onChange={(e) => handleDetailChange(index, 'menu', e.target.value)} placeholder="Deskripsi Menu..." />
                 </div>
-                <div className="md:col-span-1">
+                <div className="col-span-1 md:col-span-2">
                   <label className="text-xs text-gray-500">Qty</label>
                   <Input type="number" defaultValue={item.qty} onChange={(e) => handleDetailChange(index, 'qty', e.target.value)} placeholder="Qty" />
                 </div>
