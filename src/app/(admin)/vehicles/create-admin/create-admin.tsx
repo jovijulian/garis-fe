@@ -165,10 +165,11 @@ export default function CreateVehicleRequestAdminPage() {
 
     setIsSubmitting(true);
 
-    const start_time_iso = moment(`${formData.start_date} ${formData.start_time}`, 'YYYY-MM-DD HH:mm').toISOString();
+    const start_time_iso = moment(`${formData.start_date} ${formData.start_time}`, 'YYYY-MM-DD HH:mm').format('YYYY-MM-DD HH:mm:ss');
     const end_time_iso = (formData.end_date && formData.end_time)
-      ? moment(`${formData.end_date} ${formData.end_time}`, 'YYYY-MM-DD HH:mm').toISOString()
+      ? moment(`${formData.end_date} ${formData.end_time}`, 'YYYY-MM-DD HH:mm').format('YYYY-MM-DD HH:mm:ss')
       : null;
+
     const payload: VehicleRequestPayload = {
       cab_id: formData.cab_id ? Number(formData.cab_id) : null,
       pickup_location_text: formData.pickup_location_text || null,

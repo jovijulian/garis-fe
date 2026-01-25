@@ -145,8 +145,8 @@ export default function CreateBookingPage() {
         try {
             const payload = {
                 ...formData,
-                start_time: moment(formData.start_time).utc().toISOString(),
-                end_time: moment(formData.end_time).utc().toISOString(),
+                start_time: moment(formData.start_time).format('YYYY-MM-DD HH:mm:ss'),
+                end_time: moment(formData.end_time).format('YYYY-MM-DD HH:mm:ss'),
             };
 
             const response = await httpPost(endpointUrl("/bookings"), payload, true);
@@ -184,8 +184,8 @@ export default function CreateBookingPage() {
         try {
             const availabilityRes = await httpGet(endpointUrl('/bookings/check-availability'), true, {
                 room_id: room_id,
-                start_time: moment(start_time).utc().toISOString(),
-                end_time: moment(end_time).utc().toISOString(),
+                start_time: moment(start_time),
+                end_time: moment(end_time),
             });
 
             if (!availabilityRes.data.data.is_available) {

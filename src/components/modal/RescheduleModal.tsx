@@ -129,8 +129,8 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({ isOpen, booking, onCl
             const payload = {
                 room_id: parseInt(selectedRoom.value), // Gunakan ID dari dropdown (bisa ruangan baru atau lama)
                 purpose: booking.purpose,
-                start_time: moment(newStartTime).utc().toISOString(),
-                end_time: moment(newEndTime).utc().toISOString(),
+                start_time: moment(newStartTime).format('YYYY-MM-DD HH:mm:ss'),
+                end_time: moment(newEndTime).format('YYYY-MM-DD HH:mm:ss'),
                 status: 'Approved',
             };
 

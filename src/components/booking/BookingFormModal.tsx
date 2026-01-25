@@ -130,8 +130,8 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ isOpen, onClose, on
         // Konversi waktu ke UTC sebelum dikirim
         const payload = {
             ...formData,
-            start_time: moment(formData.start_time).utc().toISOString(),
-            end_time: moment(formData.end_time).utc().toISOString(),
+            start_time: moment(formData.start_time).format('YYYY-MM-DD HH:mm:ss'),
+            end_time: moment(formData.end_time).format('YYYY-MM-DD HH:mm:ss'),
             amenity_ids: [],
         };
 

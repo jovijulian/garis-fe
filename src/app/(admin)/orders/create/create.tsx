@@ -134,7 +134,7 @@ export default function CreateOrderPage() {
         return {
           ...d,
           qty: d.qty ? parseInt(d.qty, 10) : 0,
-          delivery_time: fullDateTime.isValid() ? fullDateTime.toISOString() : null,
+          delivery_time: fullDateTime.isValid() ? fullDateTime.format('YYYY-MM-DD HH:mm:ss') : null,
         };
       }).filter(d => d.consumption_type_id && d.qty > 0)
     };

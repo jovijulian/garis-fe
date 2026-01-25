@@ -142,8 +142,8 @@ export default function CreateVehicleRequestPage() {
 
     setIsSubmitting(true);
 
-    const start_time_iso = moment(`${formData.start_date} ${formData.start_time}`, 'YYYY-MM-DD HH:mm').toISOString();
-    const end_time_iso = moment(`${formData.end_date} ${formData.end_time}`, 'YYYY-MM-DD HH:mm').toISOString();
+    const start_time_iso = moment(`${formData.start_date} ${formData.start_time}`, 'YYYY-MM-DD HH:mm').format('YYYY-MM-DD HH:mm:ss');
+    const end_time_iso = moment(`${formData.end_date} ${formData.end_time}`, 'YYYY-MM-DD HH:mm').format('YYYY-MM-DD HH:mm:ss');
 
     const payload: VehicleRequestPayload = {
       cab_id: formData.cab_id ? Number(formData.cab_id) : null,

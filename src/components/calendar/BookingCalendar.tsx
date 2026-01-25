@@ -31,8 +31,8 @@ const BookingCalendar: React.FC = () => {
   const fetchEvents: EventSourceFunc = useCallback(async (fetchInfo, successCallback, failureCallback) => {
     try {
       const params = {
-        startDate: moment(fetchInfo.start).toISOString(),
-        endDate: moment(fetchInfo.end).toISOString(),
+        startDate: moment(fetchInfo.start).format('YYYY-MM-DD HH:mm:ss'),
+        endDate: moment(fetchInfo.end).format('YYYY-MM-DD HH:mm:ss')
       };
       
       const response = await httpGet(endpointUrl("/bookings"), true, params);

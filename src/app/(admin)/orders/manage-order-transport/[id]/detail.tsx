@@ -309,18 +309,18 @@ export default function TransportAdminDetailPage() {
             </div>
 
             {data.status === 'Submit' && (
-                <div className="flex justify-end gap-3 mt-8 pt-6 border-t bg-gray-50 -mx-6 -mb-6 p-6 rounded-b-lg">
+                <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
                     <button
-                        className="px-6 py-2.5 rounded-xl bg-white border border-red-200 text-red-600 font-bold hover:bg-red-50 transition shadow-sm"
+                        className="px-6 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
                         onClick={() => { setActionType("Rejected"); setIsStatusModalOpen(true); }}
                     >
-                        Tolak Pengajuan
+                        Tolak
                     </button>
                     <button
-                        className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+                        className="px-6 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition"
                         onClick={() => { setActionType("Approved"); setIsStatusModalOpen(true); }}
                     >
-                        Setujui Pengajuan
+                        Setujui
                     </button>
                 </div>
             )}

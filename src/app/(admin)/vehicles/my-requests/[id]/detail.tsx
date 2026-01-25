@@ -278,7 +278,7 @@ export default function VehicleRequestDetailPage() {
             <DeactiveModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
-                url={`vehicle-requests/cancel/${data?.id}`}
+                url={`vehicle-requests/${data?.id}`}
                 selectedData={data}
                 itemName={data?.purpose || ""}
                 onSuccess={() => {
