@@ -317,10 +317,18 @@ export default function MenusPage() {
         }
     };
 
+    // const handleNavigation = (href: string) => {
+    //     if (isNavigating) return;
+    //     setIsNavigating(true);
+    //     router.push(href);
+    //     setTimeout(() => setIsNavigating(false), 5000);
+    // };
+
     const handleNavigation = (href: string) => {
         if (isNavigating) return;
         setIsNavigating(true);
-        router.push(href);
+
+        window.location.href = href; 
         setTimeout(() => setIsNavigating(false), 5000);
     };
 
