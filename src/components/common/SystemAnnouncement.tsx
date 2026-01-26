@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle } from 'lucide-react'; 
+import { AlertTriangle } from 'lucide-react';
 
 export default function SystemAnnouncement() {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        const expiryDate = new Date('2026-02-01T23:59:59'); 
+        const expiryDate = new Date('2026-02-01T23:59:59');
         const now = new Date();
 
         if (now < expiryDate) {
@@ -28,11 +28,16 @@ export default function SystemAnnouncement() {
 
             <div className="whitespace-nowrap w-full absolute animate-marquee flex items-center">
                 <span className="text-sm font-semibold pl-[120px] md:pl-[160px]">
-                    !!PENGUMUMAN!!   Mohon Maaf, dikarenakan adanya pembaruan sistem Zona Waktu (Timezone), data pengajuan lama mungkin mengalami ketidaksesuaian jam. 
-                    Jika Anda menemukan kendala pada data lama, silakan hapus dan lakukan pengajuan ulang. Terima kasih atas pengertiannya.!!PENGUMUMAN!!
+                    !!PENGUMUMAN!!
+                    Mohon Maaf, sehubungan dengan adanya pembaruan sistem Zona Waktu (Timezone),
+                    data pengajuan lama yang tersimpan di cache aplikasi mungkin mengalami ketidaksesuaian jam.
+                    <strong>Mohon lakukan refresh aplikasi terlebih dahulu</strong>.
+                    Jika masih terdapat kendala pada data lama, silakan hapus data tersebut lalu lakukan pengajuan ulang.
+                    Terima kasih atas pengertiannya.
+                    !!PENGUMUMAN!!
                 </span>
             </div>
-            
+
             <style jsx>{`
                 @keyframes marquee {
                     0% { transform: translateX(100%); }
