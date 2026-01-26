@@ -10,6 +10,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import SystemAnnouncement from '@/components/common/SystemAnnouncement';
 import { Bounce, ToastContainer } from "react-toastify";
+import VersionChecker from '@/components/common/VersionChecker';
 const outfit = Outfit({
   subsets: ["latin"],
 });
@@ -33,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.className} dark:bg-gray-900`}>
+      <VersionChecker />
       <SystemAnnouncement />
         <ToastContainer
           style={{ marginTop: '4rem' }}
