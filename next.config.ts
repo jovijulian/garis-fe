@@ -4,8 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   generateEtags: false,
   generateBuildId: async () => {
-    // Bisa pakai commit hash atau timestamp
-    return `build-${Date.now()}`;
+    return buildId;
   },
   webpack(config) {
     config.module.rules.push({

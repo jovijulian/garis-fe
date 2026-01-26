@@ -11,11 +11,26 @@ export default function VersionChecker() {
     const checkVersion = async () => {
       try {
         const currentBuildId = process.env.NEXT_PUBLIC_APP_BUILD_ID;
+        
+        // --- LOGGING DEBUGGING (Lihat di Console Browser) ---
+        console.log("🔍 Cek Versi Berjalan...");
+        console.log("👉 Client ID (Browser):", currentBuildId);
+
         const res = await fetch(`/api/version?t=${Date.now()}`);
+        if (!res.ok) {
+            console.error("❌ Gagal fetch API version:", res.status);
+            return;
+        }
+        
         const data = await res.json();
         const serverBuildId = data.buildId;
-        if (currentBuildId !== serverBuildId) {
-          console.log(`Versi Baru Terdeteksi! Client: ${currentBuildId} -> Server: ${serverBuildId}`);
+
+        console.log("👉 Server ID (API):", serverBuildId);
+        // ----------------------------------------------------
+
+        if (currentBuildId && serverBuildId && currentBuildId !== serverBuildId) {
+          console.warn(`⚠️ Versi Beda! Reloading... (${currentBuildId} -> ${serverBuildId})`);
+          
           if ('caches' in window) {
              try {
                const names = await caches.keys();
@@ -24,15 +39,16 @@ export default function VersionChecker() {
           }
           
           window.location.reload();
+        } else {
+            console.log("✅ Versi Cocok / Aman.");
         }
       } catch (error) {
-        console.error("Gagal cek versi:", error);
+        console.error("❌ Error VersionChecker:", error);
       }
     };
 
     checkVersion();
-
-  }, [pathname]); 
+  }, [pathname]);
 
   return null; 
 }
