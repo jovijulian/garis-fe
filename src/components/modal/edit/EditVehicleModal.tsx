@@ -10,6 +10,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Select from "@/components/form/Select-custom";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
+import MultiSelect from "@/components/form/MultiSelect-custom";
 
 interface Payload {
     name: string;
@@ -18,6 +19,7 @@ interface Payload {
     passenger_capacity: number;
     cab_id: number;
     is_operational: number;
+    department_ids: number[];
 }
 
 interface SelectOption {
@@ -45,6 +47,7 @@ const EditVehicleModal: React.FC<EditProps> = ({
         passenger_capacity: 0,
         vehicle_type_id: 0,
         is_operational: 1,
+        department_ids: [],
     });
 
     const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
@@ -54,6 +57,8 @@ const EditVehicleModal: React.FC<EditProps> = ({
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+    const [departmentOptions, setDepartmentOptions] = useState<SelectOption[]>([]);
+    const [loadingDepartment, setLoadingDepartment] = useState(true);
 
     const handleFieldChange = (field: keyof Payload, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -75,7 +80,21 @@ const EditVehicleModal: React.FC<EditProps> = ({
                 setLoadingSites(false);
             }
         };
-
+        const fetchDepartment = async () => {
+            setLoadingDepartment(true);
+            try {
+                const response = await httpGet(endpointUrl("/departments/options"), true);
+                const formattedDeptOptions = response.data.data.map((site: any) => ({
+                    value: site.id_dept.toString(),
+                    label: site.nama_dept,
+                }));
+                setDepartmentOptions(formattedDeptOptions);
+            } catch (error) {
+                toast.error("Failed to load department data.");
+            } finally {
+                setLoadingDepartment(false);
+            }
+        };
         const fetchVehicleTypes = async () => {
             try {
                 const response = await httpGet(endpointUrl("/vehicle-types/options"), true);
@@ -97,6 +116,9 @@ const EditVehicleModal: React.FC<EditProps> = ({
             try {
                 const response = await httpGet(endpointUrl(`vehicles/${selectedId}`), true);
                 const data = response.data.data;
+                const existingDeptIds = data.departments
+                    ? data.departments.map((a: any) => a.id_dept)
+                    : [];
                 setFormData({
                     name: data.name || "",
                     cab_id: data.cab_id || 0,
@@ -104,6 +126,7 @@ const EditVehicleModal: React.FC<EditProps> = ({
                     passenger_capacity: data.passenger_capacity || 0,
                     vehicle_type_id: data.vehicle_type_id || 0,
                     is_operational: data.is_operational || 1,
+                    department_ids: existingDeptIds,
                 });
             } catch (err: any) {
                 toast.error(err?.response?.data?.message || "Gagal mengambil data kendaraan.");
@@ -116,6 +139,7 @@ const EditVehicleModal: React.FC<EditProps> = ({
             fetchSites();
             fetchVehicleTypes();
             fetchDetail();
+            fetchDepartment();
         }
     }, [isOpen, selectedId]);
 
@@ -141,6 +165,12 @@ const EditVehicleModal: React.FC<EditProps> = ({
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const getSelectedDepartment = () => {
+        return departmentOptions.filter((opt) =>
+            formData.department_ids.includes(parseInt(opt.value))
+        );
     };
 
     return (
@@ -208,6 +238,20 @@ const EditVehicleModal: React.FC<EditProps> = ({
                                 />
                             </div>
                             <div>
+                                <label className="block font-medium mb-1">Departemen</label>
+                                <MultiSelect
+                                    options={departmentOptions}
+                                    value={getSelectedDepartment()}
+                                    isLoading={loadingDepartment}
+                                    placeholder={loadingDepartment ? "Memuat departemen..." : "Pilih departemen..."}
+                                    onValueChange={(selectedOptions: any) => {
+                                        const ids = selectedOptions.map((opt: any) => parseInt(opt.value, 10));
+                                        handleFieldChange('department_ids', ids);
+                                    }}
+                                    isClearable={true}
+                                />
+                            </div>
+                            <div>
                                 <input
                                     type="checkbox"
                                     checked={formData.is_operational === 1}
@@ -216,6 +260,7 @@ const EditVehicleModal: React.FC<EditProps> = ({
                                 />
                                 <span className="ml-2">Kendaraan Operasional</span>
                             </div>
+
                         </div>
                         <div className="flex justify-end gap-3 pt-4">
                             <button

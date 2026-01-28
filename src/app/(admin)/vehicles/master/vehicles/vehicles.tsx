@@ -133,6 +133,21 @@ export default function VehiclesPage() {
                 cell: ({ row }: any) => <span>{row.passenger_capacity}</span>,
             },
             {
+                id: "departments",
+                header: "Departemen",
+                accessorKey: "departments",
+                cell: ({ row }: any) => {
+                    const departments = row.departments;
+                    return (
+                        <span>
+                            {departments && departments.length > 0
+                                ? departments.map((a: any) => a.nama_dept).join(", ")
+                                : "-"}
+                        </span>
+                    );
+                }
+            },
+            {
                 id: "is_operational",
                 header: "Operasional",
                 accessorKey: "is_operational",

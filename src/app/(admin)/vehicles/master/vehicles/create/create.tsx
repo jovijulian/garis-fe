@@ -8,6 +8,7 @@ import _, { set } from "lodash";
 import { useRouter } from "next/navigation";
 import { alertToast, endpointUrl, httpGet, httpPost } from "@/../helpers";
 import { toast } from "react-toastify";
+import MultiSelect from "@/components/form/MultiSelect-custom";
 
 interface Payload {
     name: string;
@@ -16,6 +17,7 @@ interface Payload {
     passenger_capacity: number;
     cab_id: number;
     is_operational: boolean;
+    department_ids: number[];
 }
 
 interface SelectOption {
@@ -32,6 +34,7 @@ export default function CreateRoomForm() {
         passenger_capacity: 0,
         vehicle_type_id: 0,
         is_operational: true,
+        department_ids: [],
     });
 
     const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
@@ -39,9 +42,12 @@ export default function CreateRoomForm() {
     const [loadingSites, setLoadingSites] = useState(true);
     const [loadingVehicleType, setLoadingVehicleType] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [departmentOptions, setDepartmentOptions] = useState<SelectOption[]>([]);
+    const [loadingDepartment, setLoadingDepartment] = useState(true);
 
     useEffect(() => {
         const fetchSites = async () => {
+            setLoadingSites(true);
             try {
                 const response = await httpGet(endpointUrl("/rooms/site-options"), true);
                 const formattedOptions = response.data.data.map((site: any) => ({
@@ -55,7 +61,23 @@ export default function CreateRoomForm() {
                 setLoadingSites(false);
             }
         };
+        const fetchDepartment = async () => {
+            setLoadingDepartment(true);
+            try {
+                const response = await httpGet(endpointUrl("/departments/options"), true);
+                const formattedDeptOptions = response.data.data.map((site: any) => ({
+                    value: site.id_dept.toString(),
+                    label: site.nama_dept,
+                }));
+                setDepartmentOptions(formattedDeptOptions);
+            } catch (error) {
+                toast.error("Failed to load department data.");
+            } finally {
+                setLoadingDepartment(false);
+            }
+        };
         const fetchVehicleTypes = async () => {
+            setLoadingVehicleType(true);
             try {
                 const response = await httpGet(endpointUrl("/vehicle-types/options"), true);
                 const formattedOptions = response.data.data.map((type: any) => ({
@@ -72,6 +94,7 @@ export default function CreateRoomForm() {
 
         fetchSites();
         fetchVehicleTypes();
+        fetchDepartment();
     }, []);
 
     const handleFieldChange = (field: keyof Payload, value: any) => {
@@ -109,6 +132,12 @@ export default function CreateRoomForm() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const getSelectedDepartment = () => {
+        return departmentOptions.filter((opt) =>
+            formData.department_ids.includes(parseInt(opt.value))
+        );
     };
 
     return (
@@ -163,6 +192,20 @@ export default function CreateRoomForm() {
                         value={_.find(siteOptions, { value: formData.cab_id?.toString() })}
                         options={siteOptions}
                         disabled={loadingSites}
+                    />
+                </div>
+                <div>
+                    <label className="block font-medium mb-1">Departemen</label>
+                    <MultiSelect
+                        options={departmentOptions}
+                        value={getSelectedDepartment()}
+                        isLoading={loadingDepartment}
+                        placeholder={loadingDepartment ? "Memuat departemen..." : "Pilih departemen..."}
+                        onValueChange={(selectedOptions: any) => {
+                            const ids = selectedOptions.map((opt: any) => parseInt(opt.value, 10));
+                            handleFieldChange('department_ids', ids);
+                        }}
+                        isClearable={true}
                     />
                 </div>
                 <div>

@@ -121,7 +121,6 @@ const EditRoomModal: React.FC<EditProps> = ({
             ...formData,
             cab_id: parseInt(formData.cab_id!.toString(), 10),
             capacity: parseInt(formData.capacity, 10),
-            // amenity_ids sudah array, dikirim langsung
         };
 
         try {
