@@ -10,7 +10,7 @@ import 'moment/locale/id';
 import { toast } from "react-toastify";
 import ChangeStatusOrderModal from "@/components/modal/ChangeStatusOrderModal";
 import CancelOrderModal from '@/components/modal/CancelOrderModal';
-import ExportOrderModal from '@/components/modal/ExportOrderTransportModal'; 
+import ExportOrderModal from '@/components/modal/ExportOrderTransportModal';
 import { CircleX, FileDown } from "lucide-react";
 import { FaEdit, FaCheck, FaTimes } from "react-icons/fa";
 
@@ -237,18 +237,34 @@ export default function ManageTransportOrderPage() {
         {
             id: "user",
             header: "Pemesan",
-            accessorKey: "user.nama_user",
-            cell: ({ row }: { row: TransportOrder }) => {
+            accessorFn: (row: any) => row.user?.nama_user,
+            cell: ({ row }: { row: any }) => {
+                const request = row;
                 return (
-                    <div
-                        className="flex items-center gap-2 cursor-pointer text-blue-600 hover:underline"
-                        onClick={() => router.push(`/orders/manage-order-transport/${row.id}`)}
-                    >
-                        <span>{row.user?.nama_user}</span>
+                    <div className="flex flex-col items-start gap-2 cursor-pointer" onClick={() => {
+                        router.push(`/orders/manage-order-transport/${row.id}`)
+                    }}>
+                        <span className="font-semibold text-blue-600 hover:underline">{request.user?.nama_user}</span>
+                        <span className="text-xs text-gray-500">Cabang pemesan: <span className="font-semibold">{request.cabang?.nama_cab}</span></span>
                     </div>
                 );
             },
         },
+        // {
+        //     id: "user",
+        //     header: "Pemesan",
+        //     accessorKey: "user.nama_user",
+        //     cell: ({ row }: { row: TransportOrder }) => {
+        //         return (
+        //             <div
+        //                 className="flex items-center gap-2 cursor-pointer text-blue-600 hover:underline"
+        //                 onClick={() => router.push(`/orders/manage-order-transport/${row.id}`)}
+        //             >
+        //                 <span>{row.user?.nama_user}</span>
+        //             </div>
+        //         );
+        //     },
+        // },
         {
             id: "transport_type",
             header: "Jenis",

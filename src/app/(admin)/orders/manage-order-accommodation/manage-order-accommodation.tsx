@@ -197,26 +197,42 @@ export default function ManageOrderPage() {
         {
             id: "user",
             header: "Pemesan",
-            accessorKey: "user",
             accessorFn: (row: any) => row.user?.nama_user,
             cell: ({ row }: { row: any }) => {
-                const order = row;
+                const request = row;
                 return (
-                    <div className="flex items-center gap-2 cursor-pointer text-blue-600 hover:underline" onClick={() => {
+                    <div className="flex flex-col items-start gap-2 cursor-pointer" onClick={() => {
                         router.push(`/orders/manage-order-accommodation/${row.id}`);
                     }}>
-                        <span>{order.user?.nama_user}</span>
+                        <span className="font-semibold text-blue-600 hover:underline">{request.user?.nama_user}</span>
+                        <span className="text-xs text-gray-500">Cabang pemesan: <span className="font-semibold">{request.cabang?.nama_cab}</span></span>
                     </div>
                 );
             },
         },
-        {
-            id: "cabang",
-            header: "Cabang",
-            accessorKey: "cabang.nama_cab",
-            accessorFn: (row: any) => row.cabang?.nama_cab,
-            cell: ({ row }: any) => <span>{row.cabang?.nama_cab}</span>,
-        },
+        // {
+        //     id: "user",
+        //     header: "Pemesan",
+        //     accessorKey: "user",
+        //     accessorFn: (row: any) => row.user?.nama_user,
+        //     cell: ({ row }: { row: any }) => {
+        //         const order = row;
+        //         return (
+        //             <div className="flex items-center gap-2 cursor-pointer text-blue-600 hover:underline" onClick={() => {
+        //                 router.push(`/orders/manage-order-accommodation/${row.id}`);
+        //             }}>
+        //                 <span>{order.user?.nama_user}</span>
+        //             </div>
+        //         );
+        //     },
+        // },
+        // {
+        //     id: "cabang",
+        //     header: "Cabang",
+        //     accessorKey: "cabang.nama_cab",
+        //     accessorFn: (row: any) => row.cabang?.nama_cab,
+        //     cell: ({ row }: any) => <span>{row.cabang?.nama_cab}</span>,
+        // },
         {
             id: "room_needed",
             header: "Pemesanan Kamar",

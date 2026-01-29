@@ -131,7 +131,12 @@ export default function ManageVehicleRequestsPage() {
                         router.push(`/vehicles/manage-requests/${row.id}`);
                     }}>
                         <span className="font-semibold text-blue-600 hover:underline">{request.user?.nama_user}</span>
-                        <span className="text-xs text-gray-500">Dept: {request.department?.nama_dept}</span>
+                        <div className="flex  items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                            <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                                <span className="font-medium">{request.department ? request.department?.nama_dept : "-"}</span>
+                            </div>
+                        </div>
+                        <span className="text-xs text-gray-500">Cabang pemohon: <span className="font-semibold">{request.cabang?.nama_cab}</span></span>
                     </div>
                 );
             },
@@ -158,12 +163,12 @@ export default function ManageVehicleRequestsPage() {
                 );
             }
         },
-        {
-            id: "cabang",
-            header: "Cabang Pemohon",
-            accessorFn: (row: any) => row.cabang?.nama_cab,
-            cell: ({ row }: { row: any }) => <span>{row.cabang?.nama_cab}</span>,
-        },
+        // {
+        //     id: "cabang",
+        //     header: "Cabang Pemohon",
+        //     accessorFn: (row: any) => row.cabang?.nama_cab,
+        //     cell: ({ row }: { row: any }) => <span>{row.cabang?.nama_cab}</span>,
+        // },
         {
             id: "pickup_location",
             header: "Lokasi Jemput",
