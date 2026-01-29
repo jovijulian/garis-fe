@@ -127,10 +127,11 @@ export default function ManageVehicleRequestsPage() {
             cell: ({ row }: { row: any }) => {
                 const request = row;
                 return (
-                    <div className="flex items-center gap-2 cursor-pointer text-blue-600 hover:underline" onClick={() => {
+                    <div className="flex flex-col items-start gap-2 cursor-pointer" onClick={() => {
                         router.push(`/vehicles/manage-requests/${row.id}`);
                     }}>
-                        <span>{request.user?.nama_user}</span>
+                        <span className="font-semibold text-blue-600 hover:underline">{request.user?.nama_user}</span>
+                        <span className="text-xs text-gray-500">Dept: {request.department?.nama_dept}</span>
                     </div>
                 );
             },
@@ -187,16 +188,26 @@ export default function ManageVehicleRequestsPage() {
             id: "passenger_count",
             header: "Penumpang",
             accessorKey: "passenger_count",
-            cell: ({ row }: { row: any }) => <span>{row.passenger_count}</span>,
+            // cell: ({ row }: { row: any }) => <span>{row.passenger_count}</span>,
+            cell: ({ row }: { row: any }) => {
+                const request = row;
+                const isRequireDriver = request.requires_driver === 1 ? "Ya" : "Tidak";
+                return (
+                    <div className="flex flex-col items-start">
+                        <span className="font-semibold ">{request.passenger_count}</span>
+                        <span className="text-xs text-gray-500">Butuh Supir: <span className="font-semibold">{isRequireDriver}</span></span>
+                    </div>
+                );
+            },
         },
-        {
-            id: "requires_driver",
-            header: "Butuh Supir?",
-            accessorFn: (row: any) => row.requires_driver === 1 ? "Ya" : "Tidak",
-            cell: ({ row }: { row: any }) => (
-                <span>{row.requires_driver === 1 ? "Ya" : "Tidak"}</span>
-            ),
-        },
+        // {
+        //     id: "requires_driver",
+        //     header: "Butuh Supir?",
+        //     accessorFn: (row: any) => row.requires_driver === 1 ? "Ya" : "Tidak",
+        //     cell: ({ row }: { row: any }) => (
+        //         <span>{row.requires_driver === 1 ? "Ya" : "Tidak"}</span>
+        //     ),
+        // },
         {
             id: "status",
             header: "Status",

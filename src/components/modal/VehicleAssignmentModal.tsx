@@ -29,6 +29,7 @@ interface AssignmentModalProps {
     startTime?: string | null;
     endTime?: string | null;
     onlyDriver?: boolean;
+    deptId?: number | null;
 }
 
 const AssignmentModal: React.FC<AssignmentModalProps> = ({
@@ -42,6 +43,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     startTime,
     endTime,
     onlyDriver,
+    deptId,
 }) => {
     const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
     const [vehicleOptions, setVehicleOptions] = useState<SelectOption[]>([]);
@@ -56,8 +58,12 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         if (filterByBranch && adminCabId) {
             params.cab_id = adminCabId;
         }
+        if (deptId) {
+            params.id_dept = deptId;
+        }
         params.start_time = startTime || null;
         params.end_time = endTime || null;
+       
 
         try {
             const vehiclesRes = await httpGet(endpointUrl("/vehicles/options"), true, params);

@@ -37,6 +37,8 @@ interface VehicleRequestData {
     user: { id_user: string; nama_user: string; };
     vehicle_type: { id: number; name: string; } | null;
     detail: AssignmentDetail[]; rejection_reason: string | null;
+    id_dept: number | null;
+    department: { id_dept: number; nama_dept: string; } | null;
 }
 
 export default function AdminVehicleRequestDetailPage() {
@@ -244,13 +246,24 @@ export default function AdminVehicleRequestDetailPage() {
                             </span>
                         </div>
 
-                        <p className="text-sm text-gray-500">
-                            Diajukan oleh
-                            <strong className="text-gray-700"> {data.user?.nama_user}</strong>
-                            <span className="mx-1">•</span>
-                            ID:
-                            <strong className="text-gray-700"> #{data.id}</strong>
+                        <p className="text-sm text-gray-500 flex flex-wrap items-center gap-x-1">
+                            <span>Diajukan oleh</span>
+                            <strong className="text-gray-700">
+                                {data.user?.nama_user}
+                            </strong>
+
+                            <span className="text-gray-400">
+                                (Dept. {data.department?.nama_dept})
+                            </span>
+
+                            <span className="mx-1 text-gray-300">•</span>
+
+                            <span>ID</span>
+                            <strong className="text-gray-700">
+                                #{data.id}
+                            </strong>
                         </p>
+
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -439,6 +452,7 @@ export default function AdminVehicleRequestDetailPage() {
                 startTime={data.start_time}
                 endTime={data.end_time}
                 onlyDriver={!isVehicle}
+                deptId={data.id_dept}
             />
         </>
     );
