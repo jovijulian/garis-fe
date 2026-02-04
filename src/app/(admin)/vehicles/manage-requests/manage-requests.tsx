@@ -107,8 +107,10 @@ export default function ManageVehicleRequestsPage() {
             header: "Aksi",
             cell: ({ row }: { row: any }) => {
                 const request = row;
+                const status = request.status;
+
                 return (
-                    <div className="flex items-center justify-center">
+                    <div className="flex items-center gap-2 justify-center">
                         <button
                             onClick={() => router.push(`/vehicles/manage-requests/${request.id}`)}
                             title="Lihat Detail & Proses"
@@ -116,6 +118,16 @@ export default function ManageVehicleRequestsPage() {
                         >
                             <Eye className="w-4 h-4" />
                         </button>
+
+                        {["Approved", "Submit"].includes(status) && (
+                            <button
+                                onClick={() => router.push(`/vehicles/edit/${request.id}`)}
+                                title="Edit pengajuan"
+                                className="p-2 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                            >
+                                <FaEdit className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
                 );
             },
