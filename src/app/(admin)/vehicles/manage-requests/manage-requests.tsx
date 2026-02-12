@@ -119,7 +119,7 @@ export default function ManageVehicleRequestsPage() {
                             <Eye className="w-4 h-4" />
                         </button>
 
-                        {["Approved", "Submit"].includes(status) && (
+                        {["Approved", "Submit", "In Progress"].includes(status) && (
                             <button
                                 onClick={() => router.push(`/vehicles/edit/${request.id}`)}
                                 title="Edit pengajuan"
