@@ -43,6 +43,8 @@ const AppSidebar: React.FC = () => {
       currentMenuKey = 'vehicle';
     } else if (pathname.startsWith('/admin')) {
       currentMenuKey = 'admin';
+    } else if (pathname.startsWith('/reminders')) {
+      currentMenuKey = 'reminder';
     } else if (pathname.startsWith('/portal-pelanggan')) {
       currentMenuKey = 'user';
     }

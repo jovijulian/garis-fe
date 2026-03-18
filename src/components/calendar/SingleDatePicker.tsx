@@ -86,6 +86,7 @@ interface SingleDatePickerProps {
   viewingMonthDate: Date;
   placeholderText?: string;
   maxDate?: Date;
+  minDate?: Date; // 1. TAMBAH PROPS minDate
   disabled?: boolean;
 }
 
@@ -97,6 +98,7 @@ export default function SingleDatePicker({
   viewingMonthDate,
   placeholderText = "Select date",
   maxDate,
+  minDate, // 2. AMBIL DARI PROPS
   disabled,
 }: SingleDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -132,14 +134,12 @@ export default function SingleDatePicker({
 
   const dayNames = useMemo(() => ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"], []);
 
-  // Update currentMonth when viewingMonthDate changes
   useEffect(() => {
     if (viewingMonthDate && !isNaN(viewingMonthDate.getTime())) {
       setCurrentMonth(new Date(viewingMonthDate.getFullYear(), viewingMonthDate.getMonth(), 1));
     }
   }, [viewingMonthDate]);
 
-  // Close calendar on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -171,12 +171,10 @@ export default function SingleDatePicker({
 
     const days: (Date | null)[] = [];
 
-    // Add empty cells for days before the first day of month
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
 
-    // Add all days in the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(year, month, day));
     }
@@ -184,15 +182,31 @@ export default function SingleDatePicker({
     return days;
   }, []);
 
+  const isDisabledDate = useCallback((date: Date) => {
+    // Memastikan perbandingan tanggal akurat tanpa terpengaruh jam (00:00:00)
+    if (maxDate) {
+      const max = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate());
+      if (date > max) return true;
+    }
+    
+    // 3. LOGIKA UNTUK minDate
+    if (minDate) {
+      const min = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+      if (date < min) return true;
+    }
+    
+    return false;
+  }, [maxDate, minDate]);
+
   const handleDateClick = useCallback((date: Date) => {
     if (disabled) return;
 
-    // Check if date exceeds maxDate
-    if (maxDate && date > maxDate) return;
+    // 4. CEK ULANG SEBELUM SET DATE AGAR AMAN
+    if (isDisabledDate(date)) return;
 
     onChange(date);
     setIsOpen(false);
-  }, [onChange, disabled, maxDate]);
+  }, [onChange, disabled, isDisabledDate]);
 
   const handleClearFilter = useCallback((e: React.MouseEvent<HTMLButtonElement | HTMLSpanElement>) => {
     e.preventDefault();
@@ -248,10 +262,6 @@ export default function SingleDatePicker({
     );
   }, [selectedDate]);
 
-  const isDisabledDate = useCallback((date: Date) => {
-    if (maxDate && date > maxDate) return true;
-    return false;
-  }, [maxDate]);
 
   const days = useMemo(() => getDaysInMonth(currentMonth), [currentMonth, getDaysInMonth]);
 
@@ -356,7 +366,8 @@ export default function SingleDatePicker({
               let dayClasses = "h-8 w-8 flex items-center justify-center text-sm rounded-full transition-colors duration-150";
 
               if (disabledDay) {
-                dayClasses += " text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50";
+                // UI untuk disabled state (abu-abu dan tidak bisa di-click)
+                dayClasses += " text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50 bg-gray-50 dark:bg-slate-800";
               } else if (selected) {
                 dayClasses += " bg-blue-600 dark:bg-blue-500 text-white font-bold cursor-pointer";
               } else if (today) {

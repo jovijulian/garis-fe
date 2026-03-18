@@ -44,6 +44,7 @@ const menuItems: {
     href: string;
     color: ColorKey;
     comingSoon?: boolean;
+    allowedRoles?: string[];
 }[] = [
     {
         title: "Peminjaman Ruangan",
@@ -86,9 +87,9 @@ const menuItems: {
         title: "Pengingat",
         description: "Kelola pengingat penting Anda.",
         icon: CalendarClock,
-        href: "/projects1",
+        href: "/reminders/dashboard",
         color: "pink",
-        comingSoon: true, 
+        allowedRoles: ["1", "2"],
     },
     {
         title: "Reimbursement",
@@ -122,6 +123,7 @@ interface MenuCardProps {
     index: number;
     mounted: boolean;
     comingSoon?: boolean;
+    allowedRoles?: string[];
 }
 
 const MenuCard: React.FC<MenuCardProps> = ({
@@ -138,10 +140,11 @@ const MenuCard: React.FC<MenuCardProps> = ({
     isNavigating,
     index,
     mounted,
-    comingSoon
+    comingSoon,
+    allowedRoles,
 }) => {
-    const isRestrictedAdmin = title === "Admin Panel" && userRole !== "1";
-    const isDisabled = isRestrictedAdmin || comingSoon;
+    const isRestricted = allowedRoles && userRole ? !allowedRoles.includes(userRole) : false;
+    const isDisabled = isRestricted || comingSoon;
 
     let dynamicHref = href;
     if (title === "Peminjaman Ruangan" && userRole === "3") {
@@ -169,7 +172,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
             toast.info("Fitur ini sedang dalam pengembangan dan akan segera hadir!");
             return;
         }
-        if (isRestrictedAdmin) {
+        if (isRestricted) {
             toast.error("Anda tidak memiliki akses ke menu ini.");
             return;
         }
@@ -214,7 +217,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
                     </div>
                 )}
                 
-                {isRestrictedAdmin && (
+                {isRestricted && (
                     <div className="absolute top-3 right-3 text-gray-400">
                         <Lock className="w-5 h-5" />
                     </div>

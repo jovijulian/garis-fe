@@ -19,12 +19,14 @@ const rolePermissions: Record<string, string[]> = {
         '/admin-panel',
         '/orders',
         '/vehicles',
+        '/reminders',
     ],
     '2': [
         '/manage-booking',
         '/profile',
         '/orders',
         '/vehicles',
+        '/reminders',
     ],
     '3': [
         '/support',

@@ -99,14 +99,16 @@ const SignIn: React.FC = () => {
         <label className="block text-sm font-medium text-slate-700 mb-1">USER ID HRIS</label>
         <div className="relative">
           <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input {...form.getInputProps("nik")} type="text" placeholder="232009" className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+          <input id="nik" {...form.getInputProps("nik")} autoComplete="nik" type="text" placeholder="232009" className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
         </div>
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
         <div className="relative">
           <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input {...form.getInputProps("password")} type={isPasswordVisible ? "text" : "password"} placeholder="Masukkan password" className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+          <input {...form.getInputProps("password")} type={isPasswordVisible ? "text" : "password"} placeholder="Masukkan password" className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            autoComplete="current-password"
+          />
           <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600">
             {isPasswordVisible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
@@ -114,14 +116,14 @@ const SignIn: React.FC = () => {
       </div>
     </div>
   );
-
+  
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-100 p-4 font-sans">
       <div className="w-full max-w-4xl flex flex-col md:flex-row bg-white rounded-2xl shadow-xl overflow-hidden">
         <div className="w-full md:w-1/2 p-8 lg:p-12 flex flex-col justify-center">
           <div className="mb-8">
-          
+
             <h1 className="font-bold text-2xl text-slate-800 mt-4">Log in</h1>
             <p className="text-slate-500 text-sm">Silakan masuk menggunakan akun HRIS yang terdaftar.</p>
           </div>

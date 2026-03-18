@@ -23,7 +23,9 @@ import {
   Settings2,
   CookingPot,
   Layers,
-  BusFront
+  BusFront,
+  Bell,
+  Tags
 } from 'lucide-react';
 
 export type NavItem = {
@@ -220,6 +222,32 @@ export const menuConfig: Record<string, NavItem[]> = {
       icon: <Users />,
       path: '/admin-panel',
       roles: [1],
+    },
+    {
+      name: 'Menu',
+      icon: <Home />,
+      path: '/menus',
+      roles: [1, 2, 3],
+    }
+  ],
+  reminder: [
+    {
+      name: 'Dashboard',
+      icon: <LayoutDashboard />,
+      path: '/reminders/dashboard',
+      roles: [1, 2],
+    },
+    {
+      name: 'Data Pengingat',
+      icon: <Bell />,
+      path: '/reminders/reminders',
+      roles: [1, 2],
+    },
+    {
+      name: 'Jenis Pengingat',
+      icon: <Tags />,
+      path: '/reminders/reminder-types',
+      roles: [1, 2],
     },
     {
       name: 'Menu',
