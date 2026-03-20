@@ -22,6 +22,7 @@ interface PendingCounts {
     pending_bookings: number;
     pending_vehicle_requests: number;
     pending_orders: number;
+    alert_reminders: number;
 }
 
 const colors = {
@@ -187,7 +188,8 @@ const MenuCard: React.FC<MenuCardProps> = ({
     const shouldCheckPending =
         title === "Peminjaman Ruangan" ||
         title === "Pengajuan Kendaraan" ||
-        title === "Order";
+        title === "Order" ||
+        title === "Pengingat";
 
     return (
         <div
@@ -361,6 +363,8 @@ export default function MenusPage() {
                                     countToShow = pendingCounts.pending_vehicle_requests;
                                 } else if (item.title === "Order") {
                                     countToShow = pendingCounts.pending_orders;
+                                } else if (item.title === "Pengingat") {
+                                    countToShow = pendingCounts.alert_reminders;
                                 }
                             }
 
