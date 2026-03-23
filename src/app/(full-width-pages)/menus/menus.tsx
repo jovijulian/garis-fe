@@ -72,7 +72,7 @@ const menuItems: {
         title: "Inventaris",
         description: "Lihat dan pinjam inventaris kantor.",
         icon: Package,
-        href: "/inventory",
+        href: "/inventories/dashboard",
         color: "yellow",
         comingSoon: true, 
     },

@@ -27,6 +27,7 @@ const rolePermissions: Record<string, string[]> = {
         '/orders',
         '/vehicles',
         '/reminders',
+        '/inventories'
     ],
     '3': [
         '/support',

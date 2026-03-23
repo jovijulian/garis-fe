@@ -25,7 +25,8 @@ import {
   Layers,
   BusFront,
   Bell,
-  Tags
+  Tags,
+  Boxes
 } from 'lucide-react';
 
 export type NavItem = {
@@ -247,6 +248,44 @@ export const menuConfig: Record<string, NavItem[]> = {
       name: 'Jenis Pengingat',
       icon: <Tags />,
       path: '/reminders/reminder-types',
+      roles: [1, 2],
+    },
+    {
+      name: 'Menu',
+      icon: <Home />,
+      path: '/menus',
+      roles: [1, 2, 3],
+    }
+  ],
+  inventory: [
+    {
+      name: 'Dashboard',
+      icon: <LayoutDashboard />,
+      path: '/inventories/dashboard',
+      roles: [1, 2],
+    },
+    {
+      name: 'Transaksi',
+      icon: <Bell />,
+      path: '/inventories/inventories',
+      roles: [1, 2],
+    },
+    {
+      name: 'Barang',
+      icon: <Tags />,
+      path: '/inventories/reminder-types',
+      roles: [1, 2],
+    },
+    {
+      name: 'Kategori Barang',
+      icon: <Tags />,
+      path: '/inventories/master/categories',
+      roles: [1, 2],
+    },
+    {
+      name: 'Unit Barang (UOM)',
+      icon: <Boxes />,
+      path: '/inventories/master/units',
       roles: [1, 2],
     },
     {
