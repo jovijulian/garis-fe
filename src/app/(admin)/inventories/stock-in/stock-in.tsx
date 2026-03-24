@@ -147,14 +147,14 @@ export default function StockInPage() {
                     input_unit_id: item.pack_unit_id ? String(item.pack_unit_id) : String(item.base_unit_id),
                 }));
 
-                document.getElementById("initial_qty")?.focus();
+                // document.getElementById("initial_qty")?.focus();
                 toast.success("Barang sudah terdaftar. Silakan masukkan jumlah stok.");
             } else {
                 setIsExistingItem(false);
                 setExistingItemId(null);
                 setExistingItemData(null);
                 setFormData(prev => ({ ...prev, barcode: scannedBarcode, input_unit_id: "" }));
-                document.getElementById("name")?.focus();
+                // document.getElementById("name")?.focus();
                 toast.success("Barang baru terdeteksi. Silakan lengkapi informasi barang.");
             }
         } catch (error) {
@@ -189,15 +189,15 @@ export default function StockInPage() {
     const startScanner = () => {
         setTimeout(() => {
             const config = {
-                fps: 10, 
-                
+                fps: 10,
+
                 qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
                     const dynamicWidth = Math.min(300, viewfinderWidth - 40);
                     return { width: dynamicWidth, height: 120 };
                 },
-                
+
                 formatsToSupport: [
-                    Html5QrcodeSupportedFormats.EAN_13, 
+                    Html5QrcodeSupportedFormats.EAN_13,
                     Html5QrcodeSupportedFormats.EAN_8,
                     Html5QrcodeSupportedFormats.CODE_128,
                     Html5QrcodeSupportedFormats.CODE_39,
@@ -210,12 +210,12 @@ export default function StockInPage() {
                 aspectRatio: 1.777778,
                 videoConstraints: {
                     facingMode: "environment",
-                    width: { ideal: 1280 }, 
+                    width: { ideal: 1280 },
                     height: { ideal: 720 },
                     advanced: [
                         { focusMode: "continuous" } as any,
-                        { zoom: 2.0 } as any 
-                    ] 
+                        { zoom: 2.0 } as any
+                    ]
                 },
                 disableFlip: true,
             };
@@ -293,7 +293,39 @@ export default function StockInPage() {
 
     return (
         <ComponentCard title="Penerimaan Barang (Stock In)">
-            <form id="single-item-form" onSubmit={handleSubmit} className="space-y-6">
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                #reader-single {
+                    width: 100% !important;
+                    border: none !important;
+                }
+                #reader-single video {
+                    width: 100% !important;
+                    height: auto !important;
+                    border-radius: 0.5rem !important;
+                    object-fit: cover !important;
+                }
+                #reader-single__dashboard_section_csr select {
+                    max-width: 100% !important;
+                    padding: 6px !important;
+                    border-radius: 6px !important;
+                    border: 1px solid #cbd5e1 !important;
+                    font-size: 12px !important;
+                }
+                #reader-single__dashboard_section_csr button {
+                    background-color: #3b82f6 !important;
+                    color: white !important;
+                    border: none !important;
+                    padding: 6px 12px !important;
+                    border-radius: 6px !important;
+                    font-size: 12px !important;
+                    margin: 4px !important;
+                }
+                #reader-single__dashboard_section_swaplink {
+                    display: none !important; /* Sembunyikan tulisan 'Scan an Image file' yang tidak perlu */
+                }
+            `}} />
+            <form onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden">
                 {isExistingItem && (
                     <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
                         <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -332,8 +364,15 @@ export default function StockInPage() {
                             </button>
                         </div>
                         {isScannerActive && (
-                            <div className="mt-4 p-4 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl relative flex flex-col items-center">
-                                <div id="reader-single" className="w-full rounded-lg overflow-hidden max-w-sm"></div>
+                            <div className="mt-4 p-2 sm:p-4 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl relative w-full overflow-hidden">
+                                <div id="reader-single" className="w-full"></div>
+
+                                {/* Tambahan teks bantuan agar UI terlihat lebih manis */}
+                                <div className="mt-3 text-center w-full">
+                                    <p className="text-xs text-blue-600 font-medium">
+                                        Arahkan kamera ke barcode. Jaga jarak 10-15cm agar fokus.
+                                    </p>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -370,11 +409,17 @@ export default function StockInPage() {
                                 <div className="flex gap-4">
                                     <label className={`flex items-center gap-2 p-3 cursor-pointer rounded-xl border flex-1 ${formData.item_type === 1 ? 'bg-blue-50 border-blue-400' : 'bg-white border-gray-200'}`}>
                                         <input type="radio" value={1} checked={formData.item_type === 1} onChange={() => handleChange("item_type", 1)} className="w-4 h-4 text-blue-600" />
-                                        <span className="font-semibold text-gray-900 text-sm">BHP (Habis Pakai)</span>
+                                        <div>
+                                            <p className="font-semibold text-gray-900 text-sm">BHP (Habis Pakai)</p>
+                                            <p className="text-xs text-gray-500 mt-1">Stok berkurang permanen saat diminta user.</p>
+                                        </div>
                                     </label>
                                     <label className={`flex items-center gap-2 p-3 cursor-pointer rounded-xl border flex-1 ${formData.item_type === 2 ? 'bg-blue-50 border-blue-400' : 'bg-white border-gray-200'}`}>
                                         <input type="radio" value={2} checked={formData.item_type === 2} onChange={() => handleChange("item_type", 2)} className="w-4 h-4 text-blue-600" />
-                                        <span className="font-semibold text-gray-900 text-sm">Pinjaman / Aset</span>
+                                        <div>
+                                            <p className="font-semibold text-gray-900 text-sm">Aset / Pinjaman</p>
+                                            <p className="text-xs text-gray-500 mt-1">Barang harus dikembalikan setelah dipinjam.</p>
+                                        </div>
                                     </label>
                                 </div>
                             </div>
@@ -433,13 +478,13 @@ export default function StockInPage() {
                         </>
                     )}
 
-                    <div className="col-span-1 md:col-span-2 mt-4 pt-4 border-t border-gray-200">
+                    <div className="col-span-1 md:col-span-1 mt-4 pt-4 border-t border-gray-200">
                         <label htmlFor="initial_qty" className={`text-base block mb-3 ${isExistingItem ? 'text-blue-700 font-bold' : 'text-gray-800 font-semibold'}`}>
                             {isExistingItem ? "3. Berapa Jumlah Barang yang Datang?" : "3. Stok Awal (Opsional)"}
                             {isExistingItem && <span className="text-red-500 ml-1">*</span>}
                         </label>
 
-                        <div className="flex gap-3 items-stretch">
+                        <div className="">
                             <div className="relative flex-1">
                                 <input
                                     id="initial_qty" type="number" min={isExistingItem ? "1" : "0"} required={isExistingItem}
@@ -451,7 +496,7 @@ export default function StockInPage() {
                                 <Package className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isExistingItem ? 'text-blue-600' : 'text-gray-400'}`} />
                             </div>
 
-                            <div className="flex-shrink-0 min-w-[180px]">
+                            <div className="mt-4 ">
                                 {inputUnitOptions.length > 0 ? (
                                     <Select
                                         options={inputUnitOptions}

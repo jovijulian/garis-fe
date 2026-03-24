@@ -198,7 +198,39 @@ export default function EditInventoryPage() {
 
     return (
         <ComponentCard title="Edit Informasi Barang">
-            <form id="edit-item-form" onSubmit={handleSubmit} className="space-y-6">
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                #reader-single {
+                    width: 100% !important;
+                    border: none !important;
+                }
+                #reader-single video {
+                    width: 100% !important;
+                    height: auto !important;
+                    border-radius: 0.5rem !important;
+                    object-fit: cover !important;
+                }
+                #reader-single__dashboard_section_csr select {
+                    max-width: 100% !important;
+                    padding: 6px !important;
+                    border-radius: 6px !important;
+                    border: 1px solid #cbd5e1 !important;
+                    font-size: 12px !important;
+                }
+                #reader-single__dashboard_section_csr button {
+                    background-color: #3b82f6 !important;
+                    color: white !important;
+                    border: none !important;
+                    padding: 6px 12px !important;
+                    border-radius: 6px !important;
+                    font-size: 12px !important;
+                    margin: 4px !important;
+                }
+                #reader-single__dashboard_section_swaplink {
+                    display: none !important; /* Sembunyikan tulisan 'Scan an Image file' yang tidak perlu */
+                }
+            `}} />
+            <form id="edit-item-form" onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden">
                 <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-start gap-3">
                     <Package className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
                     <div>

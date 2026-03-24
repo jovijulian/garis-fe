@@ -243,7 +243,39 @@ export default function StockOutPage() {
 
     return (
         <ComponentCard title="Pengeluaran Barang (Stock Out)">
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                #reader-single {
+                    width: 100% !important;
+                    border: none !important;
+                }
+                #reader-single video {
+                    width: 100% !important;
+                    height: auto !important;
+                    border-radius: 0.5rem !important;
+                    object-fit: cover !important;
+                }
+                #reader-single__dashboard_section_csr select {
+                    max-width: 100% !important;
+                    padding: 6px !important;
+                    border-radius: 6px !important;
+                    border: 1px solid #cbd5e1 !important;
+                    font-size: 12px !important;
+                }
+                #reader-single__dashboard_section_csr button {
+                    background-color: #3b82f6 !important;
+                    color: white !important;
+                    border: none !important;
+                    padding: 6px 12px !important;
+                    border-radius: 6px !important;
+                    font-size: 12px !important;
+                    margin: 4px !important;
+                }
+                #reader-single__dashboard_section_swaplink {
+                    display: none !important; /* Sembunyikan tulisan 'Scan an Image file' yang tidak perlu */
+                }
+            `}} />
+            <form onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden">
                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">

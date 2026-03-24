@@ -57,7 +57,7 @@ function Select(props: {
   return (
     <>
       <ReactSelect
-        menuPosition="fixed"
+        menuPosition="absolute"
         menuPlacement={props.menuPlacement}
         defaultValue={props.value}
         components={{ ClearIndicator, DropdownIndicator }}
