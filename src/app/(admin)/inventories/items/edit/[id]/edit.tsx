@@ -107,12 +107,13 @@ export default function EditInventoryPage() {
     const startScanner = () => {
         setTimeout(() => {
             const config = {
-                fps: 10, 
-                qrbox: { width: 220, height: 120 }, 
+                fps: 15, 
+                qrbox: { width: 300, height: 120 }, 
                 aspectRatio: 1.777778,
-                
                 videoConstraints: {
                     facingMode: "environment",
+                    width: { min: 640, ideal: 1280, max: 1920 },
+                    height: { min: 480, ideal: 720, max: 1080 },
                     advanced: [{ focusMode: "continuous" } as any] 
                 },
                 
