@@ -128,7 +128,18 @@ export default function StockOutPage() {
 
     const startScanner = () => {
         setTimeout(() => {
-            const config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.777778 };
+            const config = {
+                fps: 10,
+                qrbox: { width: 220, height: 120 },
+                aspectRatio: 1.777778,
+
+                videoConstraints: {
+                    facingMode: "environment",
+                    advanced: [{ focusMode: "continuous" } as any]
+                },
+
+                disableFlip: false,
+            };
             const newScanner = new Html5QrcodeScanner(`reader-checkout`, config, false);
             scannerRef.current = newScanner;
 
@@ -216,7 +227,7 @@ export default function StockOutPage() {
                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">
-                             NIK / User Peminta <span className="text-red-500">*</span>
+                            NIK / User Peminta <span className="text-red-500">*</span>
                         </label>
                         <input
                             id="user_id_borrower" type="text" required
@@ -227,7 +238,7 @@ export default function StockOutPage() {
                         />
                     </div>
                     <div className="space-y-2">
-                    <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">Catatan / Keperluan</label>
+                        <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">Catatan / Keperluan</label>
                         <input
                             id="note" type="text"
                             value={headerData.note}

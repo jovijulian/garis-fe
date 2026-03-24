@@ -5,7 +5,7 @@ import {
     Package, ScanBarcode, Camera, X, Loader2
 } from "lucide-react";
 import { Html5QrcodeScanner } from "html5-qrcode";
-import { useRouter, useParams } from "next/navigation"; 
+import { useRouter, useParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { endpointUrl, httpPost, httpGet, httpPut } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
@@ -15,7 +15,7 @@ import _ from "lodash";
 export default function EditInventoryPage() {
     const router = useRouter();
     const params = useParams();
-    const id = params?.id; 
+    const id = params?.id;
 
     const [loading, setLoading] = useState(false);
     const [isFetchingData, setIsFetchingData] = useState(true);
@@ -56,7 +56,7 @@ export default function EditInventoryPage() {
                     cab_id: itemData.cab_id,
                     item_type: itemData.item_type,
                     name: itemData.name,
-                    barcode: itemData.barcode || "", 
+                    barcode: itemData.barcode || "",
                     category_id: String(itemData.category_id),
                     base_unit_id: String(itemData.base_unit_id),
                     stock_minimum: itemData.stock_minimum,
@@ -106,7 +106,18 @@ export default function EditInventoryPage() {
 
     const startScanner = () => {
         setTimeout(() => {
-            const config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.777778 };
+            const config = {
+                fps: 10, 
+                qrbox: { width: 220, height: 120 }, 
+                aspectRatio: 1.777778,
+                
+                videoConstraints: {
+                    facingMode: "environment",
+                    advanced: [{ focusMode: "continuous" } as any] 
+                },
+                
+                disableFlip: false,
+            };
             const newScanner = new Html5QrcodeScanner(`reader-single`, config, false);
             scannerRef.current = newScanner;
 
@@ -308,7 +319,7 @@ export default function EditInventoryPage() {
                         {loading ? "Menyimpan..." : "Simpan Perubahan"}
                     </button>
                 </div>
-               
+
             </form>
         </ComponentCard>
     );

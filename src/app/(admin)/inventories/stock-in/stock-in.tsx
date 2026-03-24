@@ -27,12 +27,12 @@ export default function StockInPage() {
         name: "",
         barcode: "",
         category_id: "",
-        base_unit_id: "", 
+        base_unit_id: "",
         pack_unit_id: "",
         qty_per_pack: "",
         stock_minimum: 0,
-        initial_qty: "", 
-        input_unit_id: "", 
+        initial_qty: "",
+        input_unit_id: "",
     });
 
     const [isExistingItem, setIsExistingItem] = useState(false);
@@ -88,7 +88,7 @@ export default function StockInPage() {
 
     const qtyPreview = useMemo(() => {
         if (!formData.initial_qty || !formData.input_unit_id) return null;
-        
+
         const qty = Number(formData.initial_qty);
         if (qty <= 0) return null;
 
@@ -121,7 +121,7 @@ export default function StockInPage() {
             setFormData(prev => ({ ...prev, name: "", category_id: "", base_unit_id: "", pack_unit_id: "", qty_per_pack: "", stock_minimum: 0, initial_qty: "", input_unit_id: "" }));
             return;
         }
-        
+
         setIsCheckingBarcode(true);
         try {
             const res = await httpGet(endpointUrl(`/inventory-items/check-barcode/${scannedBarcode}?cab_id=${formData.cab_id}`), true);
@@ -144,7 +144,7 @@ export default function StockInPage() {
                     item_type: item.item_type,
                     stock_minimum: item.stock_minimum,
                     initial_qty: "1",
-                    input_unit_id: item.pack_unit_id ? String(item.pack_unit_id) : String(item.base_unit_id), 
+                    input_unit_id: item.pack_unit_id ? String(item.pack_unit_id) : String(item.base_unit_id),
                 }));
 
                 document.getElementById("initial_qty")?.focus();
@@ -188,7 +188,18 @@ export default function StockInPage() {
 
     const startScanner = () => {
         setTimeout(() => {
-            const config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.777778 };
+            const config = {
+                fps: 10,
+                qrbox: { width: 220, height: 120 },
+                aspectRatio: 1.777778,
+
+                videoConstraints: {
+                    facingMode: "environment",
+                    advanced: [{ focusMode: "continuous" } as any]
+                },
+
+                disableFlip: false,
+            };
             const newScanner = new Html5QrcodeScanner(`reader-single`, config, false);
             scannerRef.current = newScanner;
 
@@ -277,7 +288,7 @@ export default function StockInPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <div className="col-span-1 md:col-span-2 space-y-2">
                         <label className="text-sm font-medium text-gray-800 flex items-center justify-between">
-                            1. Scan Barcode / EAN 
+                            1. Scan Barcode / EAN
                             <span className="text-xs text-gray-500 font-normal">Kosongkan untuk generate otomatis</span>
                         </label>
                         <div className="flex gap-2">
@@ -291,7 +302,7 @@ export default function StockInPage() {
                                     placeholder="Scan atau ketik barcode lalu tekan Tab/Enter"
                                     className="w-full pl-12 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 text-sm outline-none transition-all bg-gray-50 focus:bg-white"
                                 />
-                               {isCheckingBarcode && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500 animate-spin" />}
+                                {isCheckingBarcode && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500 animate-spin" />}
                             </div>
                             <button
                                 type="button" onClick={toggleScanner}
@@ -302,9 +313,9 @@ export default function StockInPage() {
                             </button>
                         </div>
                         {isScannerActive && (
-                           <div className="mt-4 p-4 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl relative flex flex-col items-center">
-                               <div id="reader-single" className="w-full rounded-lg overflow-hidden max-w-sm"></div>
-                           </div>
+                            <div className="mt-4 p-4 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl relative flex flex-col items-center">
+                                <div id="reader-single" className="w-full rounded-lg overflow-hidden max-w-sm"></div>
+                            </div>
                         )}
                     </div>
 
@@ -448,7 +459,7 @@ export default function StockInPage() {
                     </div>
 
                 </div>
-                
+
                 <div className="flex justify-end pt-4">
                     <button
                         type="submit"
