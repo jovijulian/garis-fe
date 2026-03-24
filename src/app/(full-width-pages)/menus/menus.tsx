@@ -74,7 +74,7 @@ const menuItems: {
         icon: Package,
         href: "/inventories/dashboard",
         color: "yellow",
-        comingSoon: true, 
+        allowedRoles: ["1", "2"],
     },
     {
         title: "Pengajuan Proyek",

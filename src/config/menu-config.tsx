@@ -26,7 +26,12 @@ import {
   BusFront,
   Bell,
   Tags,
-  Boxes
+  Boxes,
+  Package,
+  PackagePlus,
+  PackageMinus,
+  Undo,
+  RotateCcw
 } from 'lucide-react';
 
 export type NavItem = {
@@ -265,29 +270,58 @@ export const menuConfig: Record<string, NavItem[]> = {
       roles: [1, 2],
     },
     {
-      name: 'Transaksi',
-      icon: <Bell />,
-      path: '/inventories/inventories',
+      name: 'Stock IN',
+      icon: <PackagePlus />,
+      path: '/inventories/stock-in',
       roles: [1, 2],
     },
     {
-      name: 'Barang',
-      icon: <Tags />,
-      path: '/inventories/reminder-types',
+      name: 'Stock OUT',
+      icon: <PackageMinus />,
+      path: '/inventories/stock-out',
       roles: [1, 2],
     },
     {
-      name: 'Kategori Barang',
-      icon: <Tags />,
-      path: '/inventories/master/categories',
+      name: 'Pengembalian',
+      icon: <RotateCcw />,
+      path: '/inventories/returns',
       roles: [1, 2],
     },
     {
-      name: 'Unit Barang (UOM)',
+      name: 'Riwayat Transaksi',
+      icon: <FileText />,
+      path: '/inventories/transaction-logs',
+      roles: [1, 2],
+    },
+    // {
+    //   name: 'Data Barang',
+    //   icon: <Package />,
+    //   path: '/inventories/items',
+    //   roles: [1, 2],
+    // },
+    {
+      name: 'Data Master',
       icon: <Boxes />,
-      path: '/inventories/master/units',
+      path: '/inventories/items',
       roles: [1, 2],
+      subItems: [
+        { name: 'Barang', path: '/inventories/items', roles: [1, 2] },
+        { name: 'Kategori Barang', path: '/inventories/master/categories', roles: [1, 2] },
+        { name: 'Unit Barang (UOM)', path: '/inventories/master/units', roles: [1, 2] },
+      ]
     },
+    // {
+    //   name: 'Kategori Barang',
+    //   icon: <Tags />,
+    //   path: '/inventories/master/categories',
+    //   roles: [1, 2],
+    // },
+    // {
+    //   name: 'Unit Barang (UOM)',
+    //   icon: <Boxes />,
+    //   path: '/inventories/master/units',
+    //   roles: [1, 2],
+    // },
     {
       name: 'Menu',
       icon: <Home />,
