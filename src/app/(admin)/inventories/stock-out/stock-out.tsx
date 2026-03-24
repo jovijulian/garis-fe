@@ -129,17 +129,25 @@ export default function StockOutPage() {
     const startScanner = () => {
         setTimeout(() => {
             const config = {
-                fps: 15, 
-                qrbox: { width: 300, height: 120 }, 
+                fps: 20, 
+                
+                qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+                    const dynamicWidth = Math.min(300, viewfinderWidth - 40);
+                    return { width: dynamicWidth, height: 120 };
+                },
+                
                 aspectRatio: 1.777778,
                 videoConstraints: {
                     facingMode: "environment",
-                    width: { min: 640, ideal: 1280, max: 1920 },
-                    height: { min: 480, ideal: 720, max: 1080 },
-                    advanced: [{ focusMode: "continuous" } as any] 
+                    width: { ideal: 1280 }, 
+                    height: { ideal: 720 },
+                    advanced: [
+                        { focusMode: "continuous" } as any,
+                        { zoom: 2.0 } as any 
+                    ] 
                 },
                 
-                disableFlip: false,
+                disableFlip: true,
             };
             const newScanner = new Html5QrcodeScanner(`reader-checkout`, config, false);
             scannerRef.current = newScanner;
