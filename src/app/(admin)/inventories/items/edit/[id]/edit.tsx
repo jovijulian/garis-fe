@@ -107,7 +107,7 @@ export default function EditInventoryPage() {
     const startScanner = () => {
         setTimeout(() => {
             const config = {
-                fps: 20, 
+                fps: 10, 
                 
                 qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
                     const dynamicWidth = Math.min(300, viewfinderWidth - 40);
@@ -122,7 +122,9 @@ export default function EditInventoryPage() {
                     Html5QrcodeSupportedFormats.UPC_A,
                     Html5QrcodeSupportedFormats.UPC_E,
                 ],
-                
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                },
                 aspectRatio: 1.777778,
                 videoConstraints: {
                     facingMode: "environment",
