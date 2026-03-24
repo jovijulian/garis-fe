@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
     Package, ScanBarcode, Camera, X, Loader2
 } from "lucide-react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { useRouter, useParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { endpointUrl, httpPost, httpGet, httpPut } from "@/../helpers";
@@ -114,6 +114,15 @@ export default function EditInventoryPage() {
                     return { width: dynamicWidth, height: 120 };
                 },
                 
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.EAN_13, 
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                ],
+                
                 aspectRatio: 1.777778,
                 videoConstraints: {
                     facingMode: "environment",
@@ -124,7 +133,6 @@ export default function EditInventoryPage() {
                         { zoom: 2.0 } as any 
                     ] 
                 },
-                
                 disableFlip: true,
             };
             const newScanner = new Html5QrcodeScanner(`reader-single`, config, false);
