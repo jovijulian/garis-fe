@@ -189,13 +189,13 @@ export default function StockInPage() {
     const startScanner = () => {
         setTimeout(() => {
             const config = {
-                fps: 10,
+                fps: 15, 
 
                 qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-                    const dynamicWidth = Math.min(300, viewfinderWidth - 40);
-                    return { width: dynamicWidth, height: 120 };
+                    const dynamicWidth = Math.min(320, viewfinderWidth - 32);
+                    return { width: dynamicWidth, height: 160 }; 
                 },
-
+    
                 formatsToSupport: [
                     Html5QrcodeSupportedFormats.EAN_13,
                     Html5QrcodeSupportedFormats.EAN_8,
@@ -204,20 +204,25 @@ export default function StockInPage() {
                     Html5QrcodeSupportedFormats.UPC_A,
                     Html5QrcodeSupportedFormats.UPC_E,
                 ],
+    
                 experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true
+                    useBarCodeDetectorIfSupported: true 
                 },
+    
                 aspectRatio: 1.777778,
+    
                 videoConstraints: {
-                    facingMode: "environment",
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 },
+                    facingMode: { exact: "environment" },
+                    width: { min: 640, ideal: 1280, max: 1920 },
+                    height: { min: 480, ideal: 720, max: 1080 },
                     advanced: [
                         { focusMode: "continuous" } as any,
-                        { zoom: 2.0 } as any
-                    ]
+                        { zoom: 2.0 } as any 
+                    ] as any
                 },
+    
                 disableFlip: true,
+                rememberLastUsedCamera: true, 
             };
             const newScanner = new Html5QrcodeScanner(`reader-single`, config, false);
             scannerRef.current = newScanner;
