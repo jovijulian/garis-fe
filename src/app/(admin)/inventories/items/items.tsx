@@ -14,6 +14,8 @@ import DeactiveModal from "@/components/modal/deactive/Deactive";
 import EditModal from "@/components/modal/edit/EditInventoryUnitModal";
 import { FaEdit, FaPlus, FaTrash } from "react-icons/fa";
 import DateRangePicker from "@/components/common/DateRangePicker";
+import Select from "@/components/form/Select-custom";
+import _ from "lodash";
 
 interface TableDataItem {
     id: number;
@@ -40,10 +42,12 @@ export default function UnitPage() {
     const [columns, setColumns] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedData, setSelectedData] = useState<any>(null);
+    const [siteOptions, setSiteOptions] = useState<any[]>([]);
+    const [selectedSite, setSelectedSite] = useState<any>(null);
 
     useEffect(() => {
         getData();
-    }, [searchParams, currentPage, perPage, page, searchTerm]);
+    }, [searchParams, currentPage, perPage, page, searchTerm, selectedSite]);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -52,6 +56,26 @@ export default function UnitPage() {
     const handlePerPageChange = (newPerPage: number) => {
         setPerPage(newPerPage);
         setCurrentPage(1);
+    };
+
+    useEffect(() => {
+        fetchOptions();
+    }, [])
+
+    const fetchOptions = async () => {
+        try {
+            const siteRes = await httpGet(endpointUrl("/rooms/site-options"), true);
+
+            const formattedSite = siteRes.data.data.map((site: any) => ({
+                value: site.id_cab,
+                label: `${site.nama_cab}`,
+            }));
+
+            setSiteOptions(formattedSite);
+        } catch (error) {
+            console.log(error)
+            toast.error("Gagal memuat data cabang / fasilitas / topik.");
+        }
     };
 
 
@@ -67,7 +91,7 @@ export default function UnitPage() {
                             {/* Edit */}
                             <button
                                 onClick={() => {
-                                   router.push(`/inventories/items/edit/${row.id}`);
+                                    router.push(`/inventories/items/edit/${row.id}`);
                                 }}
                                 title="Edit"
                                 className="p-2 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all"
@@ -122,9 +146,8 @@ export default function UnitPage() {
                 cell: ({ row }: any) => {
                     const isBHP = row.item_type === 1;
                     return (
-                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                            isBHP ? "bg-purple-50 text-purple-700 border border-purple-200" : "bg-orange-50 text-orange-700 border border-orange-200"
-                        }`}>
+                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${isBHP ? "bg-purple-50 text-purple-700 border border-purple-200" : "bg-orange-50 text-orange-700 border border-orange-200"
+                            }`}>
                             {isBHP ? "BHP" : "Aset/Pinjaman"}
                         </span>
                     );
@@ -138,7 +161,7 @@ export default function UnitPage() {
                     const stock = row.stock_available || 0;
                     const minStock = row.stock_minimum || 0;
                     const unit = row.base_unit?.name || "";
-                    
+
                     // Logika peringatan jika stok menyentuh batas minimum
                     const isLowStock = stock <= minStock;
 
@@ -166,9 +189,9 @@ export default function UnitPage() {
                     </span>
                 ),
             },
-            
+
         ];
-        
+
         return [...defaultColumns, ...columns.filter((col) => col.field !== "id" && col.field !== "hide_this_column_field")];
     }, [columns]);
 
@@ -182,6 +205,7 @@ export default function UnitPage() {
             ...(search ? { search } : {}),
             per_page: perPageParam ? Number(perPageParam) : perPage,
             page: page ? Number(page) : currentPage,
+            cab_id: selectedSite ? selectedSite.value : undefined,
         };
 
 
@@ -211,6 +235,13 @@ export default function UnitPage() {
             {/* Action Buttons */}
             <div className="flex justify-end items-center">
                 <div className="flex gap-2">
+                    <Select
+                        onValueChange={(value) => setSelectedSite(value)}
+                        placeholder={"Pilih Cabang"}
+                        value={siteOptions.find(opt => opt.value == selectedSite)}
+                        options={siteOptions}
+                        isClearable
+                    />
                     <input
                         type="text"
                         value={searchTerm}
