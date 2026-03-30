@@ -235,6 +235,8 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                                             onValueChange={(opt) => handleAssignmentChange(assignment._key, 'vehicle_id', opt ? opt.value : null)}
                                             placeholder="Pilih Kendaraan..."
                                             disabled={onlyDriver}
+                                            prefix={true}
+                                            
                                         />
                                     </div>
 
@@ -248,6 +250,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                                             onValueChange={(opt) => handleAssignmentChange(assignment._key, 'driver_id', opt ? opt.value : null)}
                                             placeholder={requiresDriver ? "Pilih Supir..." : "Tanpa Supir (Opsional)"}
                                             isClearable={!requiresDriver}
+                                            prefix={true}
                                         />
                                     </div>
 

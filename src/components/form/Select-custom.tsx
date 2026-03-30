@@ -32,7 +32,9 @@ function Select(props: {
   warnMessage?: any;
   menuPlacement?: "auto" | "bottom" | "top";
   icon?: any;
+  prefix?: any;
 }) {
+  const prefix = props.prefix;
   const icon = props.icon;
   const ClearIndicator = (props: any) => {
     const {
@@ -57,7 +59,7 @@ function Select(props: {
   return (
     <>
       <ReactSelect
-        menuPosition="absolute"
+        menuPosition={prefix ? "fixed" : "absolute"}
         menuPlacement={props.menuPlacement}
         defaultValue={props.value}
         components={{ ClearIndicator, DropdownIndicator }}
