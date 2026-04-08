@@ -8,8 +8,8 @@ import 'moment/locale/id';
 import { endpointUrl, httpGet } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import Table from "@/components/tables/Table";
-import { 
-    Package, ScanBarcode, Layers, AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCcw 
+import {
+    Package, ScanBarcode, Layers, AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCcw, Sliders
 } from "lucide-react";
 
 export default function ItemDetailPage() {
@@ -70,13 +70,29 @@ export default function ItemDetailPage() {
     }, [getTransactionHistory]);
 
 
+    // const getTransactionBadge = (type: string) => {
+    //     switch (type) {
+    //         case 'STOCK_IN': return <span className="text-green-600 font-bold flex items-center gap-1"><ArrowDownRight size={14}/> Masuk</span>;
+    //         case 'OUT_BHP': return <span className="text-purple-600 font-bold flex items-center gap-1"><ArrowUpRight size={14}/> Keluar BHP</span>;
+    //         case 'OUT_ASSET': return <span className="text-orange-600 font-bold flex items-center gap-1"><ArrowUpRight size={14}/> Dipinjam</span>;
+    //         case 'RETURN': return <span className="text-blue-600 font-bold flex items-center gap-1"><RefreshCcw size={14}/> Dikembalikan</span>;
+    //         default: return <span>{type}</span>;
+    //     }
+    // };
     const getTransactionBadge = (type: string) => {
         switch (type) {
-            case 'STOCK_IN': return <span className="text-green-600 font-bold flex items-center gap-1"><ArrowDownRight size={14}/> Masuk</span>;
-            case 'OUT_BHP': return <span className="text-purple-600 font-bold flex items-center gap-1"><ArrowUpRight size={14}/> Keluar BHP</span>;
-            case 'OUT_ASSET': return <span className="text-orange-600 font-bold flex items-center gap-1"><ArrowUpRight size={14}/> Dipinjam</span>;
-            case 'RETURN': return <span className="text-blue-600 font-bold flex items-center gap-1"><RefreshCcw size={14}/> Dikembalikan</span>;
-            default: return <span>{type}</span>;
+            case 'STOCK_IN':
+                return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700"><ArrowDownRight className="w-3.5 h-3.5" /> Masuk</span>;
+            case 'OUT_BHP':
+                return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700"><ArrowUpRight className="w-3.5 h-3.5" /> Keluar BHP</span>;
+            case 'OUT_ASSET':
+                return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700"><ArrowUpRight className="w-3.5 h-3.5" /> Pinjam Aset</span>;
+            case 'RETURN':
+                return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700"><RefreshCcw className="w-3.5 h-3.5" /> Return</span>;
+            case 'ADJUSTMENT':
+                return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700"><Sliders className="w-3.5 h-3.5" /> Opname</span>;
+            default:
+                return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs">{type}</span>;
         }
     };
 
@@ -98,10 +114,29 @@ export default function ItemDetailPage() {
             header: "Perubahan Qty",
             accessorKey: "qty",
             cell: ({ row }: any) => {
-                const isOut = row.transaction_type.includes('OUT');
+                let textColor = "";
+                let sign = "";
+                const absoluteQty = Math.abs(row.qty || 0);
+
+                if (row.transaction_type === 'ADJUSTMENT') {
+                    if (row.qty < 0) {
+                        textColor = "text-red-600";
+                        sign = "-";
+                    } else {
+                        textColor = "text-green-600";
+                        sign = "+";
+                    }
+                } else if (row.transaction_type.includes('OUT')) {
+                    textColor = "text-red-600";
+                    sign = "-";
+                } else {
+                    textColor = "text-green-600";
+                    sign = "+";
+                }
+
                 return (
-                    <span className={`font-bold ${isOut ? 'text-red-600' : 'text-green-600'}`}>
-                        {isOut ? '-' : '+'}{row.qty}
+                    <span className={`font-bold ${textColor}`}>
+                        {sign}{absoluteQty} {row.item?.base_unit?.name}
                     </span>
                 );
             },
@@ -142,10 +177,10 @@ export default function ItemDetailPage() {
                         </span>
                     </div>
                     <p className="text-gray-500 flex items-center gap-2">
-                        <ScanBarcode className="w-4 h-4"/> Barcode: <strong>{itemData.barcode || 'Tidak ada barcode'}</strong>
+                        <ScanBarcode className="w-4 h-4" /> Barcode: <strong>{itemData.barcode || 'Tidak ada barcode'}</strong>
                     </p>
                 </div>
-                
+
                 <div className={`flex flex-col items-end px-6 py-4 rounded-2xl border-2 ${isLowStock ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
                     <span className={`text-sm font-bold ${isLowStock ? 'text-red-500' : 'text-blue-600'}`}>SISA STOK GUDANG</span>
                     <div className="flex items-baseline gap-2">
@@ -154,7 +189,7 @@ export default function ItemDetailPage() {
                         </span>
                         <span className="text-lg font-bold text-gray-600">{itemData.base_unit?.name}</span>
                     </div>
-                    {isLowStock && <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Stok menipis!</p>}
+                    {isLowStock && <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Stok menipis!</p>}
                 </div>
             </div>
 
@@ -167,7 +202,7 @@ export default function ItemDetailPage() {
 
             <div>
                 <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <RefreshCcw className="text-gray-400 w-5 h-5"/> Riwayat Pergerakan Barang (Kartu Stok)
+                    <RefreshCcw className="text-gray-400 w-5 h-5" /> Riwayat Pergerakan Barang (Kartu Stok)
                 </h4>
                 <div className="border border-gray-200 rounded-xl overflow-hidden">
                     <Table

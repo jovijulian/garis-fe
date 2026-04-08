@@ -212,7 +212,7 @@ export default function StockInPage() {
                 aspectRatio: 1.777778,
     
                 videoConstraints: {
-                    facingMode: { exact: "environment" },
+                    facingMode: "environment",
                     width: { min: 640, ideal: 1280, max: 1920 },
                     height: { min: 480, ideal: 720, max: 1080 },
                     advanced: [
@@ -330,7 +330,7 @@ export default function StockInPage() {
                     display: none !important; /* Sembunyikan tulisan 'Scan an Image file' yang tidak perlu */
                 }
             `}} />
-            <form onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden">
+            <form onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden" id="single-item-form">
                 {isExistingItem && (
                     <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
                         <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -533,7 +533,7 @@ export default function StockInPage() {
                     <button
                         type="submit"
                         form="single-item-form"
-                        disabled={loading || isCheckingBarcode}
+                        // disabled={loading || isCheckingBarcode}
                         className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm"
                     >
                         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}

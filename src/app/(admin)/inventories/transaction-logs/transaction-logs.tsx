@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 import Select from "@/components/form/Select-custom";
 import _ from "lodash";
 import ComponentCard from "@/components/common/ComponentCard";
-import { ArrowDownRight, ArrowUpRight, RefreshCcw, Package } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, RefreshCcw, Package, Sliders } from "lucide-react";
 
 export default function TransactionLogsPage() {
     const searchParams = useSearchParams();
@@ -30,6 +30,7 @@ export default function TransactionLogsPage() {
         { value: 'OUT_BHP', label: 'Keluar BHP (OUT BHP)' },
         { value: 'OUT_ASSET', label: 'Peminjaman Aset (OUT ASSET)' },
         { value: 'RETURN', label: 'Pengembalian (RETURN)' },
+        { value: 'ADJUSTMENT', label: 'Penyesuaian Stok (ADJUSTMENT)' },
     ];
 
     useEffect(() => {
@@ -83,6 +84,8 @@ export default function TransactionLogsPage() {
                 return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700"><ArrowUpRight className="w-3.5 h-3.5" /> Pinjam Aset</span>;
             case 'RETURN':
                 return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700"><RefreshCcw className="w-3.5 h-3.5" /> Return</span>;
+            case 'ADJUSTMENT':
+                return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700"><Sliders className="w-3.5 h-3.5" /> Opname</span>;
             default:
                 return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs">{type}</span>;
         }
@@ -124,10 +127,29 @@ export default function TransactionLogsPage() {
             header: "Qty (Base Unit)",
             accessorKey: "qty",
             cell: ({ row }: any) => {
-                const isOut = row.transaction_type.includes('OUT');
+                let textColor = "";
+                let sign = "";
+                const absoluteQty = Math.abs(row.qty || 0);
+
+                if (row.transaction_type === 'ADJUSTMENT') {
+                    if (row.qty < 0) {
+                        textColor = "text-red-600";
+                        sign = "-";
+                    } else {
+                        textColor = "text-green-600";
+                        sign = "+";
+                    }
+                } else if (row.transaction_type.includes('OUT')) {
+                    textColor = "text-red-600";
+                    sign = "-";
+                } else {
+                    textColor = "text-green-600";
+                    sign = "+";
+                }
+
                 return (
-                    <span className={`font-bold ${isOut ? 'text-red-600' : 'text-green-600'}`}>
-                        {isOut ? '-' : '+'}{row.qty} {row.item?.base_unit?.name}
+                    <span className={`font-bold ${textColor}`}>
+                        {sign}{absoluteQty} {row.item?.base_unit?.name}
                     </span>
                 );
             },

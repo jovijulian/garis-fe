@@ -31,7 +31,8 @@ import {
   PackagePlus,
   PackageMinus,
   Undo,
-  RotateCcw
+  RotateCcw,
+  Sliders
 } from 'lucide-react';
 
 export type NavItem = {
@@ -285,6 +286,12 @@ export const menuConfig: Record<string, NavItem[]> = {
       name: 'Pengembalian',
       icon: <RotateCcw />,
       path: '/inventories/returns',
+      roles: [1, 2],
+    },
+    {
+      name: 'Stock Opname',
+      icon: <Sliders />,
+      path: '/inventories/stock-opname',
       roles: [1, 2],
     },
     {

@@ -121,8 +121,12 @@ export default function UnitPage() {
                 header: "Info Barang",
                 accessorKey: "name",
                 cell: ({ row }: any) => (
-                    <div className="flex flex-col">
-                        <span className="font-semibold text-gray-900">{row.name}</span>
+                    <div
+                        className="flex flex-col cursor-pointer p-2 rounded-md transition-all duration-200 
+                               hover:bg-blue-50 hover:text-blue-600"
+                        onClick={() => router.push("/inventories/items/" + row.id)}
+                    >
+                        <span className="font-semibold text-blue-600 cursor-pointer">{row.name}</span>
                         <span className="text-xs text-gray-500 font-mono">
                             {row.barcode ? `Barcode: ${row.barcode}` : "Tanpa Barcode"}
                         </span>
