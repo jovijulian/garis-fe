@@ -186,16 +186,92 @@ export default function StockInPage() {
         }
     };
 
+    // const startScanner = () => {
+    //     setTimeout(() => {
+    //         const config = {
+    //             fps: 15, 
+
+    //             qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+    //                 const dynamicWidth = Math.min(320, viewfinderWidth - 32);
+    //                 return { width: dynamicWidth, height: 160 }; 
+    //             },
+    
+    //             formatsToSupport: [
+    //                 Html5QrcodeSupportedFormats.EAN_13,
+    //                 Html5QrcodeSupportedFormats.EAN_8,
+    //                 Html5QrcodeSupportedFormats.CODE_128,
+    //                 Html5QrcodeSupportedFormats.CODE_39,
+    //                 Html5QrcodeSupportedFormats.UPC_A,
+    //                 Html5QrcodeSupportedFormats.UPC_E,
+    //             ],
+    
+    //             experimentalFeatures: {
+    //                 useBarCodeDetectorIfSupported: true 
+    //             },
+    
+    //             aspectRatio: 1.777778,
+    
+    //             videoConstraints: {
+    //                 facingMode: "environment",
+    //                 width: { min: 640, ideal: 1280, max: 1920 },
+    //                 height: { min: 480, ideal: 720, max: 1080 },
+    //                 advanced: [
+    //                     { focusMode: "continuous" } as any,
+    //                     { zoom: 2.0 } as any 
+    //                 ] as any
+    //             },
+    
+    //             disableFlip: true,
+    //             rememberLastUsedCamera: true, 
+    //         };
+    //         const newScanner = new Html5QrcodeScanner(`reader-single`, config, false);
+    //         scannerRef.current = newScanner;
+
+    //         newScanner.render(
+    //             (decodedText) => {
+    //                 handleChange("barcode", decodedText);
+    //                 handleCheckBarcode(decodedText);
+    //             },
+    //             (errorMessage) => console.warn("Scan error:", errorMessage)
+    //         );
+    //     }, 100);
+    // };
+
     const startScanner = () => {
-        setTimeout(() => {
+
+        setTimeout(async () => {
+            let videoConstraints: any = {
+                width: { min: 640, ideal: 1280, max: 1920 },
+                height: { min: 480, ideal: 720, max: 1080 }
+            };
+
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+
+                const hasBackCamera = devices.some(
+                    (device) =>
+                        device.kind === "videoinput" &&
+                        device.label.toLowerCase().includes("back")
+                );
+
+                if (hasBackCamera) {
+                    videoConstraints.facingMode = { exact: "environment" };
+                } else {
+                    videoConstraints.facingMode = "user";
+                }
+            } catch (err) {
+                console.warn("Gagal detect camera, fallback default", err);
+                videoConstraints = true;
+            }
+
             const config = {
-                fps: 15, 
+                fps: 15,
 
                 qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
                     const dynamicWidth = Math.min(320, viewfinderWidth - 32);
-                    return { width: dynamicWidth, height: 160 }; 
+                    return { width: dynamicWidth, height: 160 };
                 },
-    
+
                 formatsToSupport: [
                     Html5QrcodeSupportedFormats.EAN_13,
                     Html5QrcodeSupportedFormats.EAN_8,
@@ -204,35 +280,27 @@ export default function StockInPage() {
                     Html5QrcodeSupportedFormats.UPC_A,
                     Html5QrcodeSupportedFormats.UPC_E,
                 ],
-    
+
                 experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true 
+                    useBarCodeDetectorIfSupported: true
                 },
-    
+
                 aspectRatio: 1.777778,
-    
-                videoConstraints: {
-                    facingMode: "environment",
-                    width: { min: 640, ideal: 1280, max: 1920 },
-                    height: { min: 480, ideal: 720, max: 1080 },
-                    advanced: [
-                        { focusMode: "continuous" } as any,
-                        { zoom: 2.0 } as any 
-                    ] as any
-                },
-    
+
+                videoConstraints,
+
                 disableFlip: true,
-                rememberLastUsedCamera: true, 
+                rememberLastUsedCamera: true,
             };
             const newScanner = new Html5QrcodeScanner(`reader-single`, config, false);
             scannerRef.current = newScanner;
 
             newScanner.render(
                 (decodedText) => {
-                    handleChange("barcode", decodedText);
                     handleCheckBarcode(decodedText);
                 },
-                (errorMessage) => console.warn("Scan error:", errorMessage)
+                (errorMessage) => {
+                }
             );
         }, 100);
     };
@@ -483,7 +551,10 @@ export default function StockInPage() {
                         </>
                     )}
 
-                    <div className="col-span-1 md:col-span-1 mt-4 pt-4 border-t border-gray-200">
+                   
+
+                </div>
+                <div className="col-span-1 md:col-span-1 mt-4 pt-4 border-t border-gray-200">
                         <label htmlFor="initial_qty" className={`text-base block mb-3 ${isExistingItem ? 'text-blue-700 font-bold' : 'text-gray-800 font-semibold'}`}>
                             {isExistingItem ? "3. Berapa Jumlah Barang yang Datang?" : "3. Stok Awal (Opsional)"}
                             {isExistingItem && <span className="text-red-500 ml-1">*</span>}
@@ -526,8 +597,6 @@ export default function StockInPage() {
                             </div>
                         )}
                     </div>
-
-                </div>
 
                 <div className="flex justify-end pt-4">
                     <button

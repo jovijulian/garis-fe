@@ -127,7 +127,32 @@ export default function StockOutPage() {
     };
 
     const startScanner = () => {
-        setTimeout(() => {
+
+        setTimeout(async () => {
+            let videoConstraints: any = {
+                width: { min: 640, ideal: 1280, max: 1920 },
+                height: { min: 480, ideal: 720, max: 1080 }
+            };
+
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+
+                const hasBackCamera = devices.some(
+                    (device) =>
+                        device.kind === "videoinput" &&
+                        device.label.toLowerCase().includes("back")
+                );
+
+                if (hasBackCamera) {
+                    videoConstraints.facingMode = { exact: "environment" };
+                } else {
+                    videoConstraints.facingMode = "user";
+                }
+            } catch (err) {
+                console.warn("Gagal detect camera, fallback default", err);
+                videoConstraints = true;
+            }
+
             const config = {
                 fps: 15,
 
@@ -151,15 +176,7 @@ export default function StockOutPage() {
 
                 aspectRatio: 1.777778,
 
-                videoConstraints: {
-                    facingMode: { exact: "environment" },
-                    width: { min: 640, ideal: 1280, max: 1920 },
-                    height: { min: 480, ideal: 720, max: 1080 },
-                    advanced: [
-                        { focusMode: "continuous" } as any,
-                        { zoom: 2.0 } as any
-                    ] as any
-                },
+                videoConstraints,
 
                 disableFlip: true,
                 rememberLastUsedCamera: true,
@@ -250,24 +267,24 @@ export default function StockOutPage() {
         <ComponentCard title="Pengeluaran Barang (Stock Out)">
             <style dangerouslySetInnerHTML={{
                 __html: `
-                #reader-single {
+                #reader-checkout {
                     width: 100% !important;
                     border: none !important;
                 }
-                #reader-single video {
+                #reader-checkout video {
                     width: 100% !important;
                     height: auto !important;
                     border-radius: 0.5rem !important;
                     object-fit: cover !important;
                 }
-                #reader-single__dashboard_section_csr select {
+                #reader-checkout__dashboard_section_csr select {
                     max-width: 100% !important;
                     padding: 6px !important;
                     border-radius: 6px !important;
                     border: 1px solid #cbd5e1 !important;
                     font-size: 12px !important;
                 }
-                #reader-single__dashboard_section_csr button {
+                #reader-checkout__dashboard_section_csr button {
                     background-color: #3b82f6 !important;
                     color: white !important;
                     border: none !important;
@@ -276,7 +293,7 @@ export default function StockOutPage() {
                     font-size: 12px !important;
                     margin: 4px !important;
                 }
-                #reader-single__dashboard_section_swaplink {
+                #reader-checkout__dashboard_section_swaplink {
                     display: none !important; /* Sembunyikan tulisan 'Scan an Image file' yang tidak perlu */
                 }
             `}} />
@@ -312,7 +329,7 @@ export default function StockOutPage() {
                         <div className="relative flex-grow">
                             <ScanBarcode className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
-                                id="barcode-input"
+                                // id="barcode-input"
                                 type="text"
                                 value={barcodeInput}
                                 onChange={(e) => setBarcodeInput(e.target.value)}
@@ -342,11 +359,13 @@ export default function StockOutPage() {
                     </div>
 
                     {isScannerActive && (
-                        <div className="mt-4 p-4 border-2 border-dashed border-blue-300 bg-blue-50/50 rounded-2xl relative flex flex-col items-center max-w-lg mx-auto">
+                        <div className="mt-4 p-2 sm:p-4 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl relative w-full overflow-hidden">
                             <div id="reader-checkout" className="w-full rounded-lg overflow-hidden"></div>
-                            <p className="text-sm text-blue-700 mt-4 font-medium flex items-center gap-2">
-                                <Loader2 className="w-4 h-4 animate-spin" /> Arahkan barcode ke kamera...
-                            </p>
+                            <div className="mt-3 text-center w-full">
+                                <p className="text-xs text-blue-600 font-medium">
+                                    Arahkan kamera ke barcode. Jaga jarak 10-15cm agar fokus.
+                                </p>
+                            </div>
                         </div>
                     )}
                 </div>

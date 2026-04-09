@@ -9,7 +9,7 @@ import { endpointUrl, httpGet } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import Table from "@/components/tables/Table";
 import { 
-    User, History, Package, ArrowDownRight, ArrowUpRight, RefreshCcw, Box, FileText, AlertTriangle, CheckCircle2
+    User, History, Package, ArrowDownRight, ArrowUpRight, RefreshCcw, Box, FileText, AlertTriangle, CheckCircle2, Sliders
 } from "lucide-react";
 
 export default function UserDetailPage() {
@@ -80,10 +80,18 @@ export default function UserDetailPage() {
 
     const getTransactionBadge = (type: string) => {
         switch (type) {
-            case 'OUT_BHP': return <span className="text-purple-600 font-bold flex items-center gap-1"><ArrowUpRight size={14}/> Permintaan (BHP)</span>;
-            case 'OUT_ASSET': return <span className="text-orange-600 font-bold flex items-center gap-1"><ArrowUpRight size={14}/> Peminjaman (Aset)</span>;
-            case 'RETURN': return <span className="text-blue-600 font-bold flex items-center gap-1"><RefreshCcw size={14}/> Pengembalian</span>;
-            default: return <span>{type}</span>;
+            case 'STOCK_IN':
+                return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700"><ArrowDownRight className="w-3.5 h-3.5" /> Masuk</span>;
+            case 'OUT_BHP':
+                return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700"><ArrowUpRight className="w-3.5 h-3.5" /> Keluar BHP</span>;
+            case 'OUT_ASSET':
+                return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700"><ArrowUpRight className="w-3.5 h-3.5" /> Pinjam Aset</span>;
+            case 'RETURN':
+                return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700"><RefreshCcw className="w-3.5 h-3.5" /> Return</span>;
+            case 'ADJUSTMENT':
+                return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700"><Sliders className="w-3.5 h-3.5" /> Opname</span>;
+            default:
+                return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs">{type}</span>;
         }
     };
 
@@ -126,10 +134,29 @@ export default function UserDetailPage() {
             header: "Jumlah",
             accessorKey: "qty",
             cell: ({ row }: any) => {
-                const isOut = row.transaction_type.includes('OUT');
+                let textColor = "";
+                let sign = "";
+                const absoluteQty = Math.abs(row.qty || 0);
+
+                if (row.transaction_type === 'ADJUSTMENT') {
+                    if (row.qty < 0) {
+                        textColor = "text-red-600";
+                        sign = "-";
+                    } else {
+                        textColor = "text-green-600";
+                        sign = "+";
+                    }
+                } else if (row.transaction_type.includes('OUT')) {
+                    textColor = "text-red-600";
+                    sign = "-";
+                } else {
+                    textColor = "text-green-600";
+                    sign = "+";
+                }
+
                 return (
-                    <span className={`font-bold ${isOut ? 'text-red-600' : 'text-blue-600'}`}>
-                        {row.qty} {row.item?.base_unit?.name}
+                    <span className={`font-bold ${textColor}`}>
+                        {sign}{absoluteQty} {row.item?.base_unit?.name}
                     </span>
                 );
             },
