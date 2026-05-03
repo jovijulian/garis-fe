@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import { endpointUrl, httpPost, httpGet } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import _ from "lodash";
+import Select from "@/components/form/Select-custom";
 
 interface CartItem {
     item_id: number;
@@ -21,6 +22,8 @@ interface CartItem {
     stock_available: number;
     item_type: number;
 }
+
+interface SelectOption { value: string; label: string; }
 
 export default function StockOutPage() {
     const router = useRouter();
@@ -36,17 +39,34 @@ export default function StockOutPage() {
     const [isScannerActive, setIsScannerActive] = useState(false);
     const scannerRef = useRef<Html5QrcodeScanner | null>(null);
     const [cart, setCart] = useState<CartItem[]>([]);
+    const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
+    const [loadingOptions, setLoadingOptions] = useState(true);
+
+
 
     useEffect(() => {
-        const cabId = localStorage.getItem("sites");
-        setHeaderData(prev => ({ ...prev, cab_id: cabId ? Number(cabId) : 0 }));
-
+        fetchInitialData();
         return () => {
             if (scannerRef.current) {
                 scannerRef.current.clear().catch(e => console.error(e));
             }
         };
+
     }, []);
+    const fetchInitialData = async () => {
+        try {
+            const [sitesRes] = await Promise.all([
+                httpGet(endpointUrl("/rooms/site-options"), true),
+            ]);
+
+            setSiteOptions(sitesRes.data.data.map((s: any) => ({ value: s.id_cab.toString(), label: s.nama_cab })));
+
+        } catch (error) {
+            toast.error("Gagal memuat data awal untuk form.");
+        } finally {
+            setLoadingOptions(false);
+        }
+    };
 
     const handleCheckBarcode = async (scannedBarcode: string) => {
         if (!scannedBarcode || scannedBarcode.trim() === "") return;
@@ -126,84 +146,16 @@ export default function StockOutPage() {
         }
     };
 
-    // const startScanner = () => {
-
-    //     setTimeout(async () => {
-    //         let videoConstraints: any = {
-    //             width: { min: 640, ideal: 1280, max: 1920 },
-    //             height: { min: 480, ideal: 720, max: 1080 }
-    //         };
-
-    //         try {
-    //             const devices = await navigator.mediaDevices.enumerateDevices();
-
-    //             const hasBackCamera = devices.some(
-    //                 (device) =>
-    //                     device.kind === "videoinput" &&
-    //                     device.label.toLowerCase().includes("back")
-    //             );
-
-    //             if (hasBackCamera) {
-    //                 videoConstraints.facingMode = { exact: "environment" };
-    //             } else {
-    //                 videoConstraints.facingMode = "user";
-    //             }
-    //         } catch (err) {
-    //             console.warn("Gagal detect camera, fallback default", err);
-    //             videoConstraints = true;
-    //         }
-
-    //         const config = {
-    //             fps: 15,
-
-    //             qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-    //                 const dynamicWidth = Math.min(320, viewfinderWidth - 32);
-    //                 return { width: dynamicWidth, height: 160 };
-    //             },
-
-    //             formatsToSupport: [
-    //                 Html5QrcodeSupportedFormats.EAN_13,
-    //                 Html5QrcodeSupportedFormats.EAN_8,
-    //                 Html5QrcodeSupportedFormats.CODE_128,
-    //                 Html5QrcodeSupportedFormats.CODE_39,
-    //                 Html5QrcodeSupportedFormats.UPC_A,
-    //                 Html5QrcodeSupportedFormats.UPC_E,
-    //             ],
-
-    //             experimentalFeatures: {
-    //                 useBarCodeDetectorIfSupported: true
-    //             },
-
-    //             aspectRatio: 1.777778,
-
-    //             videoConstraints,
-
-    //             disableFlip: true,
-    //             rememberLastUsedCamera: true,
-    //         };
-    //         const newScanner = new Html5QrcodeScanner(`reader-checkout`, config, false);
-    //         scannerRef.current = newScanner;
-
-    //         newScanner.render(
-    //             (decodedText) => {
-    //                 handleCheckBarcode(decodedText);
-    //             },
-    //             (errorMessage) => {
-    //             }
-    //         );
-    //     }, 100);
-    // };
-
     const startScanner = () => {
         setTimeout(() => {
             const config = {
-                fps: 15, 
+                fps: 15,
 
                 qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
                     const dynamicWidth = Math.min(320, viewfinderWidth - 32);
-                    return { width: dynamicWidth, height: 160 }; 
+                    return { width: dynamicWidth, height: 160 };
                 },
-    
+
                 formatsToSupport: [
                     Html5QrcodeSupportedFormats.EAN_13,
                     Html5QrcodeSupportedFormats.EAN_8,
@@ -212,25 +164,25 @@ export default function StockOutPage() {
                     Html5QrcodeSupportedFormats.UPC_A,
                     Html5QrcodeSupportedFormats.UPC_E,
                 ],
-    
+
                 experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true 
+                    useBarCodeDetectorIfSupported: true
                 },
-    
+
                 aspectRatio: 1.777778,
-    
+
                 videoConstraints: {
                     facingMode: "environment",
                     width: { min: 640, ideal: 1280, max: 1920 },
                     height: { min: 480, ideal: 720, max: 1080 },
                     advanced: [
                         { focusMode: "continuous" } as any,
-                        { zoom: 2.0 } as any 
+                        { zoom: 2.0 } as any
                     ] as any
                 },
-    
+
                 disableFlip: true,
-                rememberLastUsedCamera: true, 
+                rememberLastUsedCamera: true,
             };
             const newScanner = new Html5QrcodeScanner(`reader-checkout`, config, false);
             scannerRef.current = newScanner;
@@ -287,6 +239,7 @@ export default function StockOutPage() {
         try {
             const payload = {
                 nik: headerData.user_id_borrower,
+                cab_id: headerData.cab_id,
                 note: headerData.note,
                 items: cart.map(item => ({
                     item_id: item.item_id,
@@ -295,7 +248,7 @@ export default function StockOutPage() {
                 }))
             };
 
-            await httpPost(endpointUrl("/inventory-transactions/stock-out"), payload, true);
+            await httpPost(endpointUrl("/inventory-transactions/stock-out/user"), payload, true);
 
             toast.success("Barang berhasil dikeluarkan!");
 
@@ -348,7 +301,7 @@ export default function StockOutPage() {
                 }
             `}} />
             <form onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden">
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                         <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">
                             NIK / User Peminta <span className="text-red-500">*</span>
@@ -359,6 +312,20 @@ export default function StockOutPage() {
                             onChange={(e) => setHeaderData(prev => ({ ...prev, user_id_borrower: e.target.value }))}
                             placeholder="Contoh: NIK Karyawan"
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all bg-white"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">
+                            Cabang Peminjaman <span className="text-red-500">*</span>
+                        </label>
+                        <Select
+                            options={siteOptions}
+                            value={_.find(siteOptions, { value: headerData.cab_id?.toString() })}
+                            onValueChange={(opt) =>
+                                setHeaderData(prev => ({ ...prev, cab_id: parseInt(opt.value) }))
+                            }
+                            placeholder="Pilih cabang..."
+                            disabled={loadingOptions}
                         />
                     </div>
                     <div className="space-y-2">

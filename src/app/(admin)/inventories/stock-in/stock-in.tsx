@@ -186,92 +186,16 @@ export default function StockInPage() {
         }
     };
 
-    // const startScanner = () => {
-    //     setTimeout(() => {
-    //         const config = {
-    //             fps: 15, 
-
-    //             qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-    //                 const dynamicWidth = Math.min(320, viewfinderWidth - 32);
-    //                 return { width: dynamicWidth, height: 160 }; 
-    //             },
-    
-    //             formatsToSupport: [
-    //                 Html5QrcodeSupportedFormats.EAN_13,
-    //                 Html5QrcodeSupportedFormats.EAN_8,
-    //                 Html5QrcodeSupportedFormats.CODE_128,
-    //                 Html5QrcodeSupportedFormats.CODE_39,
-    //                 Html5QrcodeSupportedFormats.UPC_A,
-    //                 Html5QrcodeSupportedFormats.UPC_E,
-    //             ],
-    
-    //             experimentalFeatures: {
-    //                 useBarCodeDetectorIfSupported: true 
-    //             },
-    
-    //             aspectRatio: 1.777778,
-    
-    //             videoConstraints: {
-    //                 facingMode: "environment",
-    //                 width: { min: 640, ideal: 1280, max: 1920 },
-    //                 height: { min: 480, ideal: 720, max: 1080 },
-    //                 advanced: [
-    //                     { focusMode: "continuous" } as any,
-    //                     { zoom: 2.0 } as any 
-    //                 ] as any
-    //             },
-    
-    //             disableFlip: true,
-    //             rememberLastUsedCamera: true, 
-    //         };
-    //         const newScanner = new Html5QrcodeScanner(`reader-single`, config, false);
-    //         scannerRef.current = newScanner;
-
-    //         newScanner.render(
-    //             (decodedText) => {
-    //                 handleChange("barcode", decodedText);
-    //                 handleCheckBarcode(decodedText);
-    //             },
-    //             (errorMessage) => console.warn("Scan error:", errorMessage)
-    //         );
-    //     }, 100);
-    // };
-
     const startScanner = () => {
-
-        setTimeout(async () => {
-            let videoConstraints: any = {
-                width: { min: 640, ideal: 1280, max: 1920 },
-                height: { min: 480, ideal: 720, max: 1080 }
-            };
-
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-
-                const hasBackCamera = devices.some(
-                    (device) =>
-                        device.kind === "videoinput" &&
-                        device.label.toLowerCase().includes("back")
-                );
-
-                if (hasBackCamera) {
-                    videoConstraints.facingMode = { exact: "environment" };
-                } else {
-                    videoConstraints.facingMode = "user";
-                }
-            } catch (err) {
-                console.warn("Gagal detect camera, fallback default", err);
-                videoConstraints = true;
-            }
-
+        setTimeout(() => {
             const config = {
-                fps: 15,
+                fps: 15, 
 
                 qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
                     const dynamicWidth = Math.min(320, viewfinderWidth - 32);
-                    return { width: dynamicWidth, height: 160 };
+                    return { width: dynamicWidth, height: 160 }; 
                 },
-
+    
                 formatsToSupport: [
                     Html5QrcodeSupportedFormats.EAN_13,
                     Html5QrcodeSupportedFormats.EAN_8,
@@ -280,30 +204,106 @@ export default function StockInPage() {
                     Html5QrcodeSupportedFormats.UPC_A,
                     Html5QrcodeSupportedFormats.UPC_E,
                 ],
-
+    
                 experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true
+                    useBarCodeDetectorIfSupported: true 
                 },
-
+    
                 aspectRatio: 1.777778,
-
-                videoConstraints,
-
+    
+                videoConstraints: {
+                    facingMode: "environment",
+                    width: { min: 640, ideal: 1280, max: 1920 },
+                    height: { min: 480, ideal: 720, max: 1080 },
+                    advanced: [
+                        { focusMode: "continuous" } as any,
+                        { zoom: 2.0 } as any 
+                    ] as any
+                },
+    
                 disableFlip: true,
-                rememberLastUsedCamera: true,
+                rememberLastUsedCamera: true, 
             };
             const newScanner = new Html5QrcodeScanner(`reader-single`, config, false);
             scannerRef.current = newScanner;
 
             newScanner.render(
                 (decodedText) => {
+                    handleChange("barcode", decodedText);
                     handleCheckBarcode(decodedText);
                 },
-                (errorMessage) => {
-                }
+                (errorMessage) => console.warn("Scan error:", errorMessage)
             );
         }, 100);
     };
+
+    // const startScanner = () => {
+
+    //     setTimeout(async () => {
+    //         let videoConstraints: any = {
+    //             width: { min: 640, ideal: 1280, max: 1920 },
+    //             height: { min: 480, ideal: 720, max: 1080 }
+    //         };
+
+    //         try {
+    //             const devices = await navigator.mediaDevices.enumerateDevices();
+
+    //             const hasBackCamera = devices.some(
+    //                 (device) =>
+    //                     device.kind === "videoinput" &&
+    //                     device.label.toLowerCase().includes("back")
+    //             );
+
+    //             if (hasBackCamera) {
+    //                 videoConstraints.facingMode = { exact: "environment" };
+    //             } else {
+    //                 videoConstraints.facingMode = "user";
+    //             }
+    //         } catch (err) {
+    //             console.warn("Gagal detect camera, fallback default", err);
+    //             videoConstraints = true;
+    //         }
+
+    //         const config = {
+    //             fps: 15,
+
+    //             qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+    //                 const dynamicWidth = Math.min(320, viewfinderWidth - 32);
+    //                 return { width: dynamicWidth, height: 160 };
+    //             },
+
+    //             formatsToSupport: [
+    //                 Html5QrcodeSupportedFormats.EAN_13,
+    //                 Html5QrcodeSupportedFormats.EAN_8,
+    //                 Html5QrcodeSupportedFormats.CODE_128,
+    //                 Html5QrcodeSupportedFormats.CODE_39,
+    //                 Html5QrcodeSupportedFormats.UPC_A,
+    //                 Html5QrcodeSupportedFormats.UPC_E,
+    //             ],
+
+    //             experimentalFeatures: {
+    //                 useBarCodeDetectorIfSupported: true
+    //             },
+
+    //             aspectRatio: 1.777778,
+
+    //             videoConstraints,
+
+    //             disableFlip: true,
+    //             rememberLastUsedCamera: true,
+    //         };
+    //         const newScanner = new Html5QrcodeScanner(`reader-single`, config, false);
+    //         scannerRef.current = newScanner;
+
+    //         newScanner.render(
+    //             (decodedText) => {
+    //                 handleCheckBarcode(decodedText);
+    //             },
+    //             (errorMessage) => {
+    //             }
+    //         );
+    //     }, 100);
+    // };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

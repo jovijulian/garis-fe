@@ -46,6 +46,10 @@ const rolePermissions: Record<string, string[]> = {
         '/vehicles/create',
         '/vehicles/edit',
         '/vehicles/schedule',
+        '/inventories/my-loans',
+        '/inventories/create',
+        '/inventories/histories',
+        
     ],
     
 };

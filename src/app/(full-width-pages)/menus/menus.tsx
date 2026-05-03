@@ -74,7 +74,7 @@ const menuItems: {
         icon: Package,
         href: "/inventories/dashboard",
         color: "yellow",
-        allowedRoles: ["1", "2"],
+        // allowedRoles: ["1", "2"],
     },
     {
         title: "Pengajuan Proyek",
@@ -153,6 +153,10 @@ const MenuCard: React.FC<MenuCardProps> = ({
     }
     if (title === "Order" && userRole === "3") {
         dynamicHref = "/orders/my-orders";
+    }
+
+    if (title === "Inventaris" && userRole === "3") {
+        dynamicHref = "/inventories/my-loans";
     }
 
     if (title === "Pengajuan Kendaraan") {
