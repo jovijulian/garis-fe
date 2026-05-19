@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-    Check, PackageMinus, ScanBarcode, Camera, X, Loader2, Trash2, ShoppingCart, User
+    Check, PackageMinus, ScanBarcode, Camera, X, Loader2, Trash2, ShoppingCart, Info
 } from "lucide-react";
 import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { useRouter } from "next/navigation";
@@ -18,9 +18,11 @@ interface CartItem {
     barcode: string;
     input_qty: any;
     input_unit_id: number;
-    unit_name: string;
+    base_unit_name: string;
     stock_available: number;
     item_type: number;
+    available_uoms: { value: string, label: string, multiplier: number, unitName: string }[];
+    selected_multiplier: number;
 }
 
 interface SelectOption { value: string; label: string; }
@@ -39,10 +41,9 @@ export default function StockOutPage() {
     const [isScannerActive, setIsScannerActive] = useState(false);
     const scannerRef = useRef<Html5QrcodeScanner | null>(null);
     const [cart, setCart] = useState<CartItem[]>([]);
+
     const [siteOptions, setSiteOptions] = useState<SelectOption[]>([]);
     const [loadingOptions, setLoadingOptions] = useState(true);
-
-
 
     useEffect(() => {
         fetchInitialData();
@@ -51,26 +52,35 @@ export default function StockOutPage() {
                 scannerRef.current.clear().catch(e => console.error(e));
             }
         };
-
     }, []);
+
     const fetchInitialData = async () => {
         try {
             const [sitesRes] = await Promise.all([
                 httpGet(endpointUrl("/rooms/site-options"), true),
             ]);
-
             setSiteOptions(sitesRes.data.data.map((s: any) => ({ value: s.id_cab.toString(), label: s.nama_cab })));
 
+            const cabId = localStorage.getItem("sites");
+            if (cabId) {
+                setHeaderData(prev => ({ ...prev, cab_id: Number(cabId) }));
+            }
         } catch (error) {
-            toast.error("Gagal memuat data awal untuk form.");
+            toast.error("Gagal memuat data cabang untuk form.");
         } finally {
             setLoadingOptions(false);
         }
     };
 
     const handleCheckBarcode = async (scannedBarcode: string) => {
+        if (!headerData.cab_id) {
+            toast.warning("Silakan pilih cabang peminjaman terlebih dahulu.");
+            setBarcodeInput("");
+            return;
+        }
+
         if (!scannedBarcode || scannedBarcode.trim() === "") return;
-        if (isCheckingBarcode) return; // Mencegah double scan
+        if (isCheckingBarcode) return;
 
         setIsCheckingBarcode(true);
         try {
@@ -80,9 +90,28 @@ export default function StockOutPage() {
             if (result?.is_existing) {
                 const item = result.data;
                 if (item.stock_available <= 0) {
-                    toast.error(`Stok ${item.name} sedang kosong!`);
+                    toast.error(`Stok ${item.name} sedang kosong di cabang ini!`);
                     setBarcodeInput("");
                     return;
+                }
+
+                const opts: any = [];
+                opts.push({
+                    value: String(item.base_unit_id),
+                    label: item.base_unit?.name || "Satuan",
+                    multiplier: 1,
+                    unitName: item.base_unit?.name
+                });
+
+                if (item.uoms && Array.isArray(item.uoms)) {
+                    item.uoms.forEach((u: any) => {
+                        opts.push({
+                            value: String(u.unit_id),
+                            label: `${u.unit?.name} (1 = ${u.multiplier} ${item.base_unit?.name})`,
+                            multiplier: u.multiplier,
+                            unitName: u.unit?.name
+                        });
+                    });
                 }
 
                 setCart(prevCart => {
@@ -90,12 +119,15 @@ export default function StockOutPage() {
                     const newCart = [...prevCart];
 
                     if (existingItemIndex >= 0) {
-                        const currentQty = newCart[existingItemIndex].input_qty;
-                        if (currentQty < item.stock_available) {
-                            newCart[existingItemIndex].input_qty += 1;
+                        const currentCartItem = newCart[existingItemIndex];
+                        const newQty = (currentCartItem.input_qty || 0) + 1;
+                        const totalBaseDeduct = newQty * currentCartItem.selected_multiplier;
+
+                        if (totalBaseDeduct <= item.stock_available) {
+                            newCart[existingItemIndex].input_qty = newQty;
                             toast.success(`+1 ${item.name} ditambahkan`);
                         } else {
-                            toast.warning(`Stok ${item.name} tidak cukup (Sisa: ${item.stock_available})`);
+                            toast.warning(`Stok ${item.name} tidak cukup (Sisa: ${item.stock_available} ${item.base_unit?.name})`);
                         }
                     } else {
                         newCart.push({
@@ -104,9 +136,11 @@ export default function StockOutPage() {
                             barcode: item.barcode,
                             input_qty: 1,
                             input_unit_id: item.base_unit_id,
-                            unit_name: item.base_unit?.name || "Unit",
+                            base_unit_name: item.base_unit?.name || "Unit",
                             stock_available: item.stock_available,
-                            item_type: item.item_type
+                            item_type: item.item_type,
+                            available_uoms: opts,
+                            selected_multiplier: 1
                         });
                         toast.success(`${item.name} masuk keranjang`);
                     }
@@ -114,7 +148,7 @@ export default function StockOutPage() {
                 });
 
             } else {
-                toast.error("Barang tidak ditemukan di database!");
+                toast.error("Barang tidak ditemukan di cabang ini!");
             }
         } catch (error) {
             console.error("Error checking barcode:", error);
@@ -150,37 +184,23 @@ export default function StockOutPage() {
         setTimeout(() => {
             const config = {
                 fps: 15,
-
                 qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
                     const dynamicWidth = Math.min(320, viewfinderWidth - 32);
                     return { width: dynamicWidth, height: 160 };
                 },
-
                 formatsToSupport: [
-                    Html5QrcodeSupportedFormats.EAN_13,
-                    Html5QrcodeSupportedFormats.EAN_8,
-                    Html5QrcodeSupportedFormats.CODE_128,
-                    Html5QrcodeSupportedFormats.CODE_39,
-                    Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E,
                 ],
-
-                experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true
-                },
-
+                experimentalFeatures: { useBarCodeDetectorIfSupported: true },
                 aspectRatio: 1.777778,
-
                 videoConstraints: {
                     facingMode: "environment",
                     width: { min: 640, ideal: 1280, max: 1920 },
                     height: { min: 480, ideal: 720, max: 1080 },
-                    advanced: [
-                        { focusMode: "continuous" } as any,
-                        { zoom: 2.0 } as any
-                    ] as any
+                    advanced: [{ focusMode: "continuous" } as any, { zoom: 2.0 } as any] as any
                 },
-
                 disableFlip: true,
                 rememberLastUsedCamera: true,
             };
@@ -188,9 +208,7 @@ export default function StockOutPage() {
             scannerRef.current = newScanner;
 
             newScanner.render(
-                (decodedText) => {
-                    handleCheckBarcode(decodedText);
-                },
+                (decodedText) => handleCheckBarcode(decodedText),
                 (errorMessage) => console.warn("Scan error:", errorMessage)
             );
         }, 100);
@@ -206,13 +224,39 @@ export default function StockOutPage() {
                 return newCart;
             }
 
-            if (newQty > item.stock_available) {
-                toast.warning(`Maksimal stok yang bisa dikeluarkan: ${item.stock_available}`);
-                newCart[index].input_qty = item.stock_available;
+            const totalBaseDeduct = newQty * item.selected_multiplier;
+
+            if (totalBaseDeduct > item.stock_available) {
+                const maxQtyAllowed = Math.floor(item.stock_available / item.selected_multiplier);
+                toast.warning(`Maksimal stok yang bisa dikeluarkan: ${maxQtyAllowed} unit terpilih (Sisa fisik: ${item.stock_available})`);
+                newCart[index].input_qty = maxQtyAllowed;
             } else if (newQty > 0) {
                 newCart[index].input_qty = newQty;
             }
 
+            return newCart;
+        });
+    };
+
+    const updateCartUnit = (index: number, newUnitId: string) => {
+        setCart(prev => {
+            const newCart = [...prev];
+            const item = newCart[index];
+            const selectedUom = item.available_uoms.find(u => u.value === newUnitId);
+
+            if (selectedUom) {
+                newCart[index].input_unit_id = Number(newUnitId);
+                newCart[index].selected_multiplier = selectedUom.multiplier;
+
+                const currentQty = newCart[index].input_qty || 0;
+                const totalBaseDeduct = currentQty * selectedUom.multiplier;
+
+                if (totalBaseDeduct > item.stock_available) {
+                    const maxQtyAllowed = Math.floor(item.stock_available / selectedUom.multiplier);
+                    toast.warning(`Stok gudang tidak cukup untuk ${currentQty} ${selectedUom.unitName}. Disesuaikan ke max: ${maxQtyAllowed}.`);
+                    newCart[index].input_qty = maxQtyAllowed > 0 ? maxQtyAllowed : 1;
+                }
+            }
             return newCart;
         });
     };
@@ -223,6 +267,11 @@ export default function StockOutPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!headerData.cab_id) {
+            toast.warning("Mohon pilih Cabang Peminjaman.");
+            return;
+        }
 
         if (!headerData.user_id_borrower) {
             toast.warning("Mohon isi NIK / ID Karyawan yang meminta barang.");
@@ -235,6 +284,12 @@ export default function StockOutPage() {
             return;
         }
 
+        const invalidItem = cart.find(c => !c.input_qty || c.input_qty <= 0);
+        if (invalidItem) {
+            toast.warning(`Pastikan jumlah permintaan untuk ${invalidItem.name} valid.`);
+            return;
+        }
+
         setLoading(true);
         try {
             const payload = {
@@ -243,14 +298,14 @@ export default function StockOutPage() {
                 note: headerData.note,
                 items: cart.map(item => ({
                     item_id: item.item_id,
-                    input_qty: item.input_qty,
+                    input_qty: Number(item.input_qty),
                     input_unit_id: item.input_unit_id
                 }))
             };
 
             await httpPost(endpointUrl("/inventory-transactions/stock-out/user"), payload, true);
 
-            toast.success("Barang berhasil dikeluarkan!");
+            toast.success("Permintaan barang berhasil diproses!");
 
             setHeaderData(prev => ({ ...prev, user_id_borrower: "", note: "" }));
             setCart([]);
@@ -260,48 +315,24 @@ export default function StockOutPage() {
 
         } catch (error: any) {
             console.error(error);
-            toast.error(error?.response?.data?.message || "Gagal memproses pengeluaran barang.");
+            toast.error(error?.response?.data?.message || "Gagal memproses permintaan barang.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <ComponentCard title="Pengeluaran Barang (Stock Out)">
+        <ComponentCard title="Permintaan Inventaris (Stock Out)">
             <style dangerouslySetInnerHTML={{
                 __html: `
-                #reader-checkout {
-                    width: 100% !important;
-                    border: none !important;
-                }
-                #reader-checkout video {
-                    width: 100% !important;
-                    height: auto !important;
-                    border-radius: 0.5rem !important;
-                    object-fit: cover !important;
-                }
-                #reader-checkout__dashboard_section_csr select {
-                    max-width: 100% !important;
-                    padding: 6px !important;
-                    border-radius: 6px !important;
-                    border: 1px solid #cbd5e1 !important;
-                    font-size: 12px !important;
-                }
-                #reader-checkout__dashboard_section_csr button {
-                    background-color: #3b82f6 !important;
-                    color: white !important;
-                    border: none !important;
-                    padding: 6px 12px !important;
-                    border-radius: 6px !important;
-                    font-size: 12px !important;
-                    margin: 4px !important;
-                }
-                #reader-checkout__dashboard_section_swaplink {
-                    display: none !important; /* Sembunyikan tulisan 'Scan an Image file' yang tidak perlu */
-                }
+                #reader-checkout { width: 100% !important; border: none !important; }
+                #reader-checkout video { width: 100% !important; height: auto !important; border-radius: 0.5rem !important; object-fit: cover !important; }
+                #reader-checkout__dashboard_section_csr select { max-width: 100% !important; padding: 6px !important; border-radius: 6px !important; border: 1px solid #cbd5e1 !important; font-size: 12px !important; }
+                #reader-checkout__dashboard_section_csr button { background-color: #3b82f6 !important; color: white !important; border: none !important; padding: 6px 12px !important; border-radius: 6px !important; font-size: 12px !important; margin: 4px !important; }
+                #reader-checkout__dashboard_section_swaplink { display: none !important; }
             `}} />
             <form onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden">
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-gray-50 p-5 sm:p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                     <div className="space-y-2">
                         <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">
                             NIK / User Peminta <span className="text-red-500">*</span>
@@ -315,26 +346,26 @@ export default function StockOutPage() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">
+                        <label className="text-sm font-medium text-gray-800 flex items-center gap-2">
                             Cabang Peminjaman <span className="text-red-500">*</span>
                         </label>
                         <Select
                             options={siteOptions}
-                            value={_.find(siteOptions, { value: headerData.cab_id?.toString() })}
+                            value={_.find(siteOptions, { value: headerData.cab_id?.toString() }) || null}
                             onValueChange={(opt) =>
-                                setHeaderData(prev => ({ ...prev, cab_id: parseInt(opt.value) }))
+                                setHeaderData(prev => ({ ...prev, cab_id: parseInt(opt?.value || "0") }))
                             }
                             placeholder="Pilih cabang..."
                             disabled={loadingOptions}
                         />
                     </div>
                     <div className="space-y-2">
-                        <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">Catatan / Keperluan</label>
+                        <label htmlFor="note" className="text-sm font-medium text-gray-800 flex items-center gap-2">Catatan / Keperluan</label>
                         <input
                             id="note" type="text"
                             value={headerData.note}
                             onChange={(e) => setHeaderData(prev => ({ ...prev, note: e.target.value }))}
-                            placeholder="Contoh: Permintaan ATK Divisi Keuangan"
+                            placeholder="Contoh: Keperluan Rapat"
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all bg-white"
                         />
                     </div>
@@ -346,7 +377,7 @@ export default function StockOutPage() {
                         <div className="relative flex-grow">
                             <ScanBarcode className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
-                                // id="barcode-input"
+                                id="barcode-input"
                                 type="text"
                                 value={barcodeInput}
                                 onChange={(e) => setBarcodeInput(e.target.value)}
@@ -357,7 +388,8 @@ export default function StockOutPage() {
                                     }
                                 }}
                                 placeholder="Scan barang di sini lalu tekan Enter..."
-                                className="w-full pl-12 pr-10 py-4 border-2 border-blue-100 rounded-xl focus:ring-4 focus:ring-blue-50 focus:border-blue-500 text-sm outline-none transition-all bg-white shadow-sm font-medium"
+                                className="w-full pl-12 pr-10 py-4 border-2 border-blue-100 rounded-xl focus:ring-4 focus:ring-blue-50 focus:border-blue-500 text-sm outline-none transition-all bg-white shadow-sm font-medium disabled:opacity-50"
+                                disabled={!headerData.cab_id}
                             />
                             {isCheckingBarcode && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500 animate-spin" />}
                         </div>
@@ -365,7 +397,8 @@ export default function StockOutPage() {
                         <button
                             type="button"
                             onClick={toggleScanner}
-                            className={`inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-sm font-medium transition-all flex-shrink-0 sm:w-auto w-full ${isScannerActive
+                            disabled={!headerData.cab_id}
+                            className={`inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-sm font-medium transition-all flex-shrink-0 sm:w-auto w-full ${!headerData.cab_id ? 'opacity-50 cursor-not-allowed bg-gray-200 text-gray-500' : isScannerActive
                                 ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
                                 : "bg-blue-600 text-white shadow-sm hover:bg-blue-700"
                                 }`}
@@ -378,21 +411,16 @@ export default function StockOutPage() {
                     {isScannerActive && (
                         <div className="mt-4 p-2 sm:p-4 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl relative w-full overflow-hidden">
                             <div id="reader-checkout" className="w-full rounded-lg overflow-hidden"></div>
-                            <div className="mt-3 text-center w-full">
-                                <p className="text-xs text-blue-600 font-medium">
-                                    Arahkan kamera ke barcode. Jaga jarak 10-15cm agar fokus.
-                                </p>
-                            </div>
                         </div>
                     )}
                 </div>
 
                 <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center gap-3">
+                    <div className="bg-gray-50 px-5 sm:px-6 py-4 border-b border-gray-200 flex items-center gap-3">
                         <ShoppingCart className="w-5 h-5 text-gray-600" />
-                        <h3 className="font-semibold text-gray-800">Daftar Barang yang Dikeluarkan</h3>
+                        <h3 className="font-semibold text-gray-800">Daftar Permintaan Barang</h3>
                         <span className="bg-blue-100 text-blue-700 py-0.5 px-2.5 rounded-full text-xs font-bold ml-auto">
-                            {cart.length} Jenis Item
+                            {cart.length} Item
                         </span>
                     </div>
 
@@ -400,67 +428,78 @@ export default function StockOutPage() {
                         <table className="w-full text-sm text-left">
                             <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
                                 <tr>
-                                    <th className="px-6 py-4">Barang</th>
-                                    <th className="px-6 py-4">Tipe</th>
-                                    <th className="px-6 py-4">Sisa Gudang</th>
-                                    <th className="px-6 py-4 w-40">Qty Keluar</th>
-                                    <th className="px-6 py-4 text-center">Aksi</th>
+                                    <th className="px-5 sm:px-6 py-4 whitespace-nowrap">Nama Barang</th>
+                                    <th className="px-5 sm:px-6 py-4 whitespace-nowrap">Sisa Fisik Gudang</th>
+                                    <th className="px-5 sm:px-6 py-4 w-40 sm:w-64 whitespace-nowrap">Jumlah & Satuan Permintaan</th>
+                                    <th className="px-5 sm:px-6 py-4 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {cart.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                                        <td colSpan={4} className="px-6 py-12 text-center text-gray-400">
                                             <PackageMinus className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                                             Belum ada barang di keranjang. <br /> Silakan scan barcode di atas.
                                         </td>
                                     </tr>
                                 ) : (
-                                    cart.map((item, index) => (
-                                        <tr key={index} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="font-semibold text-gray-900">{item.name}</div>
-                                                <div className="text-xs text-gray-500 mt-1">{item.barcode || "Tanpa Barcode"}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2 py-1 text-[10px] font-bold rounded-md ${item.item_type === 1 ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                    {item.item_type === 1 ? "BHP" : "ASET"}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-600">
-                                                {item.stock_available} {item.unit_name}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="number" min="1" max={item.stock_available}
-                                                        value={item.input_qty}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value;
+                                    cart.map((item, index) => {
+                                        const isMultiplierActive = item.selected_multiplier > 1;
+                                        const totalBaseDeduct = (item.input_qty || 0) * item.selected_multiplier;
 
-                                                            if (value === "") {
-                                                                updateCartQty(index, "");
-                                                            } else {
-                                                                updateCartQty(index, parseInt(value));
-                                                            }
-                                                        }}
-                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                                    />
-                                                    <span className="text-gray-500 font-medium">{item.unit_name}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeCartItem(index)}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Hapus dari keranjang"
-                                                >
-                                                    <Trash2 className="w-5 h-5 mx-auto" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
+                                        return (
+                                            <tr key={index} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-5 sm:px-6 py-4">
+                                                    <div className="font-semibold text-gray-900">{item.name}</div>
+                                                    <div className="text-xs text-gray-500 mt-1">{item.barcode || "-"}</div>
+                                                    <span className={`inline-block mt-2 px-2 py-0.5 text-[10px] font-bold rounded-md ${item.item_type === 1 ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                        {item.item_type === 1 ? "BHP" : "ASET PINJAMAN"}
+                                                    </span>
+                                                </td>
+                                                <td className="px-5 sm:px-6 py-4">
+                                                    <span className="font-bold text-gray-700 text-base">{item.stock_available}</span> <span className="text-gray-500">{item.base_unit_name}</span>
+                                                </td>
+                                                <td className="px-5 sm:px-6 py-4">
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="number" min="1"
+                                                                value={item.input_qty}
+                                                                onChange={(e) => updateCartQty(index, e.target.value === "" ? "" : parseInt(e.target.value))}
+                                                                className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                                            />
+                                                            <div className="w-[140px] sm:w-[160px]">
+                                                                <Select
+                                                                    options={item.available_uoms}
+                                                                    value={_.find(item.available_uoms, { value: String(item.input_unit_id) }) || null}
+                                                                    onValueChange={(opt) => updateCartUnit(index, opt?.value || "")}
+                                                                    placeholder="Satuan"
+                                                                    prefix={true}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {isMultiplierActive && totalBaseDeduct > 0 && (
+                                                            <div className="flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 px-2.5 py-1.5 rounded-lg border border-orange-100 w-fit">
+                                                                <Info className="w-3.5 h-3.5" />
+                                                                Memotong gudang: <span className="font-bold">{totalBaseDeduct} {item.base_unit_name}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-5 sm:px-6 py-4 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeCartItem(index)}
+                                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Hapus dari keranjang"
+                                                    >
+                                                        <Trash2 className="w-5 h-5 mx-auto" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })
                                 )}
                             </tbody>
                         </table>
@@ -471,13 +510,12 @@ export default function StockOutPage() {
                     <button
                         type="submit"
                         disabled={loading || cart.length === 0}
-                        className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm transition-all"
+                        className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm transition-all"
                     >
                         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-                        {loading ? "Memproses Transaksi..." : "Selesaikan & Keluarkan Barang"}
+                        {loading ? "Memproses Permintaan..." : "Ajukan Permintaan Barang"}
                     </button>
                 </div>
-
             </form>
         </ComponentCard>
     );

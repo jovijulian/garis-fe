@@ -200,6 +200,7 @@ export default function TransactionLogsPage() {
                                 setCurrentPage(1);
                             }}
                             placeholder="Pilih Tipe Transaksi"
+                            isClearable
                         />
                     </div>
                     <div className="w-full sm:w-64">

@@ -5,7 +5,7 @@ import { Loader2, AlertTriangle, PackageOpen, ChevronLeft, ChevronRight, Package
 import { endpointUrl, httpGet } from '../../../../../helpers';
 import { toast } from 'react-toastify';
 import { useSearchParams } from 'next/navigation';
-import LoanCard from '@/components/inventory/LoanCard'; // Pastikan path import sesuai
+import LoanCard from '@/components/inventory/LoanCard';
 
 interface InventoryLoan {
     id: number;

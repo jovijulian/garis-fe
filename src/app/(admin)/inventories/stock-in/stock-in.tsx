@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
-    Check, Package, ScanBarcode, Camera, X, Loader2, Info, PackagePlus
+    Check, Package, ScanBarcode, Camera, X, Loader2, AlertCircle, Info, FileText
 } from "lucide-react";
 import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { useRouter } from "next/navigation";
@@ -16,91 +16,77 @@ export default function StockInPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [isCheckingBarcode, setIsCheckingBarcode] = useState(false);
-    const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
-    const [unitOptions, setUnitOptions] = useState<any[]>([]);
+    const [cabId, setCabId] = useState<number>(0);
 
-    const [existingItemData, setExistingItemData] = useState<any>(null);
+    // Menyimpan data barang yang berhasil di-scan
+    const [scannedItem, setScannedItem] = useState<any>(null);
 
+    // Payload murni untuk transaksi
     const [formData, setFormData] = useState({
-        cab_id: 0,
-        item_type: 1,
-        name: "",
         barcode: "",
-        category_id: "",
-        base_unit_id: "",
-        pack_unit_id: "",
-        qty_per_pack: "",
-        stock_minimum: 0,
-        initial_qty: "",
+        item_id: null as number | null,
+        input_qty: "",
         input_unit_id: "",
+        note: ""
     });
-
-    const [isExistingItem, setIsExistingItem] = useState(false);
-    const [existingItemId, setExistingItemId] = useState<number | null>(null);
 
     const [isScannerActive, setIsScannerActive] = useState(false);
     const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
     useEffect(() => {
-        const fetchOptions = async () => {
-            try {
-                const [unitRes, categoryRes] = await Promise.all([
-                    httpGet(endpointUrl("/inventory-units/options"), true),
-                    httpGet(endpointUrl("/inventory-categories/options"), true),
-                ]);
-                setUnitOptions(unitRes.data.data.map((r: any) => ({ value: r.id.toString(), label: r.name })));
-                setCategoryOptions(categoryRes.data.data.map((r: any) => ({ value: r.id.toString(), label: r.name })));
-            } catch (error) {
-                console.error("Gagal mengambil master data:", error);
-            }
-        };
-
-        fetchOptions();
-        const cabId = localStorage.getItem("sites");
-        setFormData(prev => ({ ...prev, cab_id: cabId ? Number(cabId) : 0 }));
+        const storedCabId = localStorage.getItem("sites");
+        setCabId(storedCabId ? Number(storedCabId) : 0);
         return () => {
             if (scannerRef.current) scannerRef.current.clear().catch(e => console.error(e));
         };
     }, []);
 
-    const handleChange = (field: string, value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-    };
+    // 1. MEMBENTUK DROPDOWN UOM DINAMIS BERDASARKAN BARANG YANG DI-SCAN
+    const availableUnits = useMemo(() => {
+        if (!scannedItem) return [];
 
-    const inputUnitOptions = useMemo(() => {
-        const options = [];
-        if (formData.base_unit_id) {
-            const baseOpt = unitOptions.find(u => u.value === String(formData.base_unit_id));
-            if (baseOpt) options.push({ value: baseOpt.value, label: baseOpt.label });
-        }
-        if (formData.pack_unit_id && formData.qty_per_pack) {
-            const packOpt = unitOptions.find(u => u.value === String(formData.pack_unit_id));
-            if (packOpt) options.push({ value: packOpt.value, label: `${packOpt.label} (1 = ${formData.qty_per_pack})` });
-        }
-        return options;
-    }, [formData.base_unit_id, formData.pack_unit_id, formData.qty_per_pack, unitOptions]);
+        const opts = [];
 
-    useEffect(() => {
-        if (formData.base_unit_id && !formData.input_unit_id) {
-            handleChange("input_unit_id", formData.base_unit_id);
-        }
-    }, [formData.base_unit_id]);
+        // Selalu masukkan Satuan Dasar (Base Unit) sebagai opsi pertama dengan multiplier 1
+        opts.push({
+            value: String(scannedItem.base_unit_id),
+            label: scannedItem.base_unit?.name || "Satuan Terkecil",
+            multiplier: 1,
+            unitName: scannedItem.base_unit?.name
+        });
 
+        // Jika barang memiliki kemasan tambahan (Box, Dus, dll), masukkan ke dalam opsi
+        if (scannedItem.uoms && Array.isArray(scannedItem.uoms)) {
+            scannedItem.uoms.forEach((u: any) => {
+                opts.push({
+                    value: String(u.unit_id),
+                    label: `${u.unit?.name} (1 = ${u.multiplier} ${scannedItem.base_unit?.name})`,
+                    multiplier: u.multiplier,
+                    unitName: u.unit?.name
+                });
+            });
+        }
+        return opts;
+    }, [scannedItem]);
+
+    // 2. PREVIEW PERKALIAN MATEMATIKA UNTUK USER
     const qtyPreview = useMemo(() => {
-        if (!formData.initial_qty || !formData.input_unit_id) return null;
+        if (!formData.input_qty || !formData.input_unit_id || !scannedItem) return null;
 
-        const qty = Number(formData.initial_qty);
+        const qty = Number(formData.input_qty);
         if (qty <= 0) return null;
 
-        if (formData.input_unit_id === formData.pack_unit_id && formData.qty_per_pack) {
-            const total = qty * Number(formData.qty_per_pack);
-            const packLabel = unitOptions.find(u => u.value === String(formData.pack_unit_id))?.label;
-            const baseLabel = unitOptions.find(u => u.value === String(formData.base_unit_id))?.label;
-            return `${qty} ${packLabel} × ${formData.qty_per_pack} = ${total} ${baseLabel}`;
-        }
+        const selectedUnit = availableUnits.find(u => u.value === String(formData.input_unit_id));
+        if (!selectedUnit) return null;
 
-        return null;
-    }, [formData.initial_qty, formData.input_unit_id, formData.pack_unit_id, formData.qty_per_pack, formData.base_unit_id, unitOptions]);
+        const totalInBase = qty * selectedUnit.multiplier;
+
+        if (selectedUnit.multiplier === 1) {
+            return `${totalInBase} ${scannedItem.base_unit?.name}`;
+        } else {
+            return `${qty} ${selectedUnit.unitName} × ${selectedUnit.multiplier} = ${totalInBase} ${scannedItem.base_unit?.name}`;
+        }
+    }, [formData.input_qty, formData.input_unit_id, scannedItem, availableUnits]);
 
 
     const handleCheckBarcode = async (scannedBarcode: string) => {
@@ -115,51 +101,38 @@ export default function StockInPage() {
         }
 
         if (!scannedBarcode || scannedBarcode.trim() === "") {
-            setIsExistingItem(false);
-            setExistingItemId(null);
-            setExistingItemData(null);
-            setFormData(prev => ({ ...prev, name: "", category_id: "", base_unit_id: "", pack_unit_id: "", qty_per_pack: "", stock_minimum: 0, initial_qty: "", input_unit_id: "" }));
+            setScannedItem(null);
+            setFormData(prev => ({ ...prev, item_id: null, input_qty: "", input_unit_id: "", note: "" }));
             return;
         }
 
         setIsCheckingBarcode(true);
         try {
-            const res = await httpGet(endpointUrl(`/inventory-items/check-barcode/${scannedBarcode}?cab_id=${formData.cab_id}`), true);
-            const result = res.data?.data;
+            // Gunakan state cabId yang sudah di-fetch di useEffect
+            const res = await httpGet(endpointUrl(`/inventory-items/check-barcode/${scannedBarcode}?cab_id=${cabId}`), true);
+            const responseData = res.data?.data;
 
-            if (result?.is_existing) {
-                const item = result.data;
-                setIsExistingItem(true);
-                setExistingItemId(item.id);
-                setExistingItemData(item);
-
-                setFormData(prev => ({
-                    ...prev,
+            // Jika barang ADA di database
+            if (responseData?.is_existing) {
+                const item = responseData.data;
+                setScannedItem(item);
+                setFormData({
                     barcode: scannedBarcode,
-                    name: item.name,
-                    category_id: String(item.category_id),
-                    base_unit_id: String(item.base_unit_id),
-                    pack_unit_id: item.pack_unit_id ? String(item.pack_unit_id) : "",
-                    qty_per_pack: item.qty_per_pack || "",
-                    item_type: item.item_type,
-                    stock_minimum: item.stock_minimum,
-                    initial_qty: "1",
-                    input_unit_id: item.pack_unit_id ? String(item.pack_unit_id) : String(item.base_unit_id),
-                }));
-
-                // document.getElementById("initial_qty")?.focus();
-                toast.success("Barang sudah terdaftar. Silakan masukkan jumlah stok.");
+                    item_id: item.id,
+                    input_qty: "1",
+                    input_unit_id: String(item.base_unit_id), // Default langsung terpilih satuan ecerannya
+                    note: ""
+                });
+                toast.success("Barang ditemukan!");
             } else {
-                setIsExistingItem(false);
-                setExistingItemId(null);
-                setExistingItemData(null);
-                setFormData(prev => ({ ...prev, barcode: scannedBarcode, input_unit_id: "" }));
-                // document.getElementById("name")?.focus();
-                toast.success("Barang baru terdeteksi. Silakan lengkapi informasi barang.");
+                // Jika barang TIDAK ADA, blokir user di sini
+                setScannedItem(null);
+                setFormData(prev => ({ ...prev, barcode: scannedBarcode, item_id: null }));
+                toast.error("Barang belum terdaftar! Silakan daftarkan di Master Barang terlebih dahulu.");
             }
         } catch (error) {
             console.error("Error checking barcode:", error);
-            setIsExistingItem(false);
+            setScannedItem(null);
             toast.error("Gagal memeriksa barcode.");
         } finally {
             setIsCheckingBarcode(false);
@@ -229,7 +202,7 @@ export default function StockInPage() {
 
             newScanner.render(
                 (decodedText) => {
-                    handleChange("barcode", decodedText);
+                    setFormData(prev => ({ ...prev, barcode: decodedText }));
                     handleCheckBarcode(decodedText);
                 },
                 (errorMessage) => console.warn("Scan error:", errorMessage)
@@ -237,128 +210,42 @@ export default function StockInPage() {
         }, 100);
     };
 
-    // const startScanner = () => {
-
-    //     setTimeout(async () => {
-    //         let videoConstraints: any = {
-    //             width: { min: 640, ideal: 1280, max: 1920 },
-    //             height: { min: 480, ideal: 720, max: 1080 }
-    //         };
-
-    //         try {
-    //             const devices = await navigator.mediaDevices.enumerateDevices();
-
-    //             const hasBackCamera = devices.some(
-    //                 (device) =>
-    //                     device.kind === "videoinput" &&
-    //                     device.label.toLowerCase().includes("back")
-    //             );
-
-    //             if (hasBackCamera) {
-    //                 videoConstraints.facingMode = { exact: "environment" };
-    //             } else {
-    //                 videoConstraints.facingMode = "user";
-    //             }
-    //         } catch (err) {
-    //             console.warn("Gagal detect camera, fallback default", err);
-    //             videoConstraints = true;
-    //         }
-
-    //         const config = {
-    //             fps: 15,
-
-    //             qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-    //                 const dynamicWidth = Math.min(320, viewfinderWidth - 32);
-    //                 return { width: dynamicWidth, height: 160 };
-    //             },
-
-    //             formatsToSupport: [
-    //                 Html5QrcodeSupportedFormats.EAN_13,
-    //                 Html5QrcodeSupportedFormats.EAN_8,
-    //                 Html5QrcodeSupportedFormats.CODE_128,
-    //                 Html5QrcodeSupportedFormats.CODE_39,
-    //                 Html5QrcodeSupportedFormats.UPC_A,
-    //                 Html5QrcodeSupportedFormats.UPC_E,
-    //             ],
-
-    //             experimentalFeatures: {
-    //                 useBarCodeDetectorIfSupported: true
-    //             },
-
-    //             aspectRatio: 1.777778,
-
-    //             videoConstraints,
-
-    //             disableFlip: true,
-    //             rememberLastUsedCamera: true,
-    //         };
-    //         const newScanner = new Html5QrcodeScanner(`reader-single`, config, false);
-    //         scannerRef.current = newScanner;
-
-    //         newScanner.render(
-    //             (decodedText) => {
-    //                 handleCheckBarcode(decodedText);
-    //             },
-    //             (errorMessage) => {
-    //             }
-    //         );
-    //     }, 100);
-    // };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!scannedItem || !formData.item_id) {
+            toast.warning("Silakan scan barcode barang yang valid terlebih dahulu.");
+            return;
+        }
+
+        if (!formData.input_qty || Number(formData.input_qty) <= 0) {
+            toast.warning("Masukkan jumlah stok yang valid untuk ditambahkan.");
+            return;
+        }
+        if (!formData.input_unit_id) {
+            toast.warning("Pilih satuan barang yang masuk.");
+            return;
+        }
+
         setLoading(true);
 
         try {
-            if (isExistingItem && existingItemId) {
-                if (!formData.initial_qty || Number(formData.initial_qty) <= 0) {
-                    toast.warning("Masukkan jumlah stok yang valid untuk ditambahkan.");
-                    setLoading(false); return;
-                }
-                if (!formData.input_unit_id) {
-                    toast.warning("Pilih satuan barang yang masuk.");
-                    setLoading(false); return;
-                }
+            const payloadStockIn = {
+                item_id: formData.item_id,
+                input_qty: Number(formData.input_qty),
+                input_unit_id: Number(formData.input_unit_id),
+                note: formData.note || "Penambahan stok gudang"
+            };
 
-                const payloadStockIn = {
-                    item_id: existingItemId,
-                    input_qty: Number(formData.initial_qty),
-                    input_unit_id: Number(formData.input_unit_id),
-                    note: "Penambahan stok masuk"
-                };
+            await httpPost(endpointUrl("/inventory-transactions/stock-in"), payloadStockIn, true);
+            toast.success("Stok barang berhasil ditambahkan!");
 
-                await httpPost(endpointUrl("/inventory-transactions/stock-in"), payloadStockIn, true);
-                toast.success("Stok barang berhasil ditambahkan!");
-
-            } else {
-                if (!formData.name || !formData.category_id || !formData.base_unit_id) {
-                    toast.warning("Mohon lengkapi Nama, Kategori, dan Satuan Dasar");
-                    setLoading(false); return;
-                }
-
-                const payloadCreate = {
-                    ...formData,
-                    category_id: Number(formData.category_id),
-                    base_unit_id: Number(formData.base_unit_id),
-                    pack_unit_id: formData.pack_unit_id ? Number(formData.pack_unit_id) : null,
-                    qty_per_pack: formData.qty_per_pack ? Number(formData.qty_per_pack) : null,
-                    stock_minimum: Number(formData.stock_minimum),
-                    initial_qty: formData.initial_qty ? Number(formData.initial_qty) : 0,
-                    initial_unit_id: formData.input_unit_id ? Number(formData.input_unit_id) : Number(formData.base_unit_id)
-                };
-                delete (payloadCreate as any).input_unit_id;
-                await httpPost(endpointUrl("/inventory-items"), payloadCreate, true);
-                toast.success("Barang baru beserta stok awalnya berhasil didaftarkan!");
-            }
-
-            setFormData({ cab_id: 1, item_type: 1, name: "", barcode: "", category_id: "", base_unit_id: "", pack_unit_id: "", qty_per_pack: "", stock_minimum: 0, initial_qty: "", input_unit_id: "" });
-            setIsExistingItem(false);
-            setExistingItemId(null);
-            setExistingItemData(null);
+            setScannedItem(null);
+            setFormData({ barcode: "", item_id: null, input_qty: "", input_unit_id: "", note: "" });
 
         } catch (error: any) {
             console.error(error);
-            toast.error(error?.response?.data?.message || "Gagal memproses data");
+            toast.error(error?.response?.data?.message || "Gagal memproses penambahan stok");
         } finally {
             setLoading(false);
         }
@@ -398,49 +285,39 @@ export default function StockInPage() {
                     display: none !important; /* Sembunyikan tulisan 'Scan an Image file' yang tidak perlu */
                 }
             `}} />
-            <form onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden" id="single-item-form">
-                {isExistingItem && (
-                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
-                        <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                            <h3 className="text-sm font-semibold text-blue-900">Barang Sudah Terdaftar</h3>
-                            <p className="text-xs text-blue-700 mt-1">Sistem mengenali barcode ini. Silakan langsung ke bagian bawah untuk mengisi jumlah barang yang baru datang.</p>
-                        </div>
-                    </div>
-                )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                    <div className="col-span-1 md:col-span-2 space-y-2">
-                        <label className="text-sm font-medium text-gray-800 flex items-center justify-between">
-                            1. Scan Barcode / EAN
-                            <span className="text-xs text-gray-500 font-normal">Kosongkan untuk generate otomatis</span>
-                        </label>
-                        <div className="flex gap-2">
-                            <div className="relative flex-grow">
-                                <ScanBarcode className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    value={formData.barcode}
-                                    onChange={(e) => handleChange("barcode", e.target.value)}
-                                    onBlur={(e) => handleCheckBarcode(e.target.value)}
-                                    placeholder="Scan atau ketik barcode lalu tekan Tab/Enter"
-                                    className="w-full pl-12 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 text-sm outline-none transition-all bg-gray-50 focus:bg-white"
-                                />
-                                {isCheckingBarcode && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500 animate-spin" />}
-                            </div>
-                            <button
-                                type="button" onClick={toggleScanner}
-                                className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all flex-shrink-0 ${isScannerActive ? "bg-red-50 text-red-600 border border-red-200" : "bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100"}`}
-                            >
-                                {isScannerActive ? <X className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
-                                <span className="hidden sm:inline">{isScannerActive ? "Tutup Kamera" : "Scan Kamera"}</span>
-                            </button>
+            <form onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden" id="stock-in-form">
+                <div className="space-y-2 pb-4 border-b border-gray-100">
+                    <label className="text-sm font-medium text-gray-800 flex items-center justify-between">
+                        1. Identifikasi Barang
+                        <span className="text-xs text-gray-500 font-normal">Wajib diisi</span>
+                    </label>
+
+                    <div className="flex gap-2">
+                        <div className="relative flex-grow">
+                            <ScanBarcode className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                                type="text"
+                                value={formData.barcode}
+                                onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
+                                onBlur={(e) => handleCheckBarcode(e.target.value)}
+                                placeholder="Scan atau ketik barcode lalu tekan Tab/Enter"
+                                className="w-full pl-12 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 text-sm outline-none transition-all bg-gray-50 focus:bg-white"
+                            />
+                            {isCheckingBarcode && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500 animate-spin" />}
                         </div>
-                        {isScannerActive && (
+                        <button
+                            type="button" onClick={toggleScanner}
+                            className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all flex-shrink-0 ${isScannerActive ? "bg-red-50 text-red-600 border border-red-200" : "bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100"}`}
+                        >
+                            {isScannerActive ? <X className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
+                            <span className="hidden sm:inline">{isScannerActive ? "Tutup Kamera" : "Scan Kamera"}</span>
+                        </button>
+                    </div>
+
+                    {isScannerActive && (
                             <div className="mt-4 p-2 sm:p-4 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl relative w-full overflow-hidden">
                                 <div id="reader-single" className="w-full"></div>
-
-                                {/* Tambahan teks bantuan agar UI terlihat lebih manis */}
                                 <div className="mt-3 text-center w-full">
                                     <p className="text-xs text-blue-600 font-medium">
                                         Arahkan kamera ke barcode. Jaga jarak 10-15cm agar fokus.
@@ -448,167 +325,109 @@ export default function StockInPage() {
                                 </div>
                             </div>
                         )}
-                    </div>
-
-                    {!isExistingItem && (
-                        <>
-                            <div className="col-span-1 md:col-span-2 mt-4 mb-2 pb-2 border-b border-gray-100 flex items-center gap-2">
-                                <PackagePlus className="w-5 h-5 text-gray-400" />
-                                <h3 className="font-semibold text-gray-800">2. Pendaftaran Master Barang Baru</h3>
-                            </div>
-
-                            <div className="col-span-1 md:col-span-2 space-y-2">
-                                <label htmlFor="name" className="text-sm font-medium text-gray-800">Nama Barang <span className="text-red-500">*</span></label>
-                                <input
-                                    id="name" type="text" required
-                                    value={formData.name} onChange={(e) => handleChange("name", e.target.value)}
-                                    placeholder="Contoh: Kertas HVS Sinar Dunia A4 70gsm"
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none"
-                                />
-                            </div>
-
-                            <div className="col-span-1 space-y-2">
-                                <label className="text-sm font-medium text-gray-800">Kategori <span className="text-red-500">*</span></label>
-                                <Select
-                                    options={categoryOptions}
-                                    value={_.find(categoryOptions, { value: formData.category_id }) || null}
-                                    onValueChange={(opt) => handleChange("category_id", opt?.value || "")}
-                                    placeholder="Pilih kategori..."
-                                />
-                            </div>
-
-                            <div className="col-span-1 space-y-2">
-                                <label className="text-sm font-medium text-gray-800">Jenis Inventaris <span className="text-red-500">*</span></label>
-                                <div className="flex gap-4">
-                                    <label className={`flex items-center gap-2 p-3 cursor-pointer rounded-xl border flex-1 ${formData.item_type === 1 ? 'bg-blue-50 border-blue-400' : 'bg-white border-gray-200'}`}>
-                                        <input type="radio" value={1} checked={formData.item_type === 1} onChange={() => handleChange("item_type", 1)} className="w-4 h-4 text-blue-600" />
-                                        <div>
-                                            <p className="font-semibold text-gray-900 text-sm">BHP (Habis Pakai)</p>
-                                            <p className="text-xs text-gray-500 mt-1">Stok berkurang permanen saat diminta user.</p>
-                                        </div>
-                                    </label>
-                                    <label className={`flex items-center gap-2 p-3 cursor-pointer rounded-xl border flex-1 ${formData.item_type === 2 ? 'bg-blue-50 border-blue-400' : 'bg-white border-gray-200'}`}>
-                                        <input type="radio" value={2} checked={formData.item_type === 2} onChange={() => handleChange("item_type", 2)} className="w-4 h-4 text-blue-600" />
-                                        <div>
-                                            <p className="font-semibold text-gray-900 text-sm">Aset / Pinjaman</p>
-                                            <p className="text-xs text-gray-500 mt-1">Barang harus dikembalikan setelah dipinjam.</p>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {/* DEFINISI SATUAN TERKECIL */}
-                            <div className="col-span-1 space-y-2">
-                                <label className="text-sm font-medium text-gray-800">Satuan Terkecil / Eceran <span className="text-red-500">*</span></label>
-                                <Select
-                                    options={unitOptions}
-                                    value={_.find(unitOptions, { value: formData.base_unit_id }) || null}
-                                    onValueChange={(opt) => handleChange("base_unit_id", opt?.value || "")}
-                                    placeholder="Contoh: PCS / RIM"
-                                />
-                            </div>
-
-                            <div className="col-span-1 space-y-2">
-                                <label className="text-sm font-medium text-gray-800">Batas Stok Minimum</label>
-                                <input
-                                    type="number" min="0" required
-                                    value={formData.stock_minimum} onChange={(e) => handleChange("stock_minimum", e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-                                />
-                            </div>
-
-                            <div className="col-span-1 md:col-span-2 p-5 bg-gray-50 border border-gray-200 rounded-2xl space-y-4">
-                                <h4 className="text-sm font-semibold text-gray-800">Definisi Kemasan Besar (Opsional, isi jika barang punya kemasan Box/Dus)</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-medium text-gray-600">Pilih Satuan Kemasan</label>
-                                        <Select
-                                            options={unitOptions}
-                                            value={_.find(unitOptions, { value: formData.pack_unit_id }) || null}
-                                            onValueChange={(opt) => handleChange("pack_unit_id", opt?.value || "")}
-                                            placeholder="Contoh: BOX"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-medium text-gray-600">
-                                            Isi per {unitOptions.find(u => u.value === formData.pack_unit_id)?.label || 'Kemasan'}
-                                        </label>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number" min="1" disabled={!formData.pack_unit_id}
-                                                value={formData.qty_per_pack}
-                                                onChange={(e) => handleChange("qty_per_pack", e.target.value)}
-                                                placeholder="Contoh: 12"
-                                                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 disabled:bg-gray-200"
-                                            />
-                                            <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">
-                                                {unitOptions.find(u => u.value === formData.base_unit_id)?.label || 'Satuan Eceran'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                   
-
                 </div>
-                <div className="col-span-1 md:col-span-1 mt-4 pt-4 border-t border-gray-200">
-                        <label htmlFor="initial_qty" className={`text-base block mb-3 ${isExistingItem ? 'text-blue-700 font-bold' : 'text-gray-800 font-semibold'}`}>
-                            {isExistingItem ? "3. Berapa Jumlah Barang yang Datang?" : "3. Stok Awal (Opsional)"}
-                            {isExistingItem && <span className="text-red-500 ml-1">*</span>}
-                        </label>
 
-                        <div className="">
-                            <div className="relative flex-1">
-                                <input
-                                    id="initial_qty" type="number" min={isExistingItem ? "1" : "0"} required={isExistingItem}
-                                    value={formData.initial_qty}
-                                    onChange={(e) => handleChange("initial_qty", e.target.value)}
-                                    placeholder="0"
-                                    className={`w-full h-full px-4 py-3 border rounded-xl text-lg pl-12 outline-none focus:ring-2 focus:ring-blue-100 ${isExistingItem ? 'border-blue-400 bg-blue-50/20 font-bold text-blue-900' : 'border-gray-200 focus:border-blue-400'}`}
-                                />
-                                <Package className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isExistingItem ? 'text-blue-600' : 'text-gray-400'}`} />
-                            </div>
-
-                            <div className="mt-4 ">
-                                {inputUnitOptions.length > 0 ? (
-                                    <Select
-                                        options={inputUnitOptions}
-                                        value={_.find(inputUnitOptions, { value: formData.input_unit_id }) || null}
-                                        onValueChange={(opt) => handleChange("input_unit_id", opt?.value || "")}
-                                        placeholder="Pilih satuan..."
-                                    />
-                                ) : (
-                                    <div className="h-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-400 text-sm flex items-center">
-                                        Pilih satuan terkecil di atas
-                                    </div>
-                                )}
+                {!scannedItem ? (
+                    <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 text-center">
+                        <Package className="w-10 h-10 text-gray-300 mb-3" />
+                        <h4 className="text-sm font-semibold text-gray-600">Belum Ada Barang yang Dipilih</h4>
+                        <p className="text-xs text-gray-400 mt-1 max-w-xs">Silakan scan barcode barang terlebih dahulu untuk memulai penambahan stok.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-white border border-blue-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                        {scannedItem.name}
+                                        <span className={`px-2 py-0.5 text-[10px] uppercase font-bold rounded ${scannedItem.item_type === 1 ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
+                                            {scannedItem.item_type === 1 ? 'BHP' : 'ASET'}
+                                        </span>
+                                    </h3>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Kategori: {scannedItem.category?.name || '-'} | Stok Saat Ini: <span className="font-bold text-gray-800">{scannedItem.stock_available} {scannedItem.base_unit?.name}</span>
+                                    </p>
+                                </div>
+                                <div className="bg-blue-50 px-4 py-2 rounded-lg text-xs font-semibold text-blue-700 flex items-center gap-2">
+                                    <Info className="w-4 h-4" /> Barang Valid
+                                </div>
                             </div>
                         </div>
 
-                        {qtyPreview && (
-                            <div className="flex items-center gap-2 mt-3 px-4 py-3 bg-green-50 border border-green-200 rounded-xl">
-                                <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
-                                <p className="text-sm text-green-700 font-medium">
-                                    Sistem akan menyimpan: <span className="font-bold">{qtyPreview}</span> ke Gudang
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                        <div className="bg-gray-50 p-5 sm:p-6 rounded-2xl border border-gray-200 space-y-5">
+                            <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-2">2. Detail Penambahan Stok</h4>
 
-                <div className="flex justify-end pt-4">
-                    <button
-                        type="submit"
-                        form="single-item-form"
-                        // disabled={loading || isCheckingBarcode}
-                        className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-                        {isExistingItem ? "Simpan Penambahan Stok" : "Daftarkan Barang Baru"}
-                    </button>
-                </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label htmlFor="input_qty" className="text-sm font-semibold text-gray-800">Jumlah Masuk <span className="text-red-500">*</span></label>
+                                    <input
+                                        id="input_qty" type="number" min="1" required
+                                        value={formData.input_qty}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, input_qty: e.target.value }))}
+                                        placeholder="0"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg font-bold outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-gray-800">Dalam Satuan <span className="text-red-500">*</span></label>
+                                    <Select
+                                        options={availableUnits}
+                                        value={_.find(availableUnits, { value: formData.input_unit_id }) || null}
+                                        onValueChange={(opt) => setFormData(prev => ({ ...prev, input_unit_id: opt?.value || "" }))}
+                                        placeholder="Pilih Satuan Kemasan..."
+                                    />
+                                </div>
+                            </div>
+
+                            {qtyPreview && (
+                                <div className="flex items-center gap-3 mt-2 px-4 py-3 bg-green-50/50 border border-green-200 rounded-xl">
+                                    <div className="bg-green-100 p-1.5 rounded-lg">
+                                        <Check className="w-4 h-4 text-green-700" />
+                                    </div>
+                                    <p className="text-sm text-green-800">
+                                        Total masuk ke sistem: <span className="font-bold text-green-900">{qtyPreview}</span>
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="space-y-2 pt-2">
+                                <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                    <FileText className="w-4 h-4 text-gray-500" /> Catatan / Referensi (Opsional)
+                                </label>
+                                <textarea
+                                    rows={2}
+                                    value={formData.note}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, note: e.target.value }))}
+                                    placeholder="Contoh: Restock bulanan dari supplier Gramedia..."
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 resize-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setScannedItem(null);
+                                    setFormData({ barcode: "", item_id: null, input_qty: "", input_unit_id: "", note: "" });
+                                }}
+                                className="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors w-full sm:w-auto"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all flex justify-center items-center gap-2 shadow-sm w-full sm:w-auto"
+                            >
+                                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Package className="w-5 h-5" />}
+                                Simpan Transaksi Masuk
+                            </button>
+                        </div>
+                    </div>
+                )}
             </form>
         </ComponentCard>
     );

@@ -272,13 +272,13 @@ export const menuConfig: Record<string, NavItem[]> = {
       roles: [1, 2],
     },
     {
-      name: 'Stock IN',
+      name: 'Inbound',
       icon: <PackagePlus />,
       path: '/inventories/stock-in',
       roles: [1, 2],
     },
     {
-      name: 'Stock OUT',
+      name: 'Outbound',
       icon: <PackageMinus />,
       path: '/inventories/stock-out',
       roles: [1, 2],

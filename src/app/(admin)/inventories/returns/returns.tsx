@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import moment from "moment";
 import { toast } from "react-toastify";
 import { Undo2, PackageOpen, Loader2 } from "lucide-react";
+import ReturnAssetModal from "@/components/modal/ReturnAssetModal";
 
 export default function AssetReturnPage() {
     const searchParams = useSearchParams();
@@ -23,7 +24,8 @@ export default function AssetReturnPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
     const [returnInputs, setReturnInputs] = useState<Record<number, number>>({});
-
+    const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+    const [selectedLoan, setSelectedLoan] = useState<any>(null);
     useEffect(() => {
         getData();
     }, [searchParams, currentPage, perPage, page, searchTerm]);
@@ -91,20 +93,12 @@ export default function AssetReturnPage() {
 
                     return (
                         <div className="flex items-center gap-2">
-                            <input
-                                type="number"
-                                min="1"
-                                max={remaining}
-                                placeholder="Qty"
-                                disabled={isSubmitting}
-                                value={returnInputs[row.id] || ''}
-                                onChange={(e) => handleQtyChange(row.id, e.target.value, remaining)}
-                                className="w-16 px-2 py-1.5 border border-gray-300 rounded-md text-center text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100"
-                            />
                             <button
-                                onClick={() => handleSubmitReturn(row.id)}
-                                disabled={!returnInputs[row.id] || isSubmitting}
-                                className="flex justify-center items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
+                                onClick={() => {
+                                    setSelectedLoan(row);
+                                    setIsReturnModalOpen(true);
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs font-semibold"
                             >
                                 <Undo2 className="w-3.5 h-3.5" /> Kembalikan
                             </button>
@@ -152,7 +146,7 @@ export default function AssetReturnPage() {
                 cell: ({ row }: any) => <span className="text-gray-500">{row.created_by_user?.nama_user || row.created_by}</span>,
             },
         ];
-    }, [returnInputs, isSubmitting]); 
+    }, [returnInputs, isSubmitting]);
 
     const getData = async () => {
         setIsLoading(true);
@@ -214,7 +208,16 @@ export default function AssetReturnPage() {
 
             />
 
-
+            {isReturnModalOpen && (
+                <ReturnAssetModal
+                    isOpen={isReturnModalOpen}
+                    onClose={() => setIsReturnModalOpen(false)}
+                    loan={selectedLoan}
+                    onSuccess={() => {
+                        getData(); 
+                    }}
+                />
+            )}
         </div>
     );
 }

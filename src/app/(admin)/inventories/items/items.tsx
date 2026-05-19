@@ -254,13 +254,13 @@ export default function UnitPage() {
                         className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     />
 
-                    {/* <button
+                    <button
                         onClick={() => router.push("/inventories/items/create")}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
                     >
                         <span>+</span>
                         Tambah
-                    </button> */}
+                    </button>
                     {/* {selectedRows.length > 0 && (
                         <button
                             onClick={handleBulkDelete}

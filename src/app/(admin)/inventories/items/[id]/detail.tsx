@@ -9,7 +9,7 @@ import { endpointUrl, httpGet } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import Table from "@/components/tables/Table";
 import {
-    Package, ScanBarcode, Layers, AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCcw, Sliders
+    Package, ScanBarcode, Layers, AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCcw, Sliders, Tags
 } from "lucide-react";
 
 export default function ItemDetailPage() {
@@ -70,15 +70,6 @@ export default function ItemDetailPage() {
     }, [getTransactionHistory]);
 
 
-    // const getTransactionBadge = (type: string) => {
-    //     switch (type) {
-    //         case 'STOCK_IN': return <span className="text-green-600 font-bold flex items-center gap-1"><ArrowDownRight size={14}/> Masuk</span>;
-    //         case 'OUT_BHP': return <span className="text-purple-600 font-bold flex items-center gap-1"><ArrowUpRight size={14}/> Keluar BHP</span>;
-    //         case 'OUT_ASSET': return <span className="text-orange-600 font-bold flex items-center gap-1"><ArrowUpRight size={14}/> Dipinjam</span>;
-    //         case 'RETURN': return <span className="text-blue-600 font-bold flex items-center gap-1"><RefreshCcw size={14}/> Dikembalikan</span>;
-    //         default: return <span>{type}</span>;
-    //     }
-    // };
     const getTransactionBadge = (type: string) => {
         switch (type) {
             case 'STOCK_IN':
@@ -196,8 +187,26 @@ export default function ItemDetailPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <DetailItem icon={<Layers />} label="Kategori" value={itemData.category?.name} />
                 <DetailItem icon={<Package />} label="Satuan Terkecil" value={itemData.base_unit?.name} />
-                <DetailItem icon={<Package />} label="Kemasan Box" value={itemData.pack_unit ? `1 ${itemData.pack_unit.name} = ${itemData.qty_per_pack} ${itemData.base_unit?.name}` : 'Tidak ada'} />
+                <DetailItem
+                    icon={<Package />}
+                    label="Kemasan Tambahan (UOM)"
+                    value={
+                        itemData.uoms && itemData.uoms.length > 0 ? (
+                            <div className="flex flex-col gap-1 text-xs text-gray-700">
+                                {itemData.uoms.map((u: any, idx: number) => (
+                                    <span key={idx}>1 {u.unit?.name} = {u.multiplier} {itemData.base_unit?.name}</span>
+                                ))}
+                            </div>
+                        ) : 'Tidak ada'
+                    }
+                />
+
                 <DetailItem icon={<AlertTriangle />} label="Batas Stok Minimum" value={`${itemData.stock_minimum} ${itemData.base_unit?.name}`} />
+
+                {<DetailItem icon={<Tags />} label="Ukuran" value={itemData.size} />}
+                {<DetailItem icon={<Tags />} label="Warna" value={itemData.color} />}
+                {<DetailItem icon={<Tags />} label="Model/Style" value={itemData.style} />}
+                {<DetailItem icon={<Tags />} label="Versi" value={itemData.version} />}
             </div>
 
             <div>
@@ -222,12 +231,12 @@ export default function ItemDetailPage() {
     );
 }
 
-const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | undefined }) => (
-    <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-start gap-4">
-        <div className="text-blue-500 mt-1 bg-blue-50 p-2 rounded-lg">{icon}</div>
-        <div>
-            <span className="text-gray-500 text-xs font-semibold uppercase tracking-wider block mb-1">{label}</span>
-            <span className="font-bold text-sm text-gray-800">{value || '-'}</span>
+const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: React.ReactNode }) => (
+    <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
+        <div className="text-blue-500 mt-1 bg-blue-50 p-2 rounded-lg flex-shrink-0">{icon}</div>
+        <div className="flex-1 overflow-hidden">
+            <span className="text-gray-500 text-[11px] font-semibold uppercase tracking-wider block mb-1 truncate">{label}</span>
+            <div className="font-bold text-sm text-gray-800 break-words">{value || '-'}</div>
         </div>
     </div>
 );

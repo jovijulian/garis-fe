@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-    Check, PackageMinus, ScanBarcode, Camera, X, Loader2, Trash2, ShoppingCart, User
+    Check, PackageMinus, ScanBarcode, Camera, X, Loader2, Trash2, ShoppingCart, Info
 } from "lucide-react";
 import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { endpointUrl, httpPost, httpGet } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
+import Select from "@/components/form/Select-custom";
 import _ from "lodash";
 
 interface CartItem {
@@ -17,9 +18,11 @@ interface CartItem {
     barcode: string;
     input_qty: any;
     input_unit_id: number;
-    unit_name: string;
+    base_unit_name: string;
     stock_available: number;
     item_type: number;
+    available_uoms: { value: string, label: string, multiplier: number, unitName: string }[];
+    selected_multiplier: number;
 }
 
 export default function StockOutPage() {
@@ -50,7 +53,7 @@ export default function StockOutPage() {
 
     const handleCheckBarcode = async (scannedBarcode: string) => {
         if (!scannedBarcode || scannedBarcode.trim() === "") return;
-        if (isCheckingBarcode) return; // Mencegah double scan
+        if (isCheckingBarcode) return; 
 
         setIsCheckingBarcode(true);
         try {
@@ -65,17 +68,39 @@ export default function StockOutPage() {
                     return;
                 }
 
+                const opts: any = [];
+                opts.push({
+                    value: String(item.base_unit_id),
+                    label: item.base_unit?.name || "Satuan",
+                    multiplier: 1,
+                    unitName: item.base_unit?.name
+                });
+
+                if (item.uoms && Array.isArray(item.uoms)) {
+                    item.uoms.forEach((u: any) => {
+                        opts.push({
+                            value: String(u.unit_id),
+                            label: `${u.unit?.name} (1 = ${u.multiplier} ${item.base_unit?.name})`,
+                            multiplier: u.multiplier,
+                            unitName: u.unit?.name
+                        });
+                    });
+                }
+
                 setCart(prevCart => {
                     const existingItemIndex = prevCart.findIndex(cartItem => cartItem.item_id === item.id);
                     const newCart = [...prevCart];
 
                     if (existingItemIndex >= 0) {
-                        const currentQty = newCart[existingItemIndex].input_qty;
-                        if (currentQty < item.stock_available) {
-                            newCart[existingItemIndex].input_qty += 1;
+                        const currentCartItem = newCart[existingItemIndex];
+                        const newQty = (currentCartItem.input_qty || 0) + 1;
+                        const totalBaseDeduct = newQty * currentCartItem.selected_multiplier;
+
+                        if (totalBaseDeduct <= item.stock_available) {
+                            newCart[existingItemIndex].input_qty = newQty;
                             toast.success(`+1 ${item.name} ditambahkan`);
                         } else {
-                            toast.warning(`Stok ${item.name} tidak cukup (Sisa: ${item.stock_available})`);
+                            toast.warning(`Stok ${item.name} tidak cukup (Sisa: ${item.stock_available} ${item.base_unit?.name})`);
                         }
                     } else {
                         newCart.push({
@@ -84,9 +109,11 @@ export default function StockOutPage() {
                             barcode: item.barcode,
                             input_qty: 1,
                             input_unit_id: item.base_unit_id,
-                            unit_name: item.base_unit?.name || "Unit",
+                            base_unit_name: item.base_unit?.name || "Unit",
                             stock_available: item.stock_available,
-                            item_type: item.item_type
+                            item_type: item.item_type,
+                            available_uoms: opts,
+                            selected_multiplier: 1 
                         });
                         toast.success(`${item.name} masuk keranjang`);
                     }
@@ -125,74 +152,6 @@ export default function StockOutPage() {
             }
         }
     };
-
-    // const startScanner = () => {
-
-    //     setTimeout(async () => {
-    //         let videoConstraints: any = {
-    //             width: { min: 640, ideal: 1280, max: 1920 },
-    //             height: { min: 480, ideal: 720, max: 1080 }
-    //         };
-
-    //         try {
-    //             const devices = await navigator.mediaDevices.enumerateDevices();
-
-    //             const hasBackCamera = devices.some(
-    //                 (device) =>
-    //                     device.kind === "videoinput" &&
-    //                     device.label.toLowerCase().includes("back")
-    //             );
-
-    //             if (hasBackCamera) {
-    //                 videoConstraints.facingMode = { exact: "environment" };
-    //             } else {
-    //                 videoConstraints.facingMode = "user";
-    //             }
-    //         } catch (err) {
-    //             console.warn("Gagal detect camera, fallback default", err);
-    //             videoConstraints = true;
-    //         }
-
-    //         const config = {
-    //             fps: 15,
-
-    //             qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-    //                 const dynamicWidth = Math.min(320, viewfinderWidth - 32);
-    //                 return { width: dynamicWidth, height: 160 };
-    //             },
-
-    //             formatsToSupport: [
-    //                 Html5QrcodeSupportedFormats.EAN_13,
-    //                 Html5QrcodeSupportedFormats.EAN_8,
-    //                 Html5QrcodeSupportedFormats.CODE_128,
-    //                 Html5QrcodeSupportedFormats.CODE_39,
-    //                 Html5QrcodeSupportedFormats.UPC_A,
-    //                 Html5QrcodeSupportedFormats.UPC_E,
-    //             ],
-
-    //             experimentalFeatures: {
-    //                 useBarCodeDetectorIfSupported: true
-    //             },
-
-    //             aspectRatio: 1.777778,
-
-    //             videoConstraints,
-
-    //             disableFlip: true,
-    //             rememberLastUsedCamera: true,
-    //         };
-    //         const newScanner = new Html5QrcodeScanner(`reader-checkout`, config, false);
-    //         scannerRef.current = newScanner;
-
-    //         newScanner.render(
-    //             (decodedText) => {
-    //                 handleCheckBarcode(decodedText);
-    //             },
-    //             (errorMessage) => {
-    //             }
-    //         );
-    //     }, 100);
-    // };
 
     const startScanner = () => {
         setTimeout(() => {
@@ -244,6 +203,7 @@ export default function StockOutPage() {
         }, 100);
     };
 
+
     const updateCartQty = (index: number, newQty: number | "") => {
         setCart(prev => {
             const newCart = [...prev];
@@ -254,13 +214,38 @@ export default function StockOutPage() {
                 return newCart;
             }
 
-            if (newQty > item.stock_available) {
-                toast.warning(`Maksimal stok yang bisa dikeluarkan: ${item.stock_available}`);
-                newCart[index].input_qty = item.stock_available;
+            const totalBaseDeduct = newQty * item.selected_multiplier;
+
+            if (totalBaseDeduct > item.stock_available) {
+                const maxQtyAllowed = Math.floor(item.stock_available / item.selected_multiplier);
+                toast.warning(`Maksimal stok yang bisa dikeluarkan: ${maxQtyAllowed} unit terpilih (Sisa fisik: ${item.stock_available})`);
+                newCart[index].input_qty = maxQtyAllowed; 
             } else if (newQty > 0) {
                 newCart[index].input_qty = newQty;
             }
 
+            return newCart;
+        });
+    };
+
+    const updateCartUnit = (index: number, newUnitId: string) => {
+        setCart(prev => {
+            const newCart = [...prev];
+            const item = newCart[index];
+            const selectedUom = item.available_uoms.find(u => u.value === newUnitId);
+            
+            if (selectedUom) {
+                newCart[index].input_unit_id = Number(newUnitId);
+                newCart[index].selected_multiplier = selectedUom.multiplier;
+                const currentQty = newCart[index].input_qty || 0;
+                const totalBaseDeduct = currentQty * selectedUom.multiplier;
+                
+                if (totalBaseDeduct > item.stock_available) {
+                    const maxQtyAllowed = Math.floor(item.stock_available / selectedUom.multiplier);
+                    toast.warning(`Stok gudang tidak cukup untuk ${currentQty} ${selectedUom.unitName}. Disesuaikan ke max: ${maxQtyAllowed}.`);
+                    newCart[index].input_qty = maxQtyAllowed > 0 ? maxQtyAllowed : 1; 
+                }
+            }
             return newCart;
         });
     };
@@ -282,6 +267,12 @@ export default function StockOutPage() {
             toast.warning("Keranjang kosong! Scan barang terlebih dahulu.");
             return;
         }
+        
+        const invalidItem = cart.find(c => !c.input_qty || c.input_qty <= 0);
+        if(invalidItem) {
+            toast.warning(`Pastikan jumlah keluaran untuk ${invalidItem.name} valid.`);
+            return;
+        }
 
         setLoading(true);
         try {
@@ -290,7 +281,7 @@ export default function StockOutPage() {
                 note: headerData.note,
                 items: cart.map(item => ({
                     item_id: item.item_id,
-                    input_qty: item.input_qty,
+                    input_qty: Number(item.input_qty),
                     input_unit_id: item.input_unit_id
                 }))
             };
@@ -315,7 +306,7 @@ export default function StockOutPage() {
 
     return (
         <ComponentCard title="Pengeluaran Barang (Stock Out)">
-            <style dangerouslySetInnerHTML={{
+           <style dangerouslySetInnerHTML={{
                 __html: `
                 #reader-checkout {
                     width: 100% !important;
@@ -348,7 +339,7 @@ export default function StockOutPage() {
                 }
             `}} />
             <form onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden">
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gray-50 p-5 sm:p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <div className="space-y-2">
                         <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">
                             NIK / User Peminta <span className="text-red-500">*</span>
@@ -362,7 +353,7 @@ export default function StockOutPage() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">Catatan / Keperluan</label>
+                        <label htmlFor="note" className="text-sm font-medium text-gray-800 flex items-center gap-2">Catatan / Keperluan</label>
                         <input
                             id="note" type="text"
                             value={headerData.note}
@@ -379,7 +370,7 @@ export default function StockOutPage() {
                         <div className="relative flex-grow">
                             <ScanBarcode className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
-                                // id="barcode-input"
+                                id="barcode-input"
                                 type="text"
                                 value={barcodeInput}
                                 onChange={(e) => setBarcodeInput(e.target.value)}
@@ -409,23 +400,18 @@ export default function StockOutPage() {
                     </div>
 
                     {isScannerActive && (
-                        <div className="mt-4 p-2 sm:p-4 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl relative w-full overflow-hidden">
+                        <div className="mt-4 p-2 sm:p-4 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl relative w-full overflow-hidden mx-auto">
                             <div id="reader-checkout" className="w-full rounded-lg overflow-hidden"></div>
-                            <div className="mt-3 text-center w-full">
-                                <p className="text-xs text-blue-600 font-medium">
-                                    Arahkan kamera ke barcode. Jaga jarak 10-15cm agar fokus.
-                                </p>
-                            </div>
                         </div>
                     )}
                 </div>
 
                 <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center gap-3">
+                    <div className="bg-gray-50 px-5 sm:px-6 py-4 border-b border-gray-200 flex items-center gap-3">
                         <ShoppingCart className="w-5 h-5 text-gray-600" />
-                        <h3 className="font-semibold text-gray-800">Daftar Barang yang Dikeluarkan</h3>
+                        <h3 className="font-semibold text-gray-800">Daftar Barang Keluar</h3>
                         <span className="bg-blue-100 text-blue-700 py-0.5 px-2.5 rounded-full text-xs font-bold ml-auto">
-                            {cart.length} Jenis Item
+                            {cart.length} Item
                         </span>
                     </div>
 
@@ -433,67 +419,77 @@ export default function StockOutPage() {
                         <table className="w-full text-sm text-left">
                             <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
                                 <tr>
-                                    <th className="px-6 py-4">Barang</th>
-                                    <th className="px-6 py-4">Tipe</th>
-                                    <th className="px-6 py-4">Sisa Gudang</th>
-                                    <th className="px-6 py-4 w-40">Qty Keluar</th>
-                                    <th className="px-6 py-4 text-center">Aksi</th>
+                                    <th className="px-5 sm:px-6 py-4 whitespace-nowrap">Nama Barang</th>
+                                    <th className="px-5 sm:px-6 py-4 whitespace-nowrap">Sisa Fisik Gudang</th>
+                                    <th className="px-5 sm:px-6 py-4 w-40 sm:w-64 whitespace-nowrap">Jumlah & Satuan Dikeluarkan</th>
+                                    <th className="px-5 sm:px-6 py-4 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {cart.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                                        <td colSpan={4} className="px-6 py-12 text-center text-gray-400">
                                             <PackageMinus className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                                             Belum ada barang di keranjang. <br /> Silakan scan barcode di atas.
                                         </td>
                                     </tr>
                                 ) : (
-                                    cart.map((item, index) => (
-                                        <tr key={index} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="font-semibold text-gray-900">{item.name}</div>
-                                                <div className="text-xs text-gray-500 mt-1">{item.barcode || "Tanpa Barcode"}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2 py-1 text-[10px] font-bold rounded-md ${item.item_type === 1 ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                    {item.item_type === 1 ? "BHP" : "ASET"}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-600">
-                                                {item.stock_available} {item.unit_name}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="number" min="1" max={item.stock_available}
-                                                        value={item.input_qty}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value;
-
-                                                            if (value === "") {
-                                                                updateCartQty(index, "");
-                                                            } else {
-                                                                updateCartQty(index, parseInt(value));
-                                                            }
-                                                        }}
-                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                                    />
-                                                    <span className="text-gray-500 font-medium">{item.unit_name}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeCartItem(index)}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Hapus dari keranjang"
-                                                >
-                                                    <Trash2 className="w-5 h-5 mx-auto" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
+                                    cart.map((item, index) => {
+                                        const isMultiplierActive = item.selected_multiplier > 1;
+                                        const totalBaseDeduct = (item.input_qty || 0) * item.selected_multiplier;
+                                        
+                                        return (
+                                            <tr key={index} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-5 sm:px-6 py-4">
+                                                    <div className="font-semibold text-gray-900">{item.name}</div>
+                                                    <div className="text-xs text-gray-500 mt-1">{item.barcode || "-"}</div>
+                                                    <span className={`inline-block mt-2 px-2 py-0.5 text-[10px] font-bold rounded-md ${item.item_type === 1 ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                        {item.item_type === 1 ? "BHP" : "ASET PINJAMAN"}
+                                                    </span>
+                                                </td>
+                                                <td className="px-5 sm:px-6 py-4">
+                                                    <span className="font-bold text-gray-700 text-base">{item.stock_available}</span> <span className="text-gray-500">{item.base_unit_name}</span>
+                                                </td>
+                                                <td className="px-5 sm:px-6 py-4">
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="number" min="1"
+                                                                value={item.input_qty}
+                                                                onChange={(e) => updateCartQty(index, e.target.value === "" ? "" : parseInt(e.target.value))}
+                                                                className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                                            />
+                                                            <div className="w-[140px] sm:w-[160px]">
+                                                                <Select
+                                                                    options={item.available_uoms}
+                                                                    value={_.find(item.available_uoms, { value: String(item.input_unit_id) }) || null}
+                                                                    onValueChange={(opt) => updateCartUnit(index, opt?.value || "")}
+                                                                    placeholder="Satuan"
+                                                                    prefix={true}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        {isMultiplierActive && totalBaseDeduct > 0 && (
+                                                            <div className="flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 px-2.5 py-1.5 rounded-lg border border-orange-100 w-fit">
+                                                                <Info className="w-3.5 h-3.5" />
+                                                                Memotong fisik: <span className="font-bold">{totalBaseDeduct} {item.base_unit_name}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-5 sm:px-6 py-4 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeCartItem(index)}
+                                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Hapus dari keranjang"
+                                                    >
+                                                        <Trash2 className="w-5 h-5 mx-auto" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })
                                 )}
                             </tbody>
                         </table>
@@ -504,13 +500,12 @@ export default function StockOutPage() {
                     <button
                         type="submit"
                         disabled={loading || cart.length === 0}
-                        className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm transition-all"
+                        className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm transition-all"
                     >
                         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-                        {loading ? "Memproses Transaksi..." : "Selesaikan & Keluarkan Barang"}
+                        {loading ? "Memproses Transaksi..." : "Selesaikan Transaksi"}
                     </button>
                 </div>
-
             </form>
         </ComponentCard>
     );
