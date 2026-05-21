@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import { endpointUrl, httpPost, httpGet } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import Select from "@/components/form/Select-custom";
-import _ from "lodash";
+import _, { set } from "lodash";
 
 interface CartItem {
     item_id: number;
@@ -37,7 +37,7 @@ export default function StockOutPage() {
         note: "",
         user_id: null,
     });
-
+    const [requestMode, setRequestMode] = useState<'self' | 'other'>('self');
     const [userOptions, setUserOptions] = useState<SelectOption[]>([]);
     const [barcodeInput, setBarcodeInput] = useState("");
     const [isScannerActive, setIsScannerActive] = useState(false);
@@ -56,12 +56,12 @@ export default function StockOutPage() {
             ]);
             setUserOptions(
                 usersRes.data.data.map((u: any) => ({
-                  value: u.id_user,
-                  label: u.employee
-                    ? `${u.employee.no_ktp ?? '-'} - ${u.employee.nama ?? u.nama_user}`
-                    : u.nama_user ?? 'Tanpa Nama',
+                    value: u.id_user,
+                    label: u.employee
+                        ? `${u.employee.no_ktp ?? '-'} - ${u.employee.nama ?? u.nama_user}`
+                        : u.nama_user ?? 'Tanpa Nama',
                 }))
-              );
+            );
 
         } catch (error) {
             toast.error("Gagal memuat data awal untuk form.");
@@ -235,7 +235,6 @@ export default function StockOutPage() {
         }, 100);
     };
 
-
     const updateCartQty = (index: number, newQty: number | "") => {
         setCart(prev => {
             const newCart = [...prev];
@@ -289,11 +288,11 @@ export default function StockOutPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!headerData.user_id) {
-            toast.warning("Mohon isi Karyawan yang meminta barang.");
-            document.getElementById("user_id_borrower")?.focus();
-            return;
-        }
+        // if (!headerData.user_id ) {
+        //     toast.warning("Mohon isi Karyawan yang meminta barang.");
+        //     document.getElementById("user_id_borrower")?.focus();
+        //     return;
+        // }
 
         if (cart.length === 0) {
             toast.warning("Keranjang kosong! Scan barang terlebih dahulu.");
@@ -311,19 +310,19 @@ export default function StockOutPage() {
             const payload = {
                 nik: headerData.user_id_borrower,
                 note: headerData.note,
-                user_id: Number(headerData.user_id),
+                user_id: headerData.user_id,
                 items: cart.map(item => ({
                     item_id: item.item_id,
                     input_qty: Number(item.input_qty),
                     input_unit_id: item.input_unit_id
                 }))
             };
-
             await httpPost(endpointUrl("/inventory-transactions/stock-out"), payload, true);
 
             toast.success("Barang berhasil dikeluarkan!");
 
             setHeaderData(prev => ({ ...prev, user_id_borrower: "", note: "", user_id: null }));
+            setLoadingOptions(true);
             setCart([]);
             setBarcodeInput("");
 
@@ -373,17 +372,69 @@ export default function StockOutPage() {
             `}} />
             <form onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden">
                 <div className="bg-gray-50 p-5 sm:p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                    <div className="space-y-2">
-                        <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">
-                            User Peminta <span className="text-red-500">*</span>
-                        </label>
+                    <div className="space-y-4">
 
-                        <Select
-                            options={userOptions}
-                            value={_.find(userOptions, { value: headerData.user_id })}
-                            onValueChange={(opt) => setHeaderData(prev => ({ ...prev, user_id: opt ? opt.value : null }))}
-                            placeholder={loadingUsers ? "Memuat karyawan..." : "Pilih karyawan..."}
-                        />
+                        <div>
+                            <label className="text-sm font-medium text-gray-800 mb-3 block">
+                                Peminta Barang
+                            </label>
+
+                            <div className="flex gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        checked={requestMode === 'self'}
+                                        onChange={() => {
+                                            setRequestMode('self');
+                                            setHeaderData(prev => ({
+                                                ...prev,
+                                                user_id: null
+                                            }));
+                                        }}
+                                    />
+                                    <span>Untuk Saya Sendiri</span>
+                                </label>
+
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        checked={requestMode === 'other'}
+                                        onChange={() => {
+                                            setRequestMode('other');
+                                        }}
+                                    />
+                                    <span>Untuk Karyawan Lain</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {requestMode === 'other' && (
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="user_id_borrower"
+                                    className="text-sm font-medium text-gray-800 flex items-center gap-2"
+                                >
+                                    Pilih Karyawan <span className="text-red-500">*</span>
+                                </label>
+
+                                <Select
+                                    options={userOptions}
+                                    value={_.find(userOptions, { value: headerData.user_id })}
+                                    onValueChange={(opt) =>
+                                        setHeaderData(prev => ({
+                                            ...prev,
+                                            user_id: opt ? opt.value : null
+                                        }))
+                                    }
+                                    placeholder={
+                                        loadingUsers
+                                            ? "Memuat karyawan..."
+                                            : "Cari nama / NIK karyawan..."
+                                    }
+                                />
+                            </div>
+                        )}
+
                     </div>
                     <div className="space-y-2">
                         <label htmlFor="note" className="text-sm font-medium text-gray-800 flex items-center gap-2">Catatan / Keperluan</label>

@@ -16,6 +16,7 @@ import { FaEdit, FaPlus, FaTrash } from "react-icons/fa";
 import DateRangePicker from "@/components/common/DateRangePicker";
 import Select from "@/components/form/Select-custom";
 import _ from "lodash";
+import { Boxes } from "lucide-react";
 
 interface TableDataItem {
     id: number;
@@ -253,13 +254,20 @@ export default function UnitPage() {
                         placeholder="Search..."
                         className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     />
+                    <button
+                        onClick={() => router.push("/inventories/items/bulk-create")}
+                        className="px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 flex items-center gap-2"
+                    >
+                        <Boxes className="w-4 h-4" />
+                        Tambah Massal
+                    </button>
 
                     <button
                         onClick={() => router.push("/inventories/items/create")}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
                     >
                         <span>+</span>
-                        Tambah
+                        Tambah Barang
                     </button>
                     {/* {selectedRows.length > 0 && (
                         <button
