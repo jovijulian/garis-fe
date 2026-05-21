@@ -98,10 +98,10 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan }) => {
                 </div>
             </div>
 
-            <div className="bg-gray-50 p-4 border-t flex items-center gap-2 text-xs text-gray-500">
+            {/* <div className="bg-gray-50 p-4 border-t flex items-center gap-2 text-xs text-gray-500">
                 <Info className="w-4 h-4 text-gray-400" />
                 <span>Diserahkan oleh: <b>{loan.created_by_user?.nama_user || "-"}</b></span>
-            </div>
+            </div> */}
         </div>
     );
 };

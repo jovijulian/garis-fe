@@ -196,7 +196,7 @@ export default function CreateMasterItemPage() {
                 color: formData.color.trim() !== "" ? formData.color : null,
                 style: formData.style.trim() !== "" ? formData.style : null,
                 version: formData.version.trim() !== "" ? formData.version : null,
-                uom_conversions: validUomConversions
+                uoms: validUomConversions
             };
 
             await httpPost(endpointUrl("/inventory-items"), payloadCreate, true);

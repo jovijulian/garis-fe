@@ -273,11 +273,11 @@ export default function StockOutPage() {
             return;
         }
 
-        if (!headerData.user_id_borrower) {
-            toast.warning("Mohon isi NIK / ID Karyawan yang meminta barang.");
-            document.getElementById("user_id_borrower")?.focus();
-            return;
-        }
+        // if (!headerData.user_id_borrower) {
+        //     toast.warning("Mohon isi NIK / ID Karyawan yang meminta barang.");
+        //     document.getElementById("user_id_borrower")?.focus();
+        //     return;
+        // }
 
         if (cart.length === 0) {
             toast.warning("Keranjang kosong! Scan barang terlebih dahulu.");
@@ -332,8 +332,8 @@ export default function StockOutPage() {
                 #reader-checkout__dashboard_section_swaplink { display: none !important; }
             `}} />
             <form onSubmit={handleSubmit} className="space-y-6 max-w-full overflow-x-hidden">
-                <div className="bg-gray-50 p-5 sm:p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                    <div className="space-y-2">
+                <div className="bg-gray-50 p-5 sm:p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    {/* <div className="space-y-2">
                         <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">
                             NIK / User Peminta <span className="text-red-500">*</span>
                         </label>
@@ -344,7 +344,7 @@ export default function StockOutPage() {
                             placeholder="Contoh: NIK Karyawan"
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all bg-white"
                         />
-                    </div>
+                    </div> */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-800 flex items-center gap-2">
                             Cabang Peminjaman <span className="text-red-500">*</span>

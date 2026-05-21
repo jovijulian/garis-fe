@@ -25,6 +25,8 @@ interface CartItem {
     selected_multiplier: number;
 }
 
+interface SelectOption { value: string; label: string; }
+
 export default function StockOutPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
@@ -33,14 +35,44 @@ export default function StockOutPage() {
         cab_id: 0,
         user_id_borrower: "",
         note: "",
+        user_id: null,
     });
 
+    const [userOptions, setUserOptions] = useState<SelectOption[]>([]);
     const [barcodeInput, setBarcodeInput] = useState("");
     const [isScannerActive, setIsScannerActive] = useState(false);
     const scannerRef = useRef<Html5QrcodeScanner | null>(null);
     const [cart, setCart] = useState<CartItem[]>([]);
+    const [loadingOptions, setLoadingOptions] = useState(true);
+    const [loadingUsers, setLoadingUsers] = useState(true);
+
+
+    const fetchInitialData = async () => {
+        setLoadingOptions(true);
+        setLoadingUsers(true);
+        try {
+            const [usersRes] = await Promise.all([
+                httpGet(endpointUrl("/users/employee/options"), true),
+            ]);
+            setUserOptions(
+                usersRes.data.data.map((u: any) => ({
+                  value: u.id_user,
+                  label: u.employee
+                    ? `${u.employee.no_ktp ?? '-'} - ${u.employee.nama ?? u.nama_user}`
+                    : u.nama_user ?? 'Tanpa Nama',
+                }))
+              );
+
+        } catch (error) {
+            toast.error("Gagal memuat data awal untuk form.");
+        } finally {
+            setLoadingOptions(false);
+            setLoadingUsers(false);
+        }
+    };
 
     useEffect(() => {
+        fetchInitialData();
         const cabId = localStorage.getItem("sites");
         setHeaderData(prev => ({ ...prev, cab_id: cabId ? Number(cabId) : 0 }));
 
@@ -53,7 +85,7 @@ export default function StockOutPage() {
 
     const handleCheckBarcode = async (scannedBarcode: string) => {
         if (!scannedBarcode || scannedBarcode.trim() === "") return;
-        if (isCheckingBarcode) return; 
+        if (isCheckingBarcode) return;
 
         setIsCheckingBarcode(true);
         try {
@@ -113,7 +145,7 @@ export default function StockOutPage() {
                             stock_available: item.stock_available,
                             item_type: item.item_type,
                             available_uoms: opts,
-                            selected_multiplier: 1 
+                            selected_multiplier: 1
                         });
                         toast.success(`${item.name} masuk keranjang`);
                     }
@@ -156,13 +188,13 @@ export default function StockOutPage() {
     const startScanner = () => {
         setTimeout(() => {
             const config = {
-                fps: 15, 
+                fps: 15,
 
                 qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
                     const dynamicWidth = Math.min(320, viewfinderWidth - 32);
-                    return { width: dynamicWidth, height: 160 }; 
+                    return { width: dynamicWidth, height: 160 };
                 },
-    
+
                 formatsToSupport: [
                     Html5QrcodeSupportedFormats.EAN_13,
                     Html5QrcodeSupportedFormats.EAN_8,
@@ -171,25 +203,25 @@ export default function StockOutPage() {
                     Html5QrcodeSupportedFormats.UPC_A,
                     Html5QrcodeSupportedFormats.UPC_E,
                 ],
-    
+
                 experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true 
+                    useBarCodeDetectorIfSupported: true
                 },
-    
+
                 aspectRatio: 1.777778,
-    
+
                 videoConstraints: {
                     facingMode: "environment",
                     width: { min: 640, ideal: 1280, max: 1920 },
                     height: { min: 480, ideal: 720, max: 1080 },
                     advanced: [
                         { focusMode: "continuous" } as any,
-                        { zoom: 2.0 } as any 
+                        { zoom: 2.0 } as any
                     ] as any
                 },
-    
+
                 disableFlip: true,
-                rememberLastUsedCamera: true, 
+                rememberLastUsedCamera: true,
             };
             const newScanner = new Html5QrcodeScanner(`reader-checkout`, config, false);
             scannerRef.current = newScanner;
@@ -219,7 +251,7 @@ export default function StockOutPage() {
             if (totalBaseDeduct > item.stock_available) {
                 const maxQtyAllowed = Math.floor(item.stock_available / item.selected_multiplier);
                 toast.warning(`Maksimal stok yang bisa dikeluarkan: ${maxQtyAllowed} unit terpilih (Sisa fisik: ${item.stock_available})`);
-                newCart[index].input_qty = maxQtyAllowed; 
+                newCart[index].input_qty = maxQtyAllowed;
             } else if (newQty > 0) {
                 newCart[index].input_qty = newQty;
             }
@@ -233,17 +265,17 @@ export default function StockOutPage() {
             const newCart = [...prev];
             const item = newCart[index];
             const selectedUom = item.available_uoms.find(u => u.value === newUnitId);
-            
+
             if (selectedUom) {
                 newCart[index].input_unit_id = Number(newUnitId);
                 newCart[index].selected_multiplier = selectedUom.multiplier;
                 const currentQty = newCart[index].input_qty || 0;
                 const totalBaseDeduct = currentQty * selectedUom.multiplier;
-                
+
                 if (totalBaseDeduct > item.stock_available) {
                     const maxQtyAllowed = Math.floor(item.stock_available / selectedUom.multiplier);
                     toast.warning(`Stok gudang tidak cukup untuk ${currentQty} ${selectedUom.unitName}. Disesuaikan ke max: ${maxQtyAllowed}.`);
-                    newCart[index].input_qty = maxQtyAllowed > 0 ? maxQtyAllowed : 1; 
+                    newCart[index].input_qty = maxQtyAllowed > 0 ? maxQtyAllowed : 1;
                 }
             }
             return newCart;
@@ -257,8 +289,8 @@ export default function StockOutPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!headerData.user_id_borrower) {
-            toast.warning("Mohon isi NIK / ID Karyawan yang meminta barang.");
+        if (!headerData.user_id) {
+            toast.warning("Mohon isi Karyawan yang meminta barang.");
             document.getElementById("user_id_borrower")?.focus();
             return;
         }
@@ -267,9 +299,9 @@ export default function StockOutPage() {
             toast.warning("Keranjang kosong! Scan barang terlebih dahulu.");
             return;
         }
-        
+
         const invalidItem = cart.find(c => !c.input_qty || c.input_qty <= 0);
-        if(invalidItem) {
+        if (invalidItem) {
             toast.warning(`Pastikan jumlah keluaran untuk ${invalidItem.name} valid.`);
             return;
         }
@@ -279,6 +311,7 @@ export default function StockOutPage() {
             const payload = {
                 nik: headerData.user_id_borrower,
                 note: headerData.note,
+                user_id: Number(headerData.user_id),
                 items: cart.map(item => ({
                     item_id: item.item_id,
                     input_qty: Number(item.input_qty),
@@ -290,7 +323,7 @@ export default function StockOutPage() {
 
             toast.success("Barang berhasil dikeluarkan!");
 
-            setHeaderData(prev => ({ ...prev, user_id_borrower: "", note: "" }));
+            setHeaderData(prev => ({ ...prev, user_id_borrower: "", note: "", user_id: null }));
             setCart([]);
             setBarcodeInput("");
 
@@ -306,7 +339,7 @@ export default function StockOutPage() {
 
     return (
         <ComponentCard title="Pengeluaran Barang (Stock Out)">
-           <style dangerouslySetInnerHTML={{
+            <style dangerouslySetInnerHTML={{
                 __html: `
                 #reader-checkout {
                     width: 100% !important;
@@ -342,14 +375,14 @@ export default function StockOutPage() {
                 <div className="bg-gray-50 p-5 sm:p-6 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <div className="space-y-2">
                         <label htmlFor="user_id_borrower" className="text-sm font-medium text-gray-800 flex items-center gap-2">
-                            NIK / User Peminta <span className="text-red-500">*</span>
+                            User Peminta <span className="text-red-500">*</span>
                         </label>
-                        <input
-                            id="user_id_borrower" type="text" required
-                            value={headerData.user_id_borrower}
-                            onChange={(e) => setHeaderData(prev => ({ ...prev, user_id_borrower: e.target.value }))}
-                            placeholder="Contoh: NIK Karyawan"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all bg-white"
+
+                        <Select
+                            options={userOptions}
+                            value={_.find(userOptions, { value: headerData.user_id })}
+                            onValueChange={(opt) => setHeaderData(prev => ({ ...prev, user_id: opt ? opt.value : null }))}
+                            placeholder={loadingUsers ? "Memuat karyawan..." : "Pilih karyawan..."}
                         />
                     </div>
                     <div className="space-y-2">
@@ -437,7 +470,7 @@ export default function StockOutPage() {
                                     cart.map((item, index) => {
                                         const isMultiplierActive = item.selected_multiplier > 1;
                                         const totalBaseDeduct = (item.input_qty || 0) * item.selected_multiplier;
-                                        
+
                                         return (
                                             <tr key={index} className="hover:bg-gray-50/50 transition-colors">
                                                 <td className="px-5 sm:px-6 py-4">

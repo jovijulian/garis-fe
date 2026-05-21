@@ -155,18 +155,18 @@ export default function TransactionLogsPage() {
             },
         },
         {
-            id: "nik",
+            id: "user_id",
             header: "Peminjam/Peminta",
-            accessorKey: "nik",
+            accessorKey: "user_id",
             cell: ({ row }: any) => {
-                if (!row.nik) return <span className="text-gray-400">-</span>;
+                if (!row.user_id) return <span className="text-gray-400">-</span>;
                 return (
                     <span
-                        onClick={() => router.push(`/inventories/users/${row.nik}`)}
+                        onClick={() => router.push(`/inventories/users/${row.user_id}`)}
                         className="font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
                         title="Lihat detail riwayat karyawan ini"
                     >
-                        {row.nik}
+                       {`${row.user?.employee?.no_ktp ?? '-'} - ${row.user?.employee?.nama ?? '-'}`}
                     </span>
                 );
             }

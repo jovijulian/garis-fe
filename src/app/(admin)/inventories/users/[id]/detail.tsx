@@ -8,17 +8,19 @@ import 'moment/locale/id';
 import { endpointUrl, httpGet } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import Table from "@/components/tables/Table";
-import { 
+import {
     User, History, Package, ArrowDownRight, ArrowUpRight, RefreshCcw, Box, FileText, AlertTriangle, CheckCircle2, Sliders
 } from "lucide-react";
 
 export default function UserDetailPage() {
     const params = useParams();
-    const nik = decodeURIComponent(String(params.nik)); 
+    const id = decodeURIComponent(String(params.id));
     moment.locale('id');
     const router = useRouter();
     const [loans, setLoans] = useState<any[]>([]);
+    const [profile, setProfile] = useState<any>(null);
     const [isLoadingLoans, setIsLoadingLoans] = useState(true);
+    const [isLoadingProfile, setIsLoadingProfile] = useState(true);
     const [logs, setLogs] = useState<any[]>([]);
     const [isLoadingLogs, setIsLoadingLogs] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -27,32 +29,47 @@ export default function UserDetailPage() {
     const [totalLogs, setTotalLogs] = useState(0);
     const [summary, setSummary] = useState({ totalBHP: 0, totalAset: 0 });
 
-    const getUserLoans = useCallback(async () => {
-    if (!nik) return;
-    setIsLoadingLoans(true);
-    try {
-        const response = await httpGet(endpointUrl(`inventory-loans/by-nik/?nik=${nik}`), true);
-        setLoans(response.data?.data || []);
-    } catch (error) {
-        console.error("Gagal memuat data pinjaman user");
-    } finally {
-        setIsLoadingLoans(false);
-    }
-}, [nik]);
+    const getLoans = useCallback(async () => {
+        if (!id) return;
+        setIsLoadingLoans(true);
+        try {
+            const response = await httpGet(endpointUrl(`inventory-loans/by-user-id/?user_id=${id}`), true);
+            setLoans(response.data?.data || []);
+        } catch (error) {
+            console.error("Gagal memuat data pinjaman user");
+        } finally {
+            setIsLoadingLoans(false);
+        }
+    }, [id]);
+
+    const getProfileLoan = useCallback(async () => {
+        if (!id) return;
+        setIsLoadingProfile(true);
+        try {
+            const response = await httpGet(endpointUrl(`inventory-loans/profile/${id}`), true);
+            setProfile(response.data?.data);
+        } catch (error) {
+            console.error("Gagal memuat data profil peminjaman");
+        } finally {
+            setIsLoadingProfile(false);
+        }
+    }, [id]);
+
+
 
 
     const getUserTransactionHistory = useCallback(async () => {
-        if (!nik) return;
+        if (!id) return;
         setIsLoadingLogs(true);
         try {
             const queryParams = {
-                nik: nik,
+                user_id: id,
                 page: currentPage,
                 per_page: perPage
             };
             const response = await httpGet(endpointUrl("inventory-transactions"), true, queryParams);
             const responseData = response.data.data.data;
-            
+
             setLogs(responseData);
             setTotalLogs(response.data.data.pagination.total);
             setLastPage(response.data.data.pagination.total_pages);
@@ -70,12 +87,13 @@ export default function UserDetailPage() {
         } finally {
             setIsLoadingLogs(false);
         }
-    }, [nik, currentPage, perPage]);
+    }, [id, currentPage, perPage]);
 
     useEffect(() => {
         getUserTransactionHistory();
-        getUserLoans();
-    }, [getUserTransactionHistory, getUserLoans]);
+        getLoans();
+        getProfileLoan()
+    }, [getUserTransactionHistory, getLoans, getProfileLoan]);
 
 
     const getTransactionBadge = (type: string) => {
@@ -119,8 +137,8 @@ export default function UserDetailPage() {
             accessorKey: "item.name",
             cell: ({ row }: any) => (
                 <div className="flex flex-col">
-                    <span 
-                        className="font-semibold text-blue-600 hover:underline cursor-pointer" 
+                    <span
+                        className="font-semibold text-blue-600 hover:underline cursor-pointer"
                         onClick={() => router.push(`/inventories/items/${row.item_id}`)}
                     >
                         {row.item?.name || "-"}
@@ -186,13 +204,16 @@ export default function UserDetailPage() {
                 </div>
                 <div className="text-center md:text-left flex-grow">
                     <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">Identitas Karyawan</h2>
-                    <h1 className="text-3xl font-black text-gray-900 mb-2">NIK: {nik}</h1>
+                    <h1 className="text-3xl font-black text-gray-900 mb-2">
+                        Nama: {profile?.employee?.nama || '-'}
+                    </h1>
+                    <p className="text-gray-500 gap-2">NIK: {profile?.employee?.no_ktp || '-'}</p>
                     <p className="text-gray-600 flex items-center justify-center md:justify-start gap-2">
-                        <FileText className="w-4 h-4" /> 
+                        <FileText className="w-4 h-4" />
                         Seluruh riwayat pengambilan ATK dan peminjaman inventaris dicatat di bawah ini.
                     </p>
                 </div>
-                
+
                 <div className="flex gap-4">
                     <div className="bg-purple-50 border border-purple-100 px-5 py-3 rounded-2xl text-center">
                         <span className="text-xs font-bold text-purple-600 uppercase">Total BHP Diminta</span>
@@ -208,10 +229,10 @@ export default function UserDetailPage() {
             {activeLoans.length > 0 && (
                 <div className="mb-10 bg-orange-50/50 border-2 border-orange-200 p-6 rounded-2xl animate-in fade-in duration-500">
                     <h4 className="text-lg font-bold text-orange-900 mb-4 flex items-center gap-2">
-                        <AlertTriangle className="text-orange-500 w-5 h-5"/> 
+                        <AlertTriangle className="text-orange-500 w-5 h-5" />
                         Tanggungan Aset Karyawan (Belum Lunas)
                     </h4>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {activeLoans.map((loan) => (
                             <div key={loan.id} className="bg-white p-4 rounded-xl border border-orange-200 shadow-sm flex flex-col justify-between">
@@ -226,7 +247,7 @@ export default function UserDetailPage() {
                                     </div>
                                     <h5 className="font-bold text-gray-800 leading-tight mb-1">{loan.item?.name}</h5>
                                 </div>
-                                
+
                                 <div className="mt-4 pt-3 border-t border-orange-100 flex justify-between items-center">
                                     <div className="text-xs text-gray-500 flex flex-col">
                                         <span>Total Pinjam: <b>{loan.qty_borrowed}</b></span>
@@ -261,10 +282,10 @@ export default function UserDetailPage() {
             <div>
                 <div className="flex justify-between items-end mb-4">
                     <h4 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <History className="text-gray-400 w-5 h-5"/> Riwayat Transaksi 
+                        <History className="text-gray-400 w-5 h-5" /> Riwayat Transaksi
                     </h4>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                     <Table
                         data={logs}

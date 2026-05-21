@@ -116,10 +116,10 @@ const TransactionCard: React.FC<TransactionCardProps> = ({ transaction }) => {
             </div>
 
             {/* Footer Card: Info Kasir */}
-            <div className="bg-gray-50 p-4 border-t flex items-center gap-2 text-xs text-gray-500">
+            {/* <div className="bg-gray-50 p-4 border-t flex items-center gap-2 text-xs text-gray-500">
                 <Info className="w-4 h-4 text-gray-400" />
                 <span>Diproses oleh: <b>{transaction.created_by_user?.nama_user || "-"}</b></span>
-            </div>
+            </div> */}
         </div>
     );
 };
