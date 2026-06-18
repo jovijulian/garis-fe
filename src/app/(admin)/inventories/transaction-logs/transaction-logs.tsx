@@ -9,7 +9,9 @@ import { toast } from "react-toastify";
 import Select from "@/components/form/Select-custom";
 import _ from "lodash";
 import ComponentCard from "@/components/common/ComponentCard";
-import { ArrowDownRight, ArrowUpRight, RefreshCcw, Package, Sliders } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, RefreshCcw, Package, Sliders, FileDown } from "lucide-react";
+import DateRangePicker from "@/components/common/DateRangePicker";
+import ExportInventoryTransactionModal from '@/components/modal/ExportInventoryTransactionModal';
 
 export default function TransactionLogsPage() {
     const searchParams = useSearchParams();
@@ -23,6 +25,9 @@ export default function TransactionLogsPage() {
     const router = useRouter()
     const [searchTerm, setSearchTerm] = useState('');
     const [transactionType, setTransactionType] = useState('');
+    const startDate = searchParams.get("start_date")
+    const endDate = searchParams.get("end_date")
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     const transactionTypeOptions = [
         { value: '', label: 'Semua Tipe Transaksi' },
@@ -35,7 +40,7 @@ export default function TransactionLogsPage() {
 
     useEffect(() => {
         getData();
-    }, [currentPage, perPage, searchTerm, transactionType]);
+    }, [currentPage, perPage, searchTerm, transactionType, startDate, endDate]);
 
     const handlePageChange = (page: number) => setCurrentPage(page);
     const handlePerPageChange = (newPerPage: number) => {
@@ -57,7 +62,10 @@ export default function TransactionLogsPage() {
             ...(transactionType ? { transaction_type: transactionType } : {}),
             per_page: perPage,
             page: currentPage,
+            start_date: startDate,
+            end_date: endDate
         };
+
 
         try {
             const response = await httpGet(endpointUrl("inventory-transactions"), true, params);
@@ -166,7 +174,7 @@ export default function TransactionLogsPage() {
                         className="font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
                         title="Lihat detail riwayat karyawan ini"
                     >
-                       {`${row.user?.employee?.no_ktp ?? '-'} - ${row.user?.employee?.nama ?? '-'}`}
+                        {`${row.user_id ?? '-'} - ${row.user?.employee?.nama ?? 'N/A'}`}
                     </span>
                 );
             }
@@ -179,55 +187,85 @@ export default function TransactionLogsPage() {
         },
     ], []);
 
+    const handleSummaryDatesChange = (dates: { startDate: string | null; endDate: string | null }) => {
+        const currentParams = new URLSearchParams(Array.from(searchParams.entries()));
+
+        if (dates.startDate) currentParams.set("start_date", dates.startDate);
+        else currentParams.delete("start_date");
+
+        if (dates.endDate) currentParams.set("end_date", dates.endDate);
+        else currentParams.delete("end_date");
+
+        router.push(`?${currentParams.toString()}`);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Package className="w-5 h-5" /></div>
                     <div>
-                        <h2 className="text-sm font-bold text-gray-900">Filter Pencarian</h2>
-                        <p className="text-xs text-gray-500">Gunakan filter untuk melacak pergerakan barang</p>
+                        <h2 className="text-sm font-bold text-gray-900">Riwayat Pergerakan Barang</h2>
+                        <p className="text-xs text-gray-500">Kelola dan pantau aktivitas transaksi barang</p>
                     </div>
                 </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                    <div className="w-full sm:w-56">
-                        <Select
-                            options={transactionTypeOptions}
-                            value={_.find(transactionTypeOptions, { value: transactionType }) || transactionTypeOptions[0]}
-                            onValueChange={(opt) => {
-                                setTransactionType(opt?.value || "");
-                                setCurrentPage(1);
-                            }}
-                            placeholder="Pilih Tipe Transaksi"
-                            isClearable
-                        />
-                    </div>
-                    <div className="w-full sm:w-64">
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={handleSearch}
-                            placeholder="Cari NIK atau Nama Barang..."
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                        />
-                    </div>
+                <div className="lg:ml-auto">
+                    <button
+                        onClick={() => setIsExportModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                        <FileDown size={18} />
+                        <span>Export</span>
+                    </button>
                 </div>
             </div>
-
-            {/* Table */}
-            <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
-                <Table
-                    data={data}
-                    columns={columnsNew}
-                    pagination={true}
-                    lastPage={lastPage}
-                    total={count}
-                    loading={isLoading}
-                    onPageChange={handlePageChange}
-                    onPerPageChange={handlePerPageChange}
+            <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <div className="flex-1">
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={handleSearch}
+                        placeholder="Cari NIK atau Nama Barang..."
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                </div>
+                <div className="flex-1">
+                    <Select
+                        options={transactionTypeOptions}
+                        value={_.find(transactionTypeOptions, { value: transactionType }) || transactionTypeOptions[0]}
+                        onValueChange={(opt) => {
+                            setTransactionType(opt?.value || "");
+                            setCurrentPage(1);
+                        }}
+                        placeholder="Pilih Tipe Transaksi"
+                        isClearable
+                    />
+                </div>
+                <DateRangePicker
+                    onDatesChange={handleSummaryDatesChange}
+                    initialStartDate={startDate}
+                    initialEndDate={endDate}
                 />
+
+
+
             </div>
+            {/* Table */}
+            <Table
+                data={data}
+                columns={columnsNew}
+                pagination={true}
+                lastPage={lastPage}
+                total={count}
+                loading={isLoading}
+                onPageChange={handlePageChange}
+                onPerPageChange={handlePerPageChange}
+            />
+
+            <ExportInventoryTransactionModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+            />
         </div>
     );
 }

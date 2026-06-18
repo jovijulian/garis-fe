@@ -16,7 +16,8 @@ import { FaEdit, FaPlus, FaTrash } from "react-icons/fa";
 import DateRangePicker from "@/components/common/DateRangePicker";
 import Select from "@/components/form/Select-custom";
 import _ from "lodash";
-import { Boxes } from "lucide-react";
+import { Boxes, ChevronDown, FileDown, PackagePlus } from "lucide-react";
+import ExportInventoryItemModal from '@/components/modal/ExportInventoryItemModal';
 
 interface TableDataItem {
     id: number;
@@ -45,6 +46,8 @@ export default function UnitPage() {
     const [selectedData, setSelectedData] = useState<any>(null);
     const [siteOptions, setSiteOptions] = useState<any[]>([]);
     const [selectedSite, setSelectedSite] = useState<any>(null);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     useEffect(() => {
         getData();
@@ -239,14 +242,16 @@ export default function UnitPage() {
 
             {/* Action Buttons */}
             <div className="flex justify-end items-center">
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+
                     <Select
                         onValueChange={(value) => setSelectedSite(value)}
-                        placeholder={"Pilih Cabang"}
+                        placeholder="Pilih Cabang"
                         value={siteOptions.find(opt => opt.value == selectedSite)}
                         options={siteOptions}
                         isClearable
                     />
+
                     <input
                         type="text"
                         value={searchTerm}
@@ -254,30 +259,54 @@ export default function UnitPage() {
                         placeholder="Search..."
                         className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     />
+
+
+                    {/* Export */}
                     <button
-                        onClick={() => router.push("/inventories/items/bulk-create")}
-                        className="px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 flex items-center gap-2"
+                        onClick={() => setIsExportModalOpen(true)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2"
                     >
-                        <Boxes className="w-4 h-4" />
-                        Tambah Massal
+                        <FileDown className="w-4 h-4" />
+                        Export
                     </button>
 
-                    <button
-                        onClick={() => router.push("/inventories/items/create")}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
-                    >
-                        <span>+</span>
-                        Tambah Barang
-                    </button>
-                    {/* {selectedRows.length > 0 && (
+
+                    {/* Create Dropdown */}
+                    <div className="relative">
                         <button
-                            onClick={handleBulkDelete}
-                            disabled={isLoading}
-                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                            onClick={() => setIsCreateOpen(!isCreateOpen)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
                         >
-                            Delete Selected ({selectedRows.length})
+                            <span>+</span>
+                            Tambah Barang
+                            <ChevronDown className="w-4 h-4" />
                         </button>
-                    )} */}
+
+
+                        {isCreateOpen && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+
+                                <button
+                                    onClick={() => router.push("/inventories/items/create")}
+                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
+                                >
+                                    <PackagePlus className="w-4 h-4" />
+                                    Tambah Satuan
+                                </button>
+
+
+                                <button
+                                    onClick={() => router.push("/inventories/items/bulk-create")}
+                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
+                                >
+                                    <Boxes className="w-4 h-4" />
+                                    Tambah Massal
+                                </button>
+
+                            </div>
+                        )}
+                    </div>
+
                 </div>
             </div>
 
@@ -315,6 +344,11 @@ export default function UnitPage() {
                 selectedId={selectedData?.id}
                 onClose={() => setIsEditOpen(false)}
                 onSuccess={getData}
+            />
+
+            <ExportInventoryItemModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
             />
         </div>
     );

@@ -136,7 +136,7 @@ export default function ItemDetailPage() {
             id: "nik",
             header: "Pihak Terkait",
             accessorKey: "nik",
-            cell: ({ row }: any) => <span className="font-medium text-gray-800"> {`${row.user?.employee?.no_ktp ?? '-'} - ${row.user?.employee?.nama ?? '-'}`}</span>,
+            cell: ({ row }: any) => <span className="font-medium text-gray-800"> {`${row.user_id ?? '-'} - ${row.user?.employee?.nama ?? '-'}`}</span>,
         },
         {
             id: "note",

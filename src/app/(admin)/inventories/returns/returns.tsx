@@ -111,7 +111,7 @@ export default function AssetReturnPage() {
                 id: "nik",
                 header: "Peminjam (NIK)",
                 accessorKey: "nik",
-                cell: ({ row }: any) => <span className="font-semibold text-gray-900">{row.nik || "-"}</span>,
+                cell: ({ row }: any) => <span className="font-semibold text-gray-900"> {`${row.user_id ?? '-'} - ${row.user?.employee?.nama ?? 'N/A'}`}</span>,
             },
             {
                 id: "item_name",
@@ -214,7 +214,7 @@ export default function AssetReturnPage() {
                     onClose={() => setIsReturnModalOpen(false)}
                     loan={selectedLoan}
                     onSuccess={() => {
-                        getData(); 
+                        getData();
                     }}
                 />
             )}

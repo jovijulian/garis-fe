@@ -45,7 +45,11 @@ export default function StockOutPage() {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [loadingOptions, setLoadingOptions] = useState(true);
     const [loadingUsers, setLoadingUsers] = useState(true);
-
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const fetchInitialData = async () => {
         setLoadingOptions(true);
@@ -58,7 +62,7 @@ export default function StockOutPage() {
                 usersRes.data.data.map((u: any) => ({
                     value: u.id_user,
                     label: u.employee
-                        ? `${u.employee.no_ktp ?? '-'} - ${u.employee.nama ?? u.nama_user}`
+                        ? `${u.id_user ?? '-'} - ${u.employee.nama ?? u.nama_user}`
                         : u.nama_user ?? 'Tanpa Nama',
                 }))
             );
@@ -82,6 +86,57 @@ export default function StockOutPage() {
             }
         };
     }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleSearchChange = (val: string) => {
+        setBarcodeInput(val);
+        setShowDropdown(true);
+
+        if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+        if (!val.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        searchTimeoutRef.current = setTimeout(async () => {
+            setIsSearching(true);
+            try {
+                const res = await httpGet(endpointUrl(`/inventory-items/options?search=${val}`), true);
+                setSearchResults(res.data?.data || []);
+            } catch (error) {
+                console.error("Error fetching options:", error);
+                setSearchResults([]);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 400);
+    };
+
+    const handleSelectOption = (item: any) => {
+        setBarcodeInput(item.barcode);
+        setShowDropdown(false);
+        setSearchResults([]);
+        handleCheckBarcode(item.barcode);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+            setShowDropdown(false);
+            handleCheckBarcode(barcodeInput);
+        }
+    };
 
     const handleCheckBarcode = async (scannedBarcode: string) => {
         if (!scannedBarcode || scannedBarcode.trim() === "") return;
@@ -457,17 +512,35 @@ export default function StockOutPage() {
                                 id="barcode-input"
                                 type="text"
                                 value={barcodeInput}
-                                onChange={(e) => setBarcodeInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleCheckBarcode(barcodeInput);
-                                    }
-                                }}
-                                placeholder="Scan barang di sini lalu tekan Enter..."
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                onFocus={() => { if (barcodeInput && searchResults.length > 0) setShowDropdown(true); }}
+                                placeholder="Ketik nama / scan barcode lalu tekan Enter"
+                                autoComplete="off"
                                 className="w-full pl-12 pr-10 py-4 border-2 border-blue-100 rounded-xl focus:ring-4 focus:ring-blue-50 focus:border-blue-500 text-sm outline-none transition-all bg-white shadow-sm font-medium"
                             />
-                            {isCheckingBarcode && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500 animate-spin" />}
+                            {(isCheckingBarcode || isSearching) && (
+                                <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500 animate-spin z-10" />
+                            )}
+                            {showDropdown && searchResults.length > 0 && (
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                                    {searchResults.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            onClick={() => handleSelectOption(item)}
+                                            className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors"
+                                        >
+                                            <div className="font-semibold text-sm text-gray-800">{item.name}</div>
+                                            <div className="text-xs text-gray-500 flex justify-between mt-1">
+                                                <span className="text-blue-600">{item.barcode}</span>
+                                                <span className="font-medium text-gray-600">
+                                                    Stok: {item.stock_available} {item.base_unit?.name}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <button

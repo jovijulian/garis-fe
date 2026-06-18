@@ -18,10 +18,14 @@ export default function StockInPage() {
     const [isCheckingBarcode, setIsCheckingBarcode] = useState(false);
     const [cabId, setCabId] = useState<number>(0);
 
-    // Menyimpan data barang yang berhasil di-scan
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     const [scannedItem, setScannedItem] = useState<any>(null);
 
-    // Payload murni untuk transaksi
     const [formData, setFormData] = useState({
         barcode: "",
         item_id: null as number | null,
@@ -39,6 +43,16 @@ export default function StockInPage() {
         return () => {
             if (scannerRef.current) scannerRef.current.clear().catch(e => console.error(e));
         };
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     // 1. MEMBENTUK DROPDOWN UOM DINAMIS BERDASARKAN BARANG YANG DI-SCAN
@@ -87,6 +101,48 @@ export default function StockInPage() {
             return `${qty} ${selectedUnit.unitName} × ${selectedUnit.multiplier} = ${totalInBase} ${scannedItem.base_unit?.name}`;
         }
     }, [formData.input_qty, formData.input_unit_id, scannedItem, availableUnits]);
+
+
+    const handleSearchChange = (val: string) => {
+        setFormData(prev => ({ ...prev, barcode: val }));
+        setShowDropdown(true);
+
+        if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+        if (!val.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        searchTimeoutRef.current = setTimeout(async () => {
+            setIsSearching(true);
+            try {
+                const res = await httpGet(endpointUrl(`/inventory-items/options?search=${val}`), true);
+                setSearchResults(res.data?.data || []);
+            } catch (error) {
+                console.error("Error fetching options:", error);
+                setSearchResults([]);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 400);
+    };
+
+    const handleSelectOption = (item: any) => {
+        setFormData(prev => ({ ...prev, barcode: item.barcode }));
+        setShowDropdown(false);
+        setSearchResults([]);
+        handleCheckBarcode(item.barcode);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+            setShowDropdown(false);
+            handleCheckBarcode(formData.barcode);
+        }
+    };
 
 
     const handleCheckBarcode = async (scannedBarcode: string) => {
@@ -162,13 +218,13 @@ export default function StockInPage() {
     const startScanner = () => {
         setTimeout(() => {
             const config = {
-                fps: 15, 
+                fps: 15,
 
                 qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
                     const dynamicWidth = Math.min(320, viewfinderWidth - 32);
-                    return { width: dynamicWidth, height: 160 }; 
+                    return { width: dynamicWidth, height: 160 };
                 },
-    
+
                 formatsToSupport: [
                     Html5QrcodeSupportedFormats.EAN_13,
                     Html5QrcodeSupportedFormats.EAN_8,
@@ -177,25 +233,25 @@ export default function StockInPage() {
                     Html5QrcodeSupportedFormats.UPC_A,
                     Html5QrcodeSupportedFormats.UPC_E,
                 ],
-    
+
                 experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true 
+                    useBarCodeDetectorIfSupported: true
                 },
-    
+
                 aspectRatio: 1.777778,
-    
+
                 videoConstraints: {
                     facingMode: "environment",
                     width: { min: 640, ideal: 1280, max: 1920 },
                     height: { min: 480, ideal: 720, max: 1080 },
                     advanced: [
                         { focusMode: "continuous" } as any,
-                        { zoom: 2.0 } as any 
+                        { zoom: 2.0 } as any
                     ] as any
                 },
-    
+
                 disableFlip: true,
-                rememberLastUsedCamera: true, 
+                rememberLastUsedCamera: true,
             };
             const newScanner = new Html5QrcodeScanner(`reader-single`, config, false);
             scannerRef.current = newScanner;
@@ -294,17 +350,40 @@ export default function StockInPage() {
                     </label>
 
                     <div className="flex gap-2">
-                        <div className="relative flex-grow">
-                            <ScanBarcode className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <div className="relative flex-grow" ref={dropdownRef}>
+                            <ScanBarcode className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
                             <input
                                 type="text"
                                 value={formData.barcode}
-                                onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
-                                onBlur={(e) => handleCheckBarcode(e.target.value)}
-                                placeholder="Scan atau ketik barcode lalu tekan Tab/Enter"
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                onFocus={() => { if (formData.barcode && searchResults.length > 0) setShowDropdown(true); }}
+                                placeholder="Ketik nama / scan barcode lalu tekan Enter"
+                                autoComplete="off"
                                 className="w-full pl-12 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 text-sm outline-none transition-all bg-gray-50 focus:bg-white"
                             />
-                            {isCheckingBarcode && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500 animate-spin" />}
+                            {(isCheckingBarcode || isSearching) && (
+                                <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500 animate-spin z-10" />
+                            )}
+                            {showDropdown && searchResults.length > 0 && (
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                                    {searchResults.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            onClick={() => handleSelectOption(item)}
+                                            className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors"
+                                        >
+                                            <div className="font-semibold text-sm text-gray-800">{item.name}</div>
+                                            <div className="text-xs text-gray-500 flex justify-between mt-1">
+                                                <span className="text-blue-600">{item.barcode}</span>
+                                                <span className="font-medium text-gray-600">
+                                                    Stok: {item.stock_available} {item.base_unit?.name}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         <button
                             type="button" onClick={toggleScanner}
@@ -316,15 +395,15 @@ export default function StockInPage() {
                     </div>
 
                     {isScannerActive && (
-                            <div className="mt-4 p-2 sm:p-4 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl relative w-full overflow-hidden">
-                                <div id="reader-single" className="w-full"></div>
-                                <div className="mt-3 text-center w-full">
-                                    <p className="text-xs text-blue-600 font-medium">
-                                        Arahkan kamera ke barcode. Jaga jarak 10-15cm agar fokus.
-                                    </p>
-                                </div>
+                        <div className="mt-4 p-2 sm:p-4 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl relative w-full overflow-hidden">
+                            <div id="reader-single" className="w-full"></div>
+                            <div className="mt-3 text-center w-full">
+                                <p className="text-xs text-blue-600 font-medium">
+                                    Arahkan kamera ke barcode. Jaga jarak 10-15cm agar fokus.
+                                </p>
                             </div>
-                        )}
+                        </div>
+                    )}
                 </div>
 
                 {!scannedItem ? (

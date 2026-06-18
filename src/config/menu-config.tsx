@@ -283,12 +283,12 @@ export const menuConfig: Record<string, NavItem[]> = {
       path: '/inventories/stock-out',
       roles: [1, 2],
     },
-    {
-      name: 'Pengajuan',
-      icon: <FilePlus />,
-      path: '/inventories/create',
-      roles: [3],
-    },
+    // {
+    //   name: 'Pengajuan',
+    //   icon: <FilePlus />,
+    //   path: '/inventories/create',
+    //   roles: [3],
+    // },
     {
       name: 'Pinjaman Saya',
       icon: <Package />,

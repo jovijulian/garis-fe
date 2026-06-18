@@ -207,7 +207,7 @@ export default function UserDetailPage() {
                     <h1 className="text-3xl font-black text-gray-900 mb-2">
                         Nama: {profile?.employee?.nama || '-'}
                     </h1>
-                    <p className="text-gray-500 gap-2">NIK: {profile?.employee?.no_ktp || '-'}</p>
+                    <p className="text-gray-500 gap-2">NIK: {profile?.id_user || '-'}</p>
                     <p className="text-gray-600 flex items-center justify-center md:justify-start gap-2">
                         <FileText className="w-4 h-4" />
                         Seluruh riwayat pengambilan ATK dan peminjaman inventaris dicatat di bawah ini.
