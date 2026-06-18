@@ -104,16 +104,20 @@ export default function UnitPage() {
                             </button>
 
                             {/* Delete */}
-                            <button
-                                onClick={() => {
-                                    setSelectedData(row);
-                                    setIsDeleteModalOpen(true);
-                                }}
-                                title="Delete"
-                                className="p-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-all"
-                            >
-                                <FaTrash className="w-4 h-4" />
-                            </button>
+                            {row.is_deletable && (
+                                <button
+                                    onClick={() => {
+                                        setSelectedData(row);
+                                        setIsDeleteModalOpen(true);
+                                    }}
+                                    title="Delete"
+                                    className="p-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-all"
+                                >
+                                    <FaTrash className="w-4 h-4" />
+                                </button>
+                            )
+                            }
+
                         </div>
                     );
                 },

@@ -9,7 +9,7 @@ import { endpointUrl, httpGet } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import Table from "@/components/tables/Table";
 import {
-    Package, ScanBarcode, Layers, AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCcw, Sliders, Tags
+    Package, ScanBarcode, Layers, AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCcw, Sliders, Tags, Printer
 } from "lucide-react";
 
 export default function ItemDetailPage() {
@@ -152,6 +152,47 @@ export default function ItemDetailPage() {
         },
     ], []);
 
+    const handlePrintBarcode = async (id: string) => {
+        if (!id) return;
+    
+        setIsLoadingLogs(true);
+    
+        try {
+            const response = await fetch(
+                endpointUrl(`inventory-items/print-barcode/${id}`),
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                }
+            );
+    
+            if (!response.ok) {
+                throw new Error("Gagal mengambil barcode");
+            }
+    
+            const blob = await response.blob();
+    
+            const url = window.URL.createObjectURL(blob);
+    
+            const newWindow = window.open(url, "_blank");
+    
+            if (!newWindow) {
+                toast.error("Popup diblokir browser");
+                return;
+            }
+    
+            newWindow.onload = () => {
+                newWindow.print();
+            };
+    
+        } catch (error) {
+            console.error(error);
+            toast.error("Gagal mencetak barcode.");
+        } finally {
+            setIsLoadingLogs(false);
+        }
+    };
     if (isItemLoading) return <p className="text-center mt-10 text-gray-500">Memuat detail barang...</p>;
     if (!itemData) return <p className="text-center mt-10 text-red-500">Barang tidak ditemukan.</p>;
 
@@ -162,14 +203,36 @@ export default function ItemDetailPage() {
             <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 pb-6 border-b border-gray-100">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
-                        <h1 className="text-3xl font-bold text-gray-800">{itemData.name}</h1>
-                        <span className={`px-3 py-1 text-xs font-bold rounded-full ${itemData.item_type === 1 ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
+                        <h1 className="text-3xl font-bold text-gray-800">
+                            {itemData.name}
+                        </h1>
+
+                        <span className={`px-3 py-1 text-xs font-bold rounded-full ${itemData.item_type === 1
+                                ? 'bg-purple-100 text-purple-700'
+                                : 'bg-orange-100 text-orange-700'
+                            }`}>
                             {itemData.item_type === 1 ? 'BHP' : 'ASET / PINJAMAN'}
                         </span>
                     </div>
+
+
                     <p className="text-gray-500 flex items-center gap-2">
-                        <ScanBarcode className="w-4 h-4" /> Barcode: <strong>{itemData.barcode || 'Tidak ada barcode'}</strong>
+                        <ScanBarcode className="w-4 h-4" />
+                        Barcode:
+                        <strong>{itemData.barcode || 'Tidak ada barcode'}</strong>
                     </p>
+
+
+                    {itemData.barcode && (
+                        <button
+                            onClick={() => handlePrintBarcode(itemData.id)}
+                            className="mt-3 flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition"
+                        >
+                            <Printer className="w-4 h-4" />
+                            Print Barcode
+                        </button>
+                    )}
+
                 </div>
 
                 <div className={`flex flex-col items-end px-6 py-4 rounded-2xl border-2 ${isLowStock ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
