@@ -12,9 +12,11 @@ import { useRouter } from 'next/navigation';
 import { toast } from "react-toastify";
 import DeactiveModal from "@/components/modal/deactive/Deactive";
 import EditModal from "@/components/modal/edit/EditReminderModal";
-import { FaEdit, FaPlus, FaTrash, FaCheck, FaEye } from "react-icons/fa"; // Tambahkan FaCheck
+import { FaEdit, FaPlus, FaTrash, FaCheck, FaEye, FaHistory, FaUpload } from "react-icons/fa"; // Tambahkan FaCheck
 import DateRangePicker from "@/components/common/DateRangePicker";
 import DetailReminderModal from "@/components/modal/DetailReminderModal";
+import MarkCompleteModal from "@/components/modal/MarkCompleteModal";
+import UploadProofModal from "@/components/modal/UploadProofModal";
 
 interface TableDataItem {
     id: number;
@@ -31,7 +33,8 @@ export default function ReminderTypePage() {
     const [perPage, setPerPage] = useState(20);
     const [selectedRows, setSelectedRows] = useState<TableDataItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-
+    const [isMarkModalOpen, setIsMarkModalOpen] = useState(false);
+    const [isUploadProofOpen, setIsUploadProofOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [deleteData, setDeleteData] = useState<TableDataItem | null>(null);
@@ -94,68 +97,47 @@ export default function ReminderTypePage() {
 
                     return (
                         <div className="flex items-center gap-2">
-                            {/* TOMBOL DETAIL (Selalu Muncul) */}
+                            {/* TOMBOL DETAIL */}
                             <button
-                                onClick={() => {
-                                    setDetailId(row.id);
-                                    setIsDetailOpen(true);
-                                }}
+                                onClick={() => router.push(`/reminders/reminders/${row.id}`)}
                                 title="Lihat Detail"
-                                className="p-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+                                className="p-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200"
                             >
                                 <FaEye className="w-4 h-4" />
                             </button>
 
-                            {/* Tombol Mark Completed (Hanya PENDING / OVERDUE) */}
                             {status !== "COMPLETED" && (
                                 <button
-                                    onClick={() => handleMarkCompleted(row.id)}
-                                    disabled={markingId === row.id}
-                                    title="Tandai Selesai"
-                                    className={`p-2 rounded-md transition-all flex items-center justify-center
-                                        ${markingId === row.id
-                                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                                        }`}
+                                    onClick={() => { setSelectedData(row); setIsMarkModalOpen(true); }}
+                                    title="Selesaikan & Perpanjang"
+                                    className="p-2 rounded-md bg-green-100 text-green-700 hover:bg-green-200"
                                 >
-                                    {markingId === row.id ? (
-                                        <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></span>
-                                    ) : (
-                                        <FaCheck className="w-4 h-4" />
-                                    )}
+                                    <FaCheck className="w-4 h-4" />
                                 </button>
                             )}
 
-                            {/* Tombol Edit & Delete HANYA muncul jika PENDING */}
+                            {/* TOMBOL UPLOAD BUKTI (Jika COMPLETED tapi ingin susul bukti) */}
+                            {status === "COMPLETED" && (
+                                <button
+                                    onClick={() => { setSelectedData(row); setIsUploadProofOpen(true); }}
+                                    title="Susulkan File Bukti"
+                                    className="p-2 rounded-md bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100"
+                                >
+                                    <FaUpload className="w-4 h-4" />
+                                </button>
+                            )}
+
+                            {/* TOMBOL EDIT & DELETE (Hanya PENDING) */}
                             {status === "PENDING" && (
                                 <>
-                                    <button
-                                        onClick={() => {
-                                            router.push(`/reminders/reminders/edit/${row.id}`);
-                                        }}
-                                        title="Edit"
-                                        className="p-2 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all"
-                                    >
-                                        <FaEdit className="w-4 h-4" />
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            setSelectedData(row);
-                                            setIsDeleteModalOpen(true);
-                                        }}
-                                        title="Delete"
-                                        className="p-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-all"
-                                    >
-                                        <FaTrash className="w-4 h-4" />
-                                    </button>
+                                    <button onClick={() => router.push(`/reminders/reminders/edit/${row.id}`)} className="p-2 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200"><FaEdit className="w-4 h-4" /></button>
+                                    <button onClick={() => { setSelectedData(row); setIsDeleteModalOpen(true); }} className="p-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200"><FaTrash className="w-4 h-4" /></button>
                                 </>
                             )}
                         </div>
                     );
                 },
-                minWidth: "120px",
-                maxWidth: "150px",
+                minWidth: "220px",
             },
             ...(role === 1 ? [{
                 id: "cabang",
@@ -163,6 +145,12 @@ export default function ReminderTypePage() {
                 accessorKey: "cabang",
                 cell: ({ row }: any) => <span>{row.cabang?.nama_cab}</span>,
             }] : []),
+            {
+                id: "reminder_code",
+                header: "Kode",
+                accessorKey: "reminder_code",
+                cell: ({ row }: any) => <span>{row.reminder_code}</span>,
+            },
             {
                 id: "title",
                 header: "Judul",
@@ -333,6 +321,19 @@ export default function ReminderTypePage() {
                     setIsDetailOpen(false);
                     setDetailId(null);
                 }}
+            />
+            <MarkCompleteModal
+                isOpen={isMarkModalOpen}
+                onClose={() => setIsMarkModalOpen(false)}
+                selectedData={selectedData}
+                onSuccess={getData}
+            />
+
+            <UploadProofModal
+                isOpen={isUploadProofOpen}
+                onClose={() => setIsUploadProofOpen(false)}
+                selectedId={selectedData?.id}
+                onSuccess={getData}
             />
         </div>
     );
