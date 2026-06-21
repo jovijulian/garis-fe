@@ -88,7 +88,7 @@ export default function UnifiedDetailHistoryPage() {
     }
 
     return (
-        <div className="space-y-6 max-w-5xl mx-auto pb-10">
+        <div className="space-y-6">
             <ComponentCard title="Informasi Pengingat">
                 <div className="space-y-6">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
