@@ -33,7 +33,8 @@ import {
   Undo,
   RotateCcw,
   Sliders,
-  FilePlus
+  FilePlus,
+  FolderOpenDot
 } from 'lucide-react';
 
 export type NavItem = {
@@ -355,6 +356,40 @@ export const menuConfig: Record<string, NavItem[]> = {
       roles: [1, 2, 3],
     }
   ],
+
+  project: [
+    {
+      name: 'Dashboard',
+      icon: <LayoutDashboard />,
+      path: '/projects/dashboard',
+      roles: [1, 2],
+    },
+    {
+      name: 'List Pengajuan',
+      icon: <ClipboardList />,
+      path: '/projects/manage-request',
+      roles: [1, 2],
+    },
+    {
+      name: 'Buat Pengajuan',
+      icon: <PlusCircle />,
+      path: '/projects/create',
+      roles: [3],
+    },
+    {
+      name: 'Pengajuan saya',
+      icon: <FolderOpenDot />,
+      path: '/projects/my-requests',
+      roles: [3],
+    },
+    {
+      name: 'Menu',
+      icon: <Home />,
+      path: '/menus',
+      roles: [1, 2, 3],
+    }
+  ],
+
   user: [
     {
       name: "Booking Saya",

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import AppHeader from "@/layout/AppHeader";
 import { endpointUrl, httpGet } from "../../../../helpers";
+import ApprovalNotificationSection from "@/components/notifications/ApprovalNotificationSection";
 
 interface PendingCounts {
     pending_bookings: number;
@@ -80,9 +81,10 @@ const menuItems: {
         title: "Pengajuan Proyek",
         description: "Kelola dan ajukan proyek baru.",
         icon: Briefcase,
-        href: "/projects",
+        href: "/projects/dashboard",
         color: "purple",
-        comingSoon: true, 
+        allowedRoles: ["1", "2", "3"],
+        // comingSoon: true, 
     },
     {
         title: "Pengingat",
@@ -157,6 +159,10 @@ const MenuCard: React.FC<MenuCardProps> = ({
 
     if (title === "Inventaris" && userRole === "3") {
         dynamicHref = "/inventories/my-loans";
+    }
+
+    if (title === "Pengajuan Proyek" && userRole === "3") {
+        dynamicHref = "/projects/my-requests";
     }
 
     if (title === "Pengajuan Kendaraan") {
@@ -355,6 +361,8 @@ export default function MenusPage() {
                             Silakan pilih menu yang ingin Anda akses di bawah ini.
                         </p>
                     </div>
+
+                    <ApprovalNotificationSection />
 
                     <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
                         {menuItems.map((item, index) => {
