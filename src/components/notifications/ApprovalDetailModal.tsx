@@ -109,7 +109,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4">
+      <div className="fixed inset-0 z-9999999 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4">
         <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[96vh] sm:max-h-[90vh] flex flex-col">
           {/* Modal Header */}
           <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-100 bg-gray-50/80">
