@@ -17,8 +17,9 @@ import ImagePreviewModal from "@/components/modal/ImagePreviewModal";
 import { ProjectRequestDetail } from "@/types/project";
 import {
   ArrowLeft, Building2, User, Calendar, FileText, AlertTriangle,
-  Wrench, CheckCircle2, XCircle, PlusCircle, Send, ShieldCheck, Paperclip
+  Wrench, CheckCircle2, XCircle, PlusCircle, Send, ShieldCheck, Paperclip, Loader2
 } from "lucide-react";
+import { FaFilePdf } from "react-icons/fa";
 
 const getFullImageUrl = (fileUrl: string) => {
   if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
@@ -36,7 +37,7 @@ export default function AdminProjectRequestDetailPage() {
   const params = useParams();
   const id = Number(params?.id);
   moment.locale('id');
-
+  const [isExport, setIsExport] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [actionType, setActionType] = useState<'APPROVED' | 'REJECTED'>('APPROVED');
   const [isAddProgressModalOpen, setIsAddProgressModalOpen] = useState(false);
@@ -84,6 +85,42 @@ export default function AdminProjectRequestDetailPage() {
     }
   };
 
+  const handleExport = async () => {
+    if (!data) return;
+    setIsExport(true);
+    try {
+      const response = await httpGet(endpointUrl(`project-requests/${data.id}/print`), true);
+      const htmlContent = response.data;
+
+      if (!htmlContent) {
+        toast.error('Gagal mendapatkan data untuk dicetak.');
+        return;
+      }
+
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      iframe.contentDocument?.open();
+      iframe.contentDocument?.write(htmlContent);
+      iframe.contentDocument?.close();
+
+      iframe.onload = function () {
+        iframe.contentWindow?.print();
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      };
+
+    } catch (error) {
+      setIsExport(false);
+      console.error('Gagal mencetak nota:', error);
+      toast.error('Terjadi kesalahan saat menyiapkan nota.');
+    } finally {
+      setIsExport(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] p-8">
@@ -108,7 +145,7 @@ export default function AdminProjectRequestDetailPage() {
     );
   }
 
-  const isApprovedOrInProgress = ['WAITING_GA', 'IN_PROGRESS', 'WAITING_VERIFICATION'].includes(data.status);
+  const isApprovedOrInProgress = ['IN_PROGRESS', 'WAITING_VERIFICATION'].includes(data.status);
 
   return (
     <>
@@ -136,7 +173,7 @@ export default function AdminProjectRequestDetailPage() {
               </div>
             )}
 
-            {!isApprovedOrInProgress && data.status !== 'CLOSED' && (
+            {isApprovedOrInProgress && data.status !== 'CLOSED' && (
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setIsAddProgressModalOpen(true)}
@@ -155,6 +192,17 @@ export default function AdminProjectRequestDetailPage() {
                   <span>Minta Verifikasi ke User</span>
                 </button>
               </div>
+            )}
+            {data.status !== 'WAITING_GA' && (
+              <button
+                onClick={handleExport}
+                title="Unduh Surat Perintah Jalan (PDF)"
+                disabled={isExport}
+                className="p-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200 flex items-center gap-1 text-xs sm:text-sm disabled:opacity-50"
+              >
+                {isExport ? <Loader2 className="animate-spin w-4 h-4" /> : <FaFilePdf className="w-3 h-3" />}
+                <span className="hidden sm:inline">Cetak Permintaan</span>
+              </button>
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
