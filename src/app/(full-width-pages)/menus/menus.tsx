@@ -14,6 +14,7 @@ import {
     Clock,
     Loader2,
     Lock,
+    BookOpen,
 } from "lucide-react";
 import AppHeader from "@/layout/AppHeader";
 import { endpointUrl, httpGet } from "../../../../helpers";
@@ -363,6 +364,29 @@ export default function MenusPage() {
                     </div>
 
                     <ApprovalNotificationSection />
+
+                    {/* Panduan Pengguna Notice Banner */}
+                    <div className={`max-w-5xl mx-auto bg-blue-50/85 border border-blue-100 dark:bg-blue-950/20 dark:border-blue-900/30 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
+                        <div className="flex items-center gap-3.5">
+                            <div className="p-2.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
+                                <BookOpen className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-blue-900 dark:text-blue-100 text-sm">Panduan Pengguna (User Guide)</h4>
+                                <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                                    Butuh bantuan? Silakan pelajari cara menggunakan seluruh fitur aplikasi Garis melalui panduan resmi kami.
+                                </p>
+                            </div>
+                        </div>
+                        <a
+                            href="https://rb.gy/hag2j7"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full sm:w-auto text-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all duration-200 hover:shadow hover:shadow-blue-500/20 active:scale-95"
+                        >
+                            Buka Panduan
+                        </a>
+                    </div>
 
                     <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
                         {menuItems.map((item, index) => {

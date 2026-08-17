@@ -58,7 +58,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 
     return (
         <div
-            className="fixed mt-7 inset-0 flex items-center justify-center z-50 p-2"
+            className="fixed mt-7 inset-0 flex items-center justify-center z-999999999999 p-2"
             onClick={handleBackdropClick}
         >
             <div
