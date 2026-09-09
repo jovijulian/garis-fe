@@ -25,6 +25,7 @@ interface PendingCounts {
     pending_vehicle_requests: number;
     pending_orders: number;
     alert_reminders: number;
+    pending_project_requests: number;
 }
 
 const colors = {
@@ -403,6 +404,8 @@ export default function MenusPage() {
                                     countToShow = pendingCounts.pending_orders;
                                 } else if (item.title === "Pengingat") {
                                     countToShow = pendingCounts.alert_reminders;
+                                } else if (item.title === "Pengajuan Proyek") {
+                                    countToShow = pendingCounts.pending_project_requests;
                                 }
                             }
 
