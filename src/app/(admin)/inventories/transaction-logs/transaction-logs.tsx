@@ -126,7 +126,7 @@ export default function TransactionLogsPage() {
                     <span className="font-semibold text-blue-600 hover:underline cursor-pointer" onClick={() => router.push(`/inventories/items/${row.item_id}`)}>
                         {row.item?.name || "-"}
                     </span>
-                    <span className="text-xs text-gray-500">{row.item?.barcode || ""}</span>
+                    <span className="text-gray-500">{row.item?.barcode || ""}</span>
                 </div>
             ),
         },
@@ -183,7 +183,7 @@ export default function TransactionLogsPage() {
             id: "created_by",
             header: "Dibuat Oleh",
             accessorKey: "created_by",
-            cell: ({ row }: any) => <span className="text-sm text-gray-600">{row.created_by_user?.nama_user || row.created_by}</span>,
+            cell: ({ row }: any) => <span className="text-gray-600">{row.created_by_user?.nama_user || row.created_by}</span>,
         },
     ], []);
 

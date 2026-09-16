@@ -33,7 +33,7 @@ export default function RootLayout({
   }, [pathname, router]);
   return (
     <html lang="en">
-      <body className={`${outfit.className} dark:bg-gray-900`}>
+      <body className={`${outfit.className} bg-gradient-to-br from-slate-50 to-blue-100`}>
       <VersionChecker />
       <SystemAnnouncement />
         <ToastContainer

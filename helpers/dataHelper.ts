@@ -14,7 +14,7 @@ export function parseMenuDescription(menuDescription: any) {
         .filter(item => item.length > 0);
 }
 
-export type BadgeColor = "success" | "error" | "warning" | "info";
+export type BadgeColor = "success" | "error" | "warning" | "info" | "primary";
 
 export interface BadgePropsHelper {
   color: BadgeColor;
@@ -26,8 +26,10 @@ const STATUS_MAP: Record<string, BadgePropsHelper> = {
   Rejected: { color: "error", children: "Rejected" },
   Canceled: { color: "error", children: "Canceled" },
   "In Progress": { color: "info", children: "In Progress" },
-  Completed: { color: "success", children: "Completed" },
+  Completed: { color: "primary", children: "Completed" },
   Submit: { color: "warning", children: "Submit" },
+  Overdue: { color: "error", children: "Overdue" },
+  Pending: { color: "warning", children: "Pending" },
 };
 
 export function getBadgeStatus(status: string): BadgePropsHelper {

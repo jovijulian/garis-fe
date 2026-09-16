@@ -310,6 +310,23 @@ export default function AdminVehicleRequestDetailPage() {
                                 <span className="hidden sm:inline">Unduh SPJ</span>
                             </button>
                         )}
+                        {data.status === 'Submit' && (
+                             <div className="flex justify-end gap-3">
+                                <button
+                                    className="px-5 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                                    onClick={() => handleOpenStatusModal(data, "Rejected")}
+                                >
+                                    Tolak Pengajuan
+                                </button>
+                                <button
+                                    className="px-5 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                                    onClick={() => handleOpenStatusModal(data, "Approved")}
+                                >
+                                    Setujui Pengajuan
+                                </button>
+                            </div>
+                        )}
+
                         {/* Print SPJ Button (Conditional - e.g., show if Approved and has assignments) */}
                         {/* {data.status === 'Approved' && data.detail.length > 0 && ( ... Print Button ...)} */}
                     </div>
@@ -324,7 +341,7 @@ export default function AdminVehicleRequestDetailPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                     <div className="lg:col-span-3 space-y-6">
-                        <Section title="Detail Permintaan" icon={<FaClipboardList />}>
+                        <Section title="Detail Permintaan" icon={null}>
                             <InfoRow label="Tujuan" value={data.destination} />
                             <InfoRow label="Waktu Selesai" value={data.end_time ? moment(data.end_time).format('DD MMM YYYY, HH:mm') : "-"} />
                             <InfoRow label="Jenis Kendaraan Diminta" value={data.vehicle_type?.name || 'Tidak spesifik'} />
@@ -332,7 +349,7 @@ export default function AdminVehicleRequestDetailPage() {
                             <InfoRow label="Butuh Supir?" value={data.requires_driver === 1 ? 'Ya' : 'Tidak'} />
                         </Section>
 
-                        <Section title="Informasi Penumpang" icon={<FaUsers />}>
+                        <Section title="Informasi Penumpang" icon={null}>
                             {data.passenger_names ? (
                                 <p className="text-gray-600 bg-gray-50 p-3 rounded-md whitespace-pre-wrap">{data.passenger_names}</p>
                             ) : (
@@ -341,7 +358,7 @@ export default function AdminVehicleRequestDetailPage() {
                         </Section>
 
                         {['Approved', 'In Progress', 'Completed'].includes(data.status) && (
-                            <Section title="Penugasan Kendaraan & Supir" icon={<FaCar />}>
+                            <Section title="Penugasan Kendaraan & Supir" icon={null}>
                                 {data.detail && data.detail.length > 0 ? (
                                     <div className="space-y-4">
                                         {data.detail.map((assignment, index) => (
@@ -377,7 +394,7 @@ export default function AdminVehicleRequestDetailPage() {
 
                     <div className="lg:col-span-2">
                         <div className="bg-white border rounded-lg p-5 sticky top-24">
-                            <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaStickyNote /> Catatan Tambahan dari Pemohon</h4>
+                            <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">Catatan Tambahan dari Pemohon</h4>
                             {data.note ? (
                                 <p className="text-gray-600 bg-gray-50 p-3 rounded-md whitespace-pre-wrap">{data.note}</p>
                             ) : (
@@ -387,26 +404,10 @@ export default function AdminVehicleRequestDetailPage() {
                     </div>
                 </div>
 
-                {data.status === 'Submit' && (
-                    <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
-                        <button
-                            className="px-5 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
-                            onClick={() => handleOpenStatusModal(data, "Rejected")}
-                        >
-                            Tolak Pengajuan
-                        </button>
-                        <button
-                            className="px-5 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
-                            onClick={() => handleOpenStatusModal(data, "Approved")}
-                        >
-                            Setujui Pengajuan
-                        </button>
-                    </div>
-                )}
 
                 {data.approved_by && (
                     <div className="mt-6">
-                        <Section title="Informasi Status" icon={<FaUserCheck />}>
+                        <Section title="Informasi Status" icon={null}>
                             <p>Status terakhir diperbarui pada {moment(data.updated_at).format('DD MMM YYYY, HH:mm')}
                                 {data.approved_by && ` oleh ${data.approved_by}`}.
                             </p>

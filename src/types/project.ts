@@ -101,4 +101,5 @@ export interface ProjectRequestDetail extends ProjectRequestListItem {
     nama_dept: string;
   };
   progress_timeline: ProjectProgressTimelineItem[];
+  cabang: any
 }

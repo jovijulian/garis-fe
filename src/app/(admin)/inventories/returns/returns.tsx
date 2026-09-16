@@ -127,7 +127,7 @@ export default function AssetReturnPage() {
                     const remaining = row.qty_borrowed - row.qty_returned;
                     const unitName = row.item?.base_unit?.name || 'Unit';
                     return (
-                        <span className="inline-flex items-center justify-center bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-xs font-bold">
+                        <span className="inline-flex items-center justify-center bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-bold">
                             {remaining} {unitName}
                         </span>
                     );
@@ -143,7 +143,7 @@ export default function AssetReturnPage() {
                 id: "created_by",
                 header: "Dibuat Oleh",
                 accessorKey: "created_by",
-                cell: ({ row }: any) => <span className="text-gray-500">{row.created_by_user?.nama_user || row.created_by}</span>,
+                cell: ({ row }: any) => <span className="">{row.created_by_user?.nama_user || row.created_by}</span>,
             },
         ];
     }, [returnInputs, isSubmitting]);

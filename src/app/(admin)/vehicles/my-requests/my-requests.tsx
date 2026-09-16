@@ -102,7 +102,7 @@ export default function MyVehicleRequestsPage() {
 
     return (
         <>
-            <div className="p-4 md:p-6 space-y-6 bg-gray-50 min-h-screen">
+            <div className="p-4 md:p-6 space-y-6 min-h-screen">
                 <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-800"></h1>
                     <button

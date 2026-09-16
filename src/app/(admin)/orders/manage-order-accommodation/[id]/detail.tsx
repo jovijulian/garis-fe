@@ -5,15 +5,16 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import moment from "moment";
 import 'moment/locale/id';
-import { endpointUrl, httpGet, httpPut } from "@/../helpers";
+import { endpointUrl, getBadgeStatus, httpGet, httpPut } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import {
     FaUser, FaBuilding, FaUsers, FaClock, FaClipboardList, FaStickyNote, FaPrint,
     FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaBed, FaCalendarAlt, FaMale, FaFemale
 } from "react-icons/fa";
 import ChangeStatusOrderModal from "@/components/modal/ChangeStatusOrderModal";
-import { CircleX, Printer } from "lucide-react";
+import { CircleX, Loader2, Printer } from "lucide-react";
 import CancelOrderModal from "@/components/modal/CancelOrderModal";
+import Badge from "@/components/ui/badge/Badge";
 interface GuestItem {
     id: number;
     guest_name: string;
@@ -140,29 +141,60 @@ export default function AccommodationAdminDetailPage() {
         }
     };
 
-    if (isLoading) return <p className="text-center mt-10">Memuat data akomodasi...</p>;
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-[50vh]">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <p className="ml-4 text-gray-700">Memuat detail pesanan...</p>
+            </div>
+        );
+    }
     if (!data) return <p className="text-center mt-10">Data tidak ditemukan.</p>;
 
     return (
-        <ComponentCard title="Detail Admin - Pesanan Akomodasi">
-            <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                        {data.room_needed}
-                    </h1>
-                    <p className="text-gray-500">Diajukan oleh: <strong>{data.user.nama_user}</strong></p>
+        <ComponentCard title="Detail - Pesanan Akomodasi">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 pb-4 border-b">
+
+                <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="text-2xl font-bold text-gray-800">
+                            {data.room_needed}
+                        </h1>
+                    </div>
+                    <p className="text-sm text-gray-500 flex flex-wrap items-center gap-x-1">
+                        <span>Diajukan oleh</span>
+                        <strong className="text-gray-700">
+                            {data.user.nama_user}
+                        </strong>
+                    </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    {getStatusBadge(data.status)}
+                    <Badge {...getBadgeStatus(data.status)} />
                     {data.status === 'Approved' && (
                         <>
                             <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition">
                                 <Printer size={18} /> Cetak Nota
                             </button>
                             <button onClick={() => setIsCancelModalOpen(true)} className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 rounded-lg text-gray-700 hover:bg-gray-200 transition">
-                                <CircleX className="text-red-500" size={18} /> Cancel
+                                <CircleX className="text-red-500" size={18} />
                             </button>
                         </>
+                    )}
+                    {data.status === 'Submit' && (
+                        <div className="flex justify-end gap-2">
+                            <button
+                                className="px-6 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+                                onClick={() => { setActionType("Rejected"); setIsStatusModalOpen(true); }}
+                            >
+                                Tolak
+                            </button>
+                            <button
+                                className="px-6 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+                                onClick={() => { setActionType("Approved"); setIsStatusModalOpen(true); }}
+                            >
+                                Setujui
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
@@ -172,53 +204,29 @@ export default function AccommodationAdminDetailPage() {
                 <DetailItem icon={<FaBuilding />} label="Site/Cabang" value={data.cabang.nama_cab} />
                 <DetailItem icon={<FaCalendarAlt />} label="Check In" value={moment(data.check_in_date).format('DD MMM YYYY')} />
                 <DetailItem icon={<FaCalendarAlt />} label="Check Out" value={moment(data.check_out_date).format('DD MMM YYYY')} />
-                <DetailItem 
-                    icon={<FaUsers />} 
-                    label="Total Tamu" 
-                    value={`${data.total_pax} Orang (${data.total_male}L, ${data.total_female}P)`} 
+                <DetailItem
+                    icon={<FaUsers />}
+                    label="Total Tamu"
+                    value={`${data.total_pax} Orang (${data.total_male}L, ${data.total_female}P)`}
                 />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 {/* Kolom Kiri: Daftar Tamu */}
                 <div className="lg:col-span-3 space-y-4">
-                    <h4 className="text-lg font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <FaClipboardList /> Daftar Tamu Menginap
-                    </h4>
-                    {data.guests.map((guest, index) => (
-                        <div key={guest.id} className="bg-white border rounded-lg p-4 shadow-sm">
-                            <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
-                                        {index + 1}
-                                    </div>
-                                    <div>
-                                        <h5 className="font-bold text-gray-800 text-lg">{guest.guest_name}</h5>
-                                        <p className="text-sm text-gray-500 flex items-center gap-1">
-                                            {guest.gender === 'Laki-laki' ? <FaMale className="text-blue-500" /> : <FaFemale className="text-pink-500" />}
-                                            {guest.gender}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Kolom Kanan: Kebutuhan Kamar & Catatan */}
-                <div className="lg:col-span-2 space-y-4">
                     <div className="bg-white border rounded-lg p-5">
                         <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            <FaBed className="text-blue-500" /> Kebutuhan Kamar
+                            Kebutuhan Kamar
                         </h4>
                         <p className="text-gray-800 font-medium p-3 bg-gray-50 rounded-md border border-dashed border-gray-300">
                             {data.room_needed}
                         </p>
                     </div>
-
+                </div>
+                <div className="lg:col-span-2 space-y-4">
                     <div className="bg-white border rounded-lg p-5">
                         <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            <FaStickyNote className="text-yellow-500" /> Catatan Tambahan
+                            Catatan Tambahan
                         </h4>
                         {data.note ? (
                             <p className="text-gray-600 bg-gray-50 p-3 rounded-md whitespace-pre-wrap italic">
@@ -229,25 +237,37 @@ export default function AccommodationAdminDetailPage() {
                         )}
                     </div>
                 </div>
+
+                {/* Kolom Kanan: Kebutuhan Kamar & Catatan */}
+                <div className="lg:col-span-3 space-y-4">
+                    <div className="bg-white border rounded-lg p-5">
+                        <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2 border-b pb-2">Daftar Tamu Menginap</h4>
+                        {data.guests.map((guest, index) => (
+                            <div key={guest.id} className="bg-white border rounded-lg p-4 shadow-sm">
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+                                            {index + 1}
+                                        </div>
+                                        <div>
+                                            <h5 className="font-bold text-gray-800 text-lg">{guest.guest_name}</h5>
+                                            <p className="text-sm text-gray-500 flex items-center gap-1">
+                                                {guest.gender === 'Laki-laki' ? <FaMale className="text-blue-500" /> : <FaFemale className="text-pink-500" />}
+                                                {guest.gender}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+
+                </div>
             </div>
 
             {/* Aksi Persetujuan Admin */}
-            {data.status === 'Submit' && (
-                <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
-                    <button 
-                        className="px-6 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition" 
-                        onClick={() => { setActionType("Rejected"); setIsStatusModalOpen(true); }}
-                    >
-                        Tolak
-                    </button>
-                    <button 
-                        className="px-6 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition" 
-                        onClick={() => { setActionType("Approved"); setIsStatusModalOpen(true); }}
-                    >
-                        Setujui
-                    </button>
-                </div>
-            )}
+
 
             {/* Modal Components */}
             <ChangeStatusOrderModal
@@ -270,11 +290,11 @@ export default function AccommodationAdminDetailPage() {
 }
 
 const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | null }) => (
-    <div className="bg-white p-4 rounded-lg border flex items-start gap-4 shadow-sm transition hover:shadow-md">
-        <div className="text-gray-400 mt-1">{icon}</div>
+    <div className="bg-white p-4 rounded-lg border flex items-start gap-4 h-full">
+        <div className="text-blue-500 text-xl mt-1">{icon}</div>
         <div>
-            <span className="text-gray-500 text-xs uppercase tracking-wider block mb-1">{label}</span>
-            <span className="font-bold text-base text-gray-800">{value || '-'}</span>
+            <span className="text-gray-500 text-sm block">{label}</span>
+            <span className="font-semibold text-base text-gray-800">{value || "-"}</span>
         </div>
     </div>
 );

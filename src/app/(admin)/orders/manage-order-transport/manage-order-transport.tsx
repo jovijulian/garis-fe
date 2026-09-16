@@ -315,7 +315,7 @@ export default function ManageTransportOrderPage() {
             header: "Dibuat",
             accessorKey: "created_at",
             cell: ({ row }: { row: TransportOrder }) => (
-                <span className="text-xs text-gray-500">{moment(row.created_at).format("DD/MM/YY HH:mm")}</span>
+                <span className="">{moment(row.created_at).format("DD/MM/YY HH:mm")}</span>
             ),
         },
     ], [router]);

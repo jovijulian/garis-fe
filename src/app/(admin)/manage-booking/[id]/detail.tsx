@@ -10,12 +10,13 @@ import { endpointUrl, httpGet, httpPost, httpPut } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import {
     FaCalendarAlt, FaClock, FaUser, FaBuilding, FaClipboardList, FaInfoCircle,
-    FaChair, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaStickyNote, FaUserCheck, FaExclamationTriangle
+    FaChair, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaStickyNote, FaUserCheck, FaExclamationTriangle, FaCalendarDay, FaMapMarkerAlt
 } from "react-icons/fa";
 import ChangeStatusModal from "@/components/modal/ChangeStatusModal";
 import RescheduleModal from '@/components/modal/RescheduleModal';
-import { Info } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
 import ImagePreviewModal from "@/components/modal/ImagePreviewModal";
+import Badge from "@/components/ui/badge/Badge";
 
 interface User {
     id_user: string;
@@ -56,6 +57,7 @@ interface BookingData {
     amenities: BookingAmenity[];
     proof_of_booking_path: string | null;
     admin_note: string | null;
+    created_at: string;
 }
 
 export default function BookingDetailPage() {
@@ -123,18 +125,18 @@ export default function BookingDetailPage() {
 
     const getStatusBadge = (status: string, isConflicting: number) => {
         if (status === 'Approved') {
-            return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-green-100 text-green-800"><FaCheckCircle /> Disetujui</div>;
+            return <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs md:text-sm font-medium bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500">Approved</div>;
         }
         if (status === 'Rejected') {
-            return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-red-100 text-red-800"><FaTimesCircle /> Ditolak</div>;
+            return <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs md:text-sm font-medium bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500"><FaTimesCircle /> Rejected</div>;
         }
         if (status === 'Canceled') {
-            return <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-gray-200 text-gray-800"><Info /> Dibatalkan</div>;
+            return <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs md:text-sm font-medium bg-gray-100 text-gray-700 dark:bg-white/5 dark:text-white/80"><Info /> Canceled</div>;
         }
         // Status 'Submit'
-        const color = isConflicting === 1 ? "bg-orange-100 text-orange-800" : "bg-yellow-100 text-yellow-800";
-        const text = isConflicting === 1 ? "Bentrok, Perlu Tinjauan" : "Menunggu Persetujuan";
-        return <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${color}`}><FaHourglassHalf /> {text}</div>;
+        const color = isConflicting === 1 ? "bg-yellow-100 text-yellow-800" : "bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-orange-400";
+        const text = isConflicting === 1 ? "Bentrok, Perlu Tinjauan" : "Submit";
+        return <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs md:text-sm font-medium ${color}`}>{text}</div>;
     };
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,114 +178,131 @@ export default function BookingDetailPage() {
         setIsPreviewOpen(false);
     };
 
-    if (isLoading) return <p className="text-center mt-10 text-gray-400">Memuat detail booking...</p>;
+    if (isLoading) {
+        return (
+          <div className="flex justify-center items-center min-h-[50vh]">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            <p className="ml-4 text-gray-700">Memuat detail booking...</p>
+          </div>
+        );
+      }
     if (!data) return <p className="text-center mt-10 text-red-500">Data booking tidak ditemukan.</p>;
 
     const duration = moment.duration(moment(data.end_time).diff(moment(data.start_time))).humanize();
     return (
         <ComponentCard title="Detail Booking">
             {/* --- Bagian Informasi Utama --- */}
-            <div className="bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-lg p-6 mb-6 shadow-sm">
-                <div className="flex flex-col md:flex-row items-start justify-between mb-4">
-                    <div>
-                        <h3 className="text-2xl font-bold text-gray-800">{data.purpose}</h3>
-                        <p className="text-gray-500">Topik: <strong>{data.topic.name} {data.detail_topic ? `(${data.detail_topic})` : ''}</strong></p>
-                        <p className="text-gray-500">Diajukan oleh: <strong>{data.user.nama_user}</strong></p>
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 pb-4 border-b">
+                <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="text-2xl font-bold text-gray-800">
+                            {data.purpose}
+                        </h1>
                     </div>
+                    <p className="text-sm text-gray-500 flex flex-wrap items-center gap-x-1">
+                        <span>Diajukan oleh</span>
+                        <strong className="text-gray-700">
+                            {data.user.nama_user}
+                        </strong>
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
                     {getStatusBadge(data.status, data.is_conflicting)}
+                    {/* <Badge {...getBadgeStatus(data.status, data.is_conflicting)} /> */}
+                    {data.status === 'Submit' && data.is_conflicting === 0 && (
+                        <div className="flex justify-end gap-2">
+                            <button onClick={() => handleOpenModal('Rejected')} className="px-5 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-all">
+                                Tolak
+                            </button>
+                            <button onClick={() => handleOpenModal('Approved')} className="px-5 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-all">
+                                Setujui
+                            </button>
+                        </div>
+                    )}
+
+                    {data.is_conflicting == 1 && data.status === 'Submit' && (
+                        <div className="flex justify-end gap-3 mb-6">
+                            <button
+                                onClick={() => handleOpenRescheduleModal(data)}
+                                title="Selesaikan Konflik Jadwal"
+                                className="p-2 rounded-md bg-orange-100 text-orange-700 hover:bg-orange-200 transition-all flex items-center gap-2 text-sm"
+                            >
+                                <FaExclamationTriangle className="w-4 h-4" />
+                                <span>Atur Ulang</span>
+                            </button>
+                        </div>
+                    )
+                    }
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 text-sm">
-                    <div className="bg-white p-4 rounded-lg border flex items-center gap-4">
-                        <FaBuilding className="w-6 h-6 text-blue-500" />
-                        <div>
-                            <span className="text-gray-500 block">Ruangan</span>
-                            <span className="font-semibold text-base">{data.room.name}</span>
-                        </div>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg border flex items-center gap-4">
-                        <FaCalendarAlt className="w-6 h-6 text-blue-500" />
-                        <div>
-                            <span className="text-gray-500 block">Tanggal</span>
-                            <span className="font-semibold text-base">{moment(data.start_time).format('dddd, DD MMMM YYYY')}</span>
-                        </div>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg border flex items-center gap-4">
-                        <FaClock className="w-6 h-6 text-blue-500" />
-                        <div>
-                            <span className="text-gray-500 block">Waktu</span>
-                            <span className="font-semibold text-base">
-                                {moment(data.start_time).format('HH:mm')} - {moment(data.end_time).format('HH:mm')} ({duration})
-                            </span>
-                        </div>
-                    </div>
-                </div>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <DetailItem
+                    icon={<FaBuilding />}
+                    label="Ruangan"
+                    value={data.room.name}
+                />
+                <DetailItem
+                    icon={<FaCalendarDay />}
+                    label="Tanggal"
+                    value={moment(data.start_time).format('dddd, DD MMMM YYYY')}
+                />
+                <DetailItem
+                    icon={<FaClock />}
+                    label="Waktu"
+                    value={`${moment(data.start_time).format('HH:mm')} - ${moment(data.end_time).format('HH:mm')} (${duration})`}
+                />
+                <DetailItem
+                    icon={<FaMapMarkerAlt />}
+                    label="Topik"
+                    value={`${data.topic.name} ${data.detail_topic ? `(${data.detail_topic})` : ''}`}
+                />
 
-            {/* --- Tombol Aksi untuk Admin --- */}
-            {data.status === 'Submit' && data.is_conflicting === 0 && (
-                <div className="flex justify-end gap-3 mb-6">
-                    <button onClick={() => handleOpenModal('Rejected')} className="px-5 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-all">
-                        Tolak
-                    </button>
-                    <button onClick={() => handleOpenModal('Approved')} className="px-5 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-all">
-                        Setujui
-                    </button>
-                </div>
-            )}
-
-            {data.is_conflicting == 1 && data.status === 'Submit' && (
-                <div className="flex justify-end gap-3 mb-6">
-                    <button
-                        onClick={() => handleOpenRescheduleModal(data)}
-                        title="Selesaikan Konflik Jadwal"
-                        className="p-2 rounded-md bg-orange-100 text-orange-700 hover:bg-orange-200 transition-all flex items-center gap-2 text-sm"
-                    >
-                        <FaExclamationTriangle className="w-4 h-4" />
-                        <span>Atur Ulang</span>
-                    </button>
-                </div>
-            )
-            }
-
-            {/* --- Detail Fasilitas dan Catatan --- */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                    <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaClipboardList />Fasilitas pada ruangan</h4>
-                    <div className="bg-white border rounded-lg p-5">
-                    {data.room.amenities && data.room.amenities.length > 0 ? (
-                            <ul className="space-y-3">
-                                {data.room.amenities.map(item => (
-                                    <li key={item.id} className="flex items-center gap-3 text-gray-800">
-                                        <FaChair className="text-gray-400" />
-                                        <span>{item.name}</span>
-                                    </li>
-                                ))}
-                            </ul>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                {/* Left Column (lg:col-span-3) */}
+                <div className="lg:col-span-3 space-y-6">
+                    <Section title="Fasilitas" icon={null}>
+                        {data.room.amenities && data.room.amenities.length > 0 ? (
+                            <>
+                                {
+                                    data.room.amenities.map(item => (
+                                        <InfoRow label={item.name} value="" />
+                                    ))
+                                }
+                            </>
                         ) : (
                             <p className="text-gray-500 italic">Tidak ada fasilitas pada ruangan yang dipesan.</p>
                         )}
+                    </Section>
+                </div>
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Sticky Keperluan Box */}
+                    <div className="bg-white border rounded-lg p-5 sticky top-24 space-y-6">
+                        <div>
+                            <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2 border-b pb-2">
+                                Informasi Tambahan
+                            </h4>
+                            <div className="bg-white rounded-lg p-2 space-y-2">
+                                {data.notes && (
+                                    <div>
+                                        <h5 className="font-semibold flex items-center gap-2 mb-1"><FaStickyNote /> Catatan dari Pemesan</h5>
+                                        <p className="text-gray-600 bg-gray-50 p-3 rounded-md">{data.notes}</p>
+                                    </div>
+                                )}
+                                {data.status !== 'Submit' && (
+                                    <div>
+                                        <h5 className="font-semibold flex items-center gap-2 mb-1"><FaUserCheck /> Status Diperbarui Oleh</h5>
+                                        <p className="text-gray-600">{data.approved_by || 'N/A'} pada {moment(data.updated_at).format('DD MMM YYYY, HH:mm')}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="lg:col-span-1">
-                    <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaInfoCircle /> Informasi Tambahan</h4>
-                    <div className="bg-white border rounded-lg p-5 space-y-4">
-                        {data.notes && (
-                            <div>
-                                <h5 className="font-semibold flex items-center gap-2 mb-1"><FaStickyNote /> Catatan dari Pemesan</h5>
-                                <p className="text-gray-600 bg-gray-50 p-3 rounded-md">{data.notes}</p>
-                            </div>
-                        )}
-                        {data.status !== 'Submit' && (
-                            <div>
-                                <h5 className="font-semibold flex items-center gap-2 mb-1"><FaUserCheck /> Status Diperbarui Oleh</h5>
-                                <p className="text-gray-600">{data.approved_by || 'N/A'} pada {moment(data.updated_at).format('DD MMM YYYY, HH:mm')}</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
             </div>
+
             {data.status == 'Approved' && (
                 <div className="mt-6">
                     <h4 className="text-lg font-semibold text-gray-700 mb-3">
@@ -373,3 +392,50 @@ export default function BookingDetailPage() {
         </ComponentCard>
     );
 }
+
+
+const Section: React.FC<{
+    title: string;
+    icon: React.ReactNode;
+    children: React.ReactNode;
+}> = ({ title, icon, children }) => (
+    <div className="bg-white border rounded-lg p-5">
+        <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2 border-b pb-2">
+            <span>{title}</span>
+        </h4>
+        {children}
+    </div>
+);
+
+const DetailItem = ({
+    icon,
+    label,
+    value,
+}: {
+    icon: React.ReactNode;
+    label: string;
+    value: string | number | null | undefined;
+}) => (
+    <div className="bg-white p-4 rounded-lg border flex items-start gap-4 h-full">
+        <div className="text-blue-500 text-xl mt-1">{icon}</div>
+        <div>
+            <span className="text-gray-500 text-sm block">{label}</span>
+            <span className="font-semibold text-base text-gray-800">{value || "-"}</span>
+        </div>
+    </div>
+);
+
+const InfoRow = ({
+    label,
+    value,
+}: {
+    label: string;
+    value: string | number | null | undefined | React.ReactNode;
+}) => (
+    <div className="flex flex-col sm:flex-row justify-between border-b border-gray-100 py-2.5 last:border-b-0 gap-1">
+        <span className="text-gray-500 text-sm">{label}</span>
+        <span className="font-semibold text-gray-800 text-left sm:text-right text-sm">
+            {value}
+        </span>
+    </div>
+);

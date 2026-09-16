@@ -9,7 +9,7 @@ export default function MyOrdersMainPage() {
     const [activeTab, setActiveTab] = useState<'consumption' | 'accommodation' | 'transport'>('consumption');
 
     return (
-        <div className="p-4 md:p-6 space-y-6 bg-gray-50 min-h-screen">
+        <div className="p-4 md:p-6 space-y-6 min-h-screen">
             <div className="border-b border-gray-200">
                 <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                     <button

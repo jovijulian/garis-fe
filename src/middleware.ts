@@ -22,6 +22,7 @@ const rolePermissions: Record<string, string[]> = {
         '/reminders',
         '/inventories',
         '/projects',
+        '/reimbursements'
     ],
     '2': [
         '/manage-booking',
@@ -31,6 +32,7 @@ const rolePermissions: Record<string, string[]> = {
         '/reminders',
         '/inventories',
         '/projects',
+        '/reimbursements'
     ],
     '3': [
         '/support',
@@ -54,6 +56,7 @@ const rolePermissions: Record<string, string[]> = {
         '/projects/my-requests',
         '/projects/create',
         '/projects/edit',
+        '/reimbursements'
         
     ],
     

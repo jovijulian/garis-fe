@@ -119,39 +119,137 @@ const SignIn: React.FC = () => {
   
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-100 p-4 font-sans">
-      <div className="w-full max-w-4xl flex flex-col md:flex-row bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div className="w-full md:w-1/2 p-8 lg:p-12 flex flex-col justify-center">
-          <div className="mb-8">
+    <div className="min-h-screen w-full flex items-center justify-center  bg-gradient-to-br from-slate-50 to-blue-100 p-4 sm:p-6 lg:p-8 font-sans">
+      <div className="w-full max-w-md md:max-w-4xl lg:max-w-5xl flex flex-col md:flex-row bg-white rounded-2xl md:rounded-3xl border border-slate-200/80 shadow-2xl shadow-slate-200/60 overflow-hidden">
+      <div className="w-full md:w-1/2 p-6 sm:p-8 lg:p-12 flex flex-col justify-between">
+          <div>
+            {/* Logo & Header */}
+            <div className="mb-6 sm:mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <Image
+                  src="/images/logo-header.png"
+                  alt="Logo GARIS PT. Cisangkan"
+                  width={140}
+                  height={38}
+                  priority
+                  className="h-9 w-auto object-contain"
+                />
+              </div>
 
-            <h1 className="font-bold text-2xl text-slate-800 mt-4">Log in</h1>
-            <p className="text-slate-500 text-sm">Silakan masuk menggunakan akun HRIS yang terdaftar.</p>
-          </div>
-
-          <form onSubmit={form.onSubmit(onSubmit)} className="space-y-5">
-            {renderAccountForm()}
-            {alert && (
-              <Alert variant={alert.variant} title={alert.title} message={alert.message} showLink={false} linkHref="" linkText="" />
-            )}
-
-            <div className="flex items-center justify-between text-sm">
-              {/* <button type="button" onClick={() => setLoginMethod(loginMethod === 'account' ? 'meter' : 'account')} className="text-blue-600 hover:underline font-medium">
-                {loginMethod === 'account' ? 'Login dengan Nomor Meter' : 'Login dengan Akun'}
-              </button> */}
-              {/* <Link href="/forgot-password" className="text-blue-600 hover:underline">
-                Lupa Password?
-              </Link> */}
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                Selamat Datang
+              </h1>
+              <p className="text-slate-500 text-xs sm:text-sm mt-1">
+                Silakan masuk menggunakan akun <span className="font-semibold text-slate-700">HRIS</span> Anda.
+              </p>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:bg-blue-300"
-            >
-              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : null}
-              {loading ? 'Memproses...' : 'Login'}
-            </button>
-          </form>
+            {/* Error Alert */}
+            {alert && (
+              <div className="mb-5">
+                <Alert
+                  variant={alert.variant}
+                  title={alert.title}
+                  message={alert.message}
+                  showLink={false}
+                  linkHref=""
+                  linkText=""
+                />
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={form.onSubmit(onSubmit)} className="space-y-4">
+              {/* User ID HRIS */}
+              <div>
+                <label
+                  htmlFor="nik"
+                  className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+                >
+                  User ID HRIS
+                </label>
+                <div className="relative group">
+                  <input
+                    id="nik"
+                    type="text"
+                    autoComplete="username"
+                    placeholder="Contoh: 221260"
+                    {...form.getInputProps("nik")}
+                    className={`w-full pl-4 pr-4 py-2.5 sm:py-3 text-sm text-slate-900 bg-slate-50/50 border rounded-xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all ${
+                      form.errors.nik
+                        ? "border-rose-300 focus:border-rose-500"
+                        : "border-slate-200 focus:border-blue-500 hover:border-slate-300"
+                    }`}
+                  />
+                </div>
+                {form.errors.nik && (
+                  <p className="text-[11px] text-rose-500 mt-1 font-medium">
+                    {form.errors.nik}
+                  </p>
+                )}
+              </div>
+
+              {/* Password */}
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+                >
+                  Password
+                </label>
+                <div className="relative group">
+                  <input
+                    id="password"
+                    type={isPasswordVisible ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder="Masukkan kata sandi"
+                    {...form.getInputProps("password")}
+                    className={`w-full pl-4 pr-11 py-2.5 sm:py-3 text-sm text-slate-900 bg-slate-50/50 border rounded-xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all ${
+                      form.errors.password
+                        ? "border-rose-300 focus:border-rose-500"
+                        : "border-slate-200 focus:border-blue-500 hover:border-slate-300"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                    aria-label={isPasswordVisible ? "Sembunyikan password" : "Tampilkan password"}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-700 transition-colors"
+                  >
+                    {isPasswordVisible ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {form.errors.password && (
+                  <p className="text-[11px] text-rose-500 mt-1 font-medium">
+                    {form.errors.password}
+                  </p>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 px-4 bg-blue-600 hover:from-blue-800 hover:to-indigo-800 active:scale-[0.99] text-white font-semibold text-sm rounded-xl shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Memverifikasi akun...</span>
+                    </>
+                  ) : (
+                    <span>Login</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
         </div>
 
         <div className="hidden md:flex w-1/2 bg-blue-50 items-center justify-center relative">

@@ -100,9 +100,9 @@ const menuItems: {
         title: "Reimbursement",
         description: "Ajukan klaim reimbursement biaya.",
         icon: FileText,
-        href: "/reimbursement",
+        href: "/reimbursements/dashboard",
         color: "red",
-        comingSoon: true, 
+        // comingSoon: true, 
     },
     {
         title: "Admin Panel",
@@ -110,6 +110,7 @@ const menuItems: {
         icon: ShieldCheck,
         href: "/admin-panel",
         color: "gray",
+        allowedRoles: ["1"],
     },
 ];
 
@@ -167,6 +168,10 @@ const MenuCard: React.FC<MenuCardProps> = ({
         dynamicHref = "/projects/my-requests";
     }
 
+    if (title === "Reimbursement" && userRole === "3") {
+        dynamicHref = "/reimbursements/my-reimbursements";
+    }
+
     if (title === "Pengajuan Kendaraan") {
         if (userRole === "3") {
             if (isDriver) {
@@ -217,7 +222,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
                 className={`
                     relative
                     bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 h-full flex flex-col justify-between
-                    transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden
+                    transition-all duration-300 border border-blue-200 dark:border-blue-700 overflow-hidden
                     ${isDisabled
                         ? 'opacity-80 bg-gray-50'
                         : 'hover:shadow-2xl hover:-translate-y-2 hover:border-blue-200 dark:hover:border-blue-900'
@@ -353,11 +358,11 @@ export default function MenusPage() {
         <div className="min-h-screen xl:flex-center overflow-x-hidden">
             <div className={`flex-1 transition-all duration-300 ease-in-out`}>
                 <AppHeader />
-                <div className="p-4 md:p-8 space-y-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
+                <div className="p-4 md:p-8 space-y-8 bg-gradient-to-br from-slate-50 to-blue-100 min-h-screen">
                     
                     <div className={`max-w-5xl mx-auto transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-5'}`}>
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white tracking-tight">
-                            Selamat Datang, <span className="text-blue-600">{userName}</span>!
+                            Selamat Datang, <span className="text-blue-800">{userName}</span>!
                         </h1>
                         <p className="text-gray-500 dark:text-gray-400 mt-2 text-lg">
                             Silakan pilih menu yang ingin Anda akses di bawah ini.
@@ -368,7 +373,7 @@ export default function MenusPage() {
 
                     {/* Panduan Pengguna Notice Banner */}
                     {userRole === "3" && (
-                        <div className={`max-w-5xl mx-auto bg-blue-50/85 border border-blue-100 dark:bg-blue-950/20 dark:border-blue-900/30 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
+                        <div className={`max-w-5xl mx-auto bg-blue-50/85 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-900/30 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
                             <div className="flex items-center gap-3.5">
                                 <div className="p-2.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
                                     <BookOpen className="w-5 h-5" />

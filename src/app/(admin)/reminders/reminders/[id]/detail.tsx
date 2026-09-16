@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { endpointUrl, httpGet } from "@/../helpers";
+import { endpointUrl, getBadgeStatus, httpGet } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import moment from "moment";
 import { toast } from "react-toastify";
@@ -107,51 +107,28 @@ export default function UnifiedDetailHistoryPage() {
                                 )}
                             </div>
                         </div>
-                        <div>{renderStatusBadge(detail.status)}</div>
+                        <div> <Badge {...getBadgeStatus(detail.status)} /></div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-5 bg-blue-50/50 dark:bg-slate-800/50 rounded-2xl border border-blue-100 dark:border-slate-700">
-                        <div className="flex items-start gap-3">
-                            <div className="p-2 bg-white dark:bg-slate-700 rounded-lg shadow-sm"><Tag className="w-4 h-4 text-blue-500" /></div>
-                            <div>
-                                <p className="text-xs text-gray-500 font-medium mb-0.5">Jenis Pengingat</p>
-                                <p className="text-sm font-semibold text-gray-800 dark:text-white">{detail.reminder_type?.name || "-"}</p>
-                            </div>
+                
+                    <div className="grid grid-cols-1  gap-6">
+                        <div className="lg:col-span-2 space-y-4">
+                            <Section title="Detail Pengingat" icon={null}>
+                                <InfoRow label="Jenis Pengingat" value={detail.reminder_type?.name} />
+                                <InfoRow label="Cabang" value={detail.cabang?.nama_cab} />
+                                <InfoRow label="Jatuh Tempo Saat ini" value={moment(detail.due_date).format("DD MMMM YYYY")} />
+                                {detail.identity_number && (
+                                    <InfoRow label=">Nomor Identitas" value={detail.identity_number} />
+                                )}
+                                {detail.description && (
+                                    <InfoRow label="Deskripsi" value={detail.description} />
+                                )}
+                                <InfoRow
+                                    label="Waktu Pengajuan"
+                                    value={moment(detail.created_at).format("DD MMMM YYYY, HH:mm")}
+                                />
+                            </Section>
                         </div>
-
-                        <div className="flex items-start gap-3">
-                            <div className="p-2 bg-white dark:bg-slate-700 rounded-lg shadow-sm"><MapPin className="w-4 h-4 text-orange-500" /></div>
-                            <div>
-                                <p className="text-xs text-gray-500 font-medium mb-0.5">Cabang</p>
-                                <p className="text-sm font-semibold text-gray-800 dark:text-white">{detail.cabang?.nama_cab || "-"}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                            <div className="p-2 bg-white dark:bg-slate-700 rounded-lg shadow-sm"><CalendarClock className="w-4 h-4 text-red-500" /></div>
-                            <div>
-                                <p className="text-xs text-gray-500 font-medium mb-0.5">Jatuh Tempo Saat Ini</p>
-                                <p className="text-sm font-semibold text-red-600 dark:text-red-400">{moment(detail.due_date).format("DD MMMM YYYY")}</p>
-                            </div>
-                        </div>
-
-                        {detail.identity_number && (
-                            <div className="flex items-start gap-3 sm:col-span-2 md:col-span-3 mt-2">
-                                <div>
-                                    <p className="text-xs text-gray-500 font-medium mb-0.5">Nomor Identita</p>
-                                    <p className="text-sm font-semibold text-gray-800 dark:text-white">{detail.identity_number}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {detail.description && (
-                            <div className="flex items-start gap-3 sm:col-span-2 md:col-span-3 mt-2">
-                                <div>
-                                    <p className="text-xs text-gray-500 font-medium mb-0.5">Keterangan Tambahan</p>
-                                    <p className="text-sm text-gray-800 dark:text-gray-300">{detail.description}</p>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </ComponentCard>
@@ -234,3 +211,32 @@ export default function UnifiedDetailHistoryPage() {
         </div>
     );
 }
+
+
+const Section: React.FC<{
+    title: string;
+    icon: React.ReactNode;
+    children: React.ReactNode;
+}> = ({ title, icon, children }) => (
+    <div className="bg-white border rounded-lg p-5">
+        <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2 border-b pb-2">
+            <span>{title}</span>
+        </h4>
+        {children}
+    </div>
+);
+
+const InfoRow = ({
+    label,
+    value,
+}: {
+    label: string;
+    value: string | number | null | undefined | React.ReactNode;
+}) => (
+    <div className="flex flex-col sm:flex-row justify-between border-b border-gray-100 py-2.5 last:border-b-0 gap-1">
+        <span className="text-gray-500 text-sm">{label}</span>
+        <span className="font-semibold text-gray-800 text-left sm:text-right text-sm">
+            {value || "-"}
+        </span>
+    </div>
+);

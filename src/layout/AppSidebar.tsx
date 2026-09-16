@@ -49,6 +49,10 @@ const AppSidebar: React.FC = () => {
       currentMenuKey = 'inventory';
     } else if (pathname.startsWith('/projects')) {
       currentMenuKey = 'project';
+    } else if (pathname.startsWith('/reimbursements')) {
+      currentMenuKey = 'reimbursement';
+    } else if (pathname.startsWith('/profile')) {
+      currentMenuKey = 'profile';
     } else if (pathname.startsWith('/portal-pelanggan')) {
       currentMenuKey = 'user';
     }
@@ -104,13 +108,34 @@ const AppSidebar: React.FC = () => {
     }
   }, [openSubmenu]);
 
+  const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
+    setOpenSubmenu((prevOpenSubmenu) => {
+      if (
+        prevOpenSubmenu &&
+        prevOpenSubmenu.type == menuType &&
+        prevOpenSubmenu.index == index
+      ) {
+        return null;
+      }
+      return { type: menuType, index };
+    });
+  };
+
   const renderMenuItems = (
     navItems: NavItem[],
     menuType: "main" | "others"
   ) => (
-    <ul className="flex flex-col gap-4">
+    <ul className="flex flex-col gap-2">
       {navItems.map((nav, index) => (
         <li key={nav.name}>
+          {/* Divider line for "back to menu" items */}
+          {nav.divider && (isExpanded || isHovered || isMobileOpen) && (
+            <div className="my-2 mx-3 border-t border-gray-100 dark:border-gray-800" />
+          )}
+          {nav.divider && !(isExpanded || isHovered || isMobileOpen) && (
+            <div className="my-2 mx-auto w-6 border-t border-gray-100 dark:border-gray-800" />
+          )}
+
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
@@ -177,7 +202,7 @@ const AppSidebar: React.FC = () => {
                     : "0px",
               }}
             >
-              <ul className="mt-2 space-y-1 ml-9">
+             <ul className="mt-2 space-y-1 ml-9">
                 {nav.subItems.map((subItem) => (
                   <li key={subItem.name}>
                     <Link
@@ -199,83 +224,31 @@ const AppSidebar: React.FC = () => {
     </ul>
   );
 
-  useEffect(() => {
-    let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
-      const items = activeNavItems;
-      items.forEach((nav, index) => {
-        if (nav.subItems) {
-          nav.subItems.forEach((subItem) => {
-            if (isActive(subItem.path)) {
-              setOpenSubmenu({
-                type: menuType as "main" | "others",
-                index,
-              });
-              submenuMatched = true;
-            }
-          });
-        }
-      });
-    });
-
-    if (!submenuMatched) {
-      setOpenSubmenu(null);
-    }
-  }, [pathname, isActive, activeNavItems]);
-
-  useEffect(() => {
-    if (openSubmenu !== null) {
-      const key = `${openSubmenu.type}-${openSubmenu.index}`;
-      if (subMenuRefs.current[key]) {
-        setSubMenuHeight((prevHeights) => ({
-          ...prevHeights,
-          [key]: subMenuRefs.current[key]?.scrollHeight || 0,
-        }));
-      }
-    }
-  }, [openSubmenu]);
-
-  const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
-    setOpenSubmenu((prevOpenSubmenu) => {
-      if (
-        prevOpenSubmenu &&
-        prevOpenSubmenu.type == menuType &&
-        prevOpenSubmenu.index == index
-      ) {
-        return null;
-      }
-      return { type: menuType, index };
-    });
-  };
-
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-        ${isExpanded || isMobileOpen ? "w-[290px]" : isHovered ? "w-[290px]" : "w-[90px]"}
-        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
-      onMouseEnter={() => !isExpanded && setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
-        {/* <svg viewBox="0 0 54 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-10 text-blue-600">
-          <path d="M27.3546 3.1746C21.7442 3.1746 16.7856 5.96385 13.7915 10.2305L10.4399 9.56057C13.892 3.83178 20.1756 0 27.3546 0C34.5281 0 40.8075 3.82591 44.2613 9.54743L40.9084 10.2176C37.9134 5.95821 32.9593 3.1746 27.3546 3.1746Z" fill="currentColor" />
-          <path d="M17.1529 19.7194C17.1529 25.3503 21.7203 29.915 27.3546 29.915C32.9887 29.915 37.5561 25.3503 37.5561 19.7194C37.5561 19.5572 37.5524 19.3959 37.5449 19.2355C38.5617 19.0801 39.5759 18.9013 40.5867 18.6994L40.6926 18.6782C40.7191 19.0218 40.7326 19.369 40.7326 19.7194C40.7326 27.1036 34.743 33.0896 27.3546 33.0896C19.966 33.0896 13.9765 27.1036 13.9765 19.7194C13.9765 19.374 13.9896 19.0316 14.0154 18.6927L14.0486 18.6994C15.0837 18.9062 16.1223 19.0886 17.1637 19.2467C17.1566 19.4033 17.1529 19.561 17.1529 19.7194Z" fill="currentColor" />
-        </svg> */}
+    className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+      ${isExpanded || isMobileOpen ? "w-[290px]" : isHovered ? "w-[290px]" : "w-[90px]"}
+      ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+    onMouseEnter={() => !isExpanded && setIsHovered(true)}
+    onMouseLeave={() => setIsHovered(false)}
+  >
+    
+      <div className={`py-7 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
             <Image
               className="dark:hidden -mt-4"
               src="/images/logo-header.png"
               alt="Logo"
-              width={150}
-              height={40}
+              width={140}
+              height={36}
             />
           ) : (
             <Image
               src="/images/logo-header.png"
               alt="Logo"
-              width={40}
-              height={40}
+              width={36}
+              height={36}
             />
           )}
         </Link>
@@ -284,8 +257,8 @@ const AppSidebar: React.FC = () => {
         <nav className="mb-6">
           <div className="flex flex-col gap-4">
             <div>
-              <h2 className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
-                {isExpanded || isHovered || isMobileOpen ? "Menu" : <HorizontaLDots />}
+              <h2 className={`mb-3 text-[11px] uppercase tracking-wider flex leading-[20px] text-gray-400 dark:text-gray-500 font-medium ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start pl-3"}`}>
+                {isExpanded || isHovered || isMobileOpen ? "Navigasi" : <HorizontaLDots />}
               </h2>
               {/* 4. Panggil renderMenuItems dengan `activeNavItems` */}
               {renderMenuItems(activeNavItems, "main")}

@@ -5,6 +5,7 @@ import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import React, { Suspense } from "react";
+import { usePathname } from "next/navigation";
 
 export default function AdminLayout({
   children,
@@ -13,9 +14,10 @@ export default function AdminLayout({
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const role = typeof window !== "undefined" ? localStorage.getItem("role") : null;
+  const pathname = usePathname();
   const isUser = role == "2";
   // Dynamic class for main content margin based on sidebar state
-  const mainContentMargin = 
+  const mainContentMargin =
     isMobileOpen
       ? "ml-0"
       : isExpanded || isHovered

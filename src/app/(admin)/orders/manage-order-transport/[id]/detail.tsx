@@ -14,7 +14,7 @@ import {
     FaTrain, FaPlane, FaBus, FaCar, FaTicketAlt, FaCalendarCheck, FaPhone
 } from "react-icons/fa";
 import ChangeStatusOrderModal from "@/components/modal/ChangeStatusOrderModal";
-import { CircleX, Printer } from "lucide-react";
+import { CircleX, Loader2, Printer } from "lucide-react";
 import CancelOrderModal from "@/components/modal/CancelOrderModal";
 
 interface PassengerItem {
@@ -175,18 +175,32 @@ export default function TransportAdminDetailPage() {
         }
     };
 
-    if (isLoading) return <p className="text-center mt-10">Memuat data transportasi...</p>;
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-[50vh]">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <p className="ml-4 text-gray-700">Memuat detail pesanan...</p>
+            </div>
+        );
+    }
     if (!data) return <p className="text-center mt-10">Data tidak ditemukan.</p>;
 
     return (
-        <ComponentCard title="Detail Admin - Pesanan Transportasi">
+        <ComponentCard title="Detail - Pesanan Transportasi">
             <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 pb-4 border-b">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                        {getTransportIcon(data.transport_type.name)}
-                        {data.transport_type.name}
-                    </h1>
-                    <p className="text-gray-500 mt-1">Diajukan oleh: <strong>{data.user.nama_user}</strong></p>
+
+                <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="text-2xl font-bold text-gray-800">
+                            {data.transport_type.name}
+                        </h1>
+                    </div>
+                    <p className="text-sm text-gray-500 flex flex-wrap items-center gap-x-1">
+                        <span>Diajukan oleh</span>
+                        <strong className="text-gray-700">
+                            {data.user.nama_user}
+                        </strong>
+                    </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                     <Badge {...getBadgeStatus(data.status)} />
@@ -200,29 +214,45 @@ export default function TransportAdminDetailPage() {
                             </button>
                         </>
                     )}
+                    {data.status === 'Submit' && (
+                        <div className="flex justify-end gap-2">
+                            <button
+                                className="px-5 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+                                onClick={() => { setActionType("Rejected"); setIsStatusModalOpen(true); }}
+                            >
+                                Tolak
+                            </button>
+                            <button
+                                className="px-5 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+                                onClick={() => { setActionType("Approved"); setIsStatusModalOpen(true); }}
+                            >
+                                Setujui
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <DetailItem
-                    icon={<FaMapMarkerAlt className="text-blue-500" />}
+                    icon={<FaMapMarkerAlt />}
                     label="Asal (Origin)"
                     value={data.origin}
                     subValue={data.origin_detail}
                 />
                 <DetailItem
-                    icon={<FaMapMarkerAlt className="text-red-500" />}
+                    icon={<FaMapMarkerAlt />}
                     label="Tujuan (Destination)"
                     value={data.destination}
                     subValue={data.destination_detail}
                 />
                 <DetailItem
-                    icon={<FaCalendarCheck className="text-green-600" />}
+                    icon={<FaCalendarCheck />}
                     label="Tanggal Berangkat"
                     value={moment(data.date).format('DD MMM YYYY')}
                 />
                 <DetailItem
-                    icon={<FaClock className="text-purple-600" />}
+                    icon={<FaClock />}
                     label="Waktu / Jam"
                     value={data.time}
                 />
@@ -230,10 +260,9 @@ export default function TransportAdminDetailPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-4">
-                    <h4 className="text-lg font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <FaClipboardList /> Daftar Penumpang ({data.total_pax} Org)
-                    </h4>
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="bg-white border rounded-lg p-5">
+                        <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2 border-b pb-2">  Daftar Penumpang ({data.total_pax} Org)
+                        </h4>
                         {data.passengers.map((p, index) => (
                             <div key={p.id} className="bg-white border rounded-lg p-4 shadow-sm flex items-center justify-between">
                                 <div className="flex items-center gap-4">
@@ -256,49 +285,11 @@ export default function TransportAdminDetailPage() {
 
                 <div className="space-y-6">
                     <div className="bg-white border rounded-lg p-5 shadow-sm">
-                        <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                            <FaBuilding className="text-gray-500" /> Info Pemohon
-                        </h4>
-                        <div className="text-sm space-y-2">
-                            <div>
-                                <span className="text-gray-500">Cabang:</span>
-                                <p className="font-semibold text-gray-800">{data.cabang.nama_cab}</p>
-                            </div>
-                            <div>
-                                <span className="text-gray-500">Nama User:</span>
-                                <p className="font-semibold text-gray-800">{data.user.nama_user}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white border rounded-lg p-5 shadow-sm">
-                        <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                            <FaTicketAlt className="text-yellow-600" /> Detail Tiket
-                        </h4>
-                        <div className="space-y-3">
-                            <div>
-                                <span className="text-xs text-gray-400 uppercase font-bold">Kelas</span>
-                                <p className="font-medium text-gray-800">{data.transport_class || '-'}</p>
-                            </div>
-                            <hr className="border-dashed" />
-                            <div>
-                                <span className="text-xs text-gray-400 uppercase font-bold">Provider / Maskapai</span>
-                                <p className="font-medium text-gray-800">{data.preferred_provider || '-'}</p>
-                            </div>
-                            <hr className="border-dashed" />
-                            <div>
-                                <span className="text-xs text-gray-400 uppercase font-bold">Keperluan</span>
-                                <p className="font-medium text-gray-800">{data.purpose || '-'}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white border rounded-lg p-5 shadow-sm">
                         <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            <FaStickyNote className="text-yellow-500" /> Catatan Tambahan
+                            Catatan Tambahan
                         </h4>
                         {data.note ? (
-                            <p className="text-gray-600 bg-yellow-50 p-3 rounded-md whitespace-pre-wrap text-sm italic border border-yellow-100">
+                             <p className="text-gray-600 bg-gray-50 p-3 rounded-md whitespace-pre-wrap italic">
                                 "{data.note}"
                             </p>
                         ) : (
@@ -307,23 +298,24 @@ export default function TransportAdminDetailPage() {
                     </div>
                 </div>
             </div>
-
-            {data.status === 'Submit' && (
-                <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
-                    <button
-                        className="px-6 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
-                        onClick={() => { setActionType("Rejected"); setIsStatusModalOpen(true); }}
-                    >
-                        Tolak
-                    </button>
-                    <button
-                        className="px-6 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition"
-                        onClick={() => { setActionType("Approved"); setIsStatusModalOpen(true); }}
-                    >
-                        Setujui
-                    </button>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-4">
+                    <Section title="Detail Pesanan" icon={null}>
+                        <InfoRow label="Keperluan" value={data.purpose} />
+                        <InfoRow label="Kelas" value={data.transport_class} />
+                        <InfoRow label="Provider / Maskapai" value={data.preferred_provider} />
+                        <InfoRow label="Cabang Pemohon" value={data.cabang.nama_cab} />
+                        <InfoRow label="Nama User" value={data.user.nama_user} />
+                        <InfoRow
+                            label="Waktu Pengajuan"
+                            value={moment(data.created_at).format("DD MMMM YYYY, HH:mm")}
+                        />
+                    </Section>
                 </div>
-            )}
+            </div>
+
+
+
 
             <ChangeStatusOrderModal
                 isOpen={isStatusModalOpen}
@@ -345,13 +337,42 @@ export default function TransportAdminDetailPage() {
     );
 }
 
+
 const DetailItem = ({ icon, label, value, subValue }: { icon: React.ReactNode, label: string, value: string | null, subValue?: string | null }) => (
-    <div className="bg-white p-4 rounded-lg border flex items-start gap-4 shadow-sm transition hover:shadow-md hover:border-blue-300">
-        <div className="text-xl mt-1">{icon}</div>
+    <div className="bg-white p-4 rounded-lg border flex items-start gap-4 h-full">
+        <div className="text-blue-500 text-xl mt-1">{icon}</div>
         <div>
-            <span className="text-gray-400 text-xs uppercase tracking-wider block mb-1">{label}</span>
-            <span className="font-bold text-gray-800 block">{value || '-'}</span>
+            <span className="text-gray-500 text-sm block">{label}</span>
+            <span className="font-semibold text-base text-gray-800">{value || "-"}</span>
             {subValue && <span className="text-xs text-gray-500 mt-1 block">{subValue}</span>}
         </div>
+    </div>
+);
+
+const Section: React.FC<{
+    title: string;
+    icon: React.ReactNode;
+    children: React.ReactNode;
+}> = ({ title, icon, children }) => (
+    <div className="bg-white border rounded-lg p-5">
+        <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2 border-b pb-2">
+            <span>{title}</span>
+        </h4>
+        {children}
+    </div>
+);
+
+const InfoRow = ({
+    label,
+    value,
+}: {
+    label: string;
+    value: string | number | null | undefined | React.ReactNode;
+}) => (
+    <div className="flex flex-col sm:flex-row justify-between border-b border-gray-100 py-2.5 last:border-b-0 gap-1">
+        <span className="text-gray-500 text-sm">{label}</span>
+        <span className="font-semibold text-gray-800 text-left sm:text-right text-sm">
+            {value || "-"}
+        </span>
     </div>
 );

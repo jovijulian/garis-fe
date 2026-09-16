@@ -132,7 +132,7 @@ export default function ManageProjectRequestsPage() {
             header: "Tanggal Pengajuan",
             accessorFn: (row: ProjectRequestListItem) => row.request_date,
             cell: ({ row }: { row: ProjectRequestListItem }) => (
-                <span className="text-xs text-gray-600 whitespace-nowrap">
+                <span className="whitespace-nowrap">
                     {moment(row.request_date).format("DD MMM YYYY, HH:mm")}
                 </span>
             ),

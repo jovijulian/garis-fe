@@ -107,7 +107,7 @@ const BookingScheduleGrid: React.FC<ScheduleGridProps> = ({ data, selectedDate, 
                         {timeSlots.map((time, rowIndex) => (
                             <div
                                 key={`cell-${col.id}-${time}`}
-                                className="border-b border-r border-gray-600 hover:bg-gray-700 cursor-pointer"
+                                className="border-b border-r bg-gray-200 text-gray-300 border-gray-600 hover:bg-gray-700 cursor-pointer"
                                 style={{
                                     gridColumn: colIndex + 2,
                                     gridRow: rowIndex + 2,

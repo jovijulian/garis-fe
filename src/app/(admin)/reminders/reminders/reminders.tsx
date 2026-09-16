@@ -147,15 +147,20 @@ export default function ReminderTypePage() {
             }] : []),
             {
                 id: "reminder_code",
-                header: "Kode",
-                accessorKey: "reminder_code",
-                cell: ({ row }: any) => <span>{row.reminder_code}</span>,
-            },
-            {
-                id: "title",
-                header: "Judul",
-                accessorKey: "title",
-                cell: ({ row }: any) => <span>{row.title}</span>,
+                header: "Judul & Kode Pengingat",
+                cell: ({ row }: { row: any }) => {
+                    const request = row;
+                    return (
+                        <div className="flex flex-col items-start gap-2 cursor-pointer" >
+                            <span className="font-semibold">{row.title}</span>
+                            <div className="flex  items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                                <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                                    <span className="font-medium">{row.reminder_code}</span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                },
             },
             {
                 id: "reminder_type.name",

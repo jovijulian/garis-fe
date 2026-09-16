@@ -114,7 +114,7 @@ export default function BookingDashboardPage() {
 
     const { kpi, charts, rankings } = dashboardData;
     return (
-        <div className="p-4 md:p-6 space-y-6 bg-gray-50 dark:bg-gray-900">
+        <div className="p-4 md:p-6 space-y-6">
             {/* Header dengan Judul dan Date Range Picker */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div>

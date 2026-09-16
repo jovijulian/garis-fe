@@ -294,12 +294,21 @@ export default function ItemDetailPage() {
     );
 }
 
-const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: React.ReactNode }) => (
-    <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
-        <div className="text-blue-500 mt-1 bg-blue-50 p-2 rounded-lg flex-shrink-0">{icon}</div>
-        <div className="flex-1 overflow-hidden">
-            <span className="text-gray-500 text-[11px] font-semibold uppercase tracking-wider block mb-1 truncate">{label}</span>
-            <div className="font-bold text-sm text-gray-800 break-words">{value || '-'}</div>
-        </div>
+
+const DetailItem = ({
+    icon,
+    label,
+    value,
+  }: {
+    icon: React.ReactNode;
+    label: string;
+    value:  React.ReactNode
+  }) => (
+    <div className="bg-white p-4 rounded-lg border flex items-start gap-4 h-full">
+      <div className="text-blue-500 text-xl mt-1">{icon}</div>
+      <div>
+        <span className="text-gray-500 text-sm block">{label}</span>
+        <span className="font-semibold text-base text-gray-800">{value || "-"}</span>
+      </div>
     </div>
-);
+  );

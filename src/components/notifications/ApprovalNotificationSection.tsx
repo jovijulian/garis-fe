@@ -32,7 +32,7 @@ export const ApprovalNotificationSection: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex justify-center items-center h-screen">
         <div className="text-center">
           <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">Memuat...</p>
@@ -47,9 +47,9 @@ export const ApprovalNotificationSection: React.FC = () => {
 
   return (
     <>
-      <div className="max-w-5xl mx-auto mb-6 sm:mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800/80 rounded-2xl p-4 sm:p-5 border border-blue-200/80 dark:border-gray-700 shadow-md transition-all">
+      <div className="max-w-5xl mx-auto mb-6 sm:mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800/80 rounded-2xl p-4 sm:p-5 border border-blue-600 dark:border-gray-700 shadow-md transition-all">
         {/* Banner Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-blue-200/60 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-blue-200 dark:border-gray-700">
           <div className="flex items-start sm:items-center gap-3">
             <div className="relative p-2 bg-blue-600 text-white rounded-xl shadow-sm shrink-0 mt-0.5 sm:mt-0">
               <BellRing className="w-5 h-5 animate-bounce" />

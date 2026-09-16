@@ -5,15 +5,16 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import moment from "moment";
 import 'moment/locale/id';
-import { endpointUrl, httpGet, httpPut } from "@/../helpers";
+import { endpointUrl, getBadgeStatus, httpGet, httpPut } from "@/../helpers";
 import ComponentCard from "@/components/common/ComponentCard";
 import {
     FaUser, FaBuilding, FaMapMarkerAlt, FaUsers, FaClock, FaClipboardList, FaStickyNote, FaPrint,
     FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaBox, FaUtensils, FaCalendarDay
 } from "react-icons/fa";
 import ChangeStatusOrderModal from "@/components/modal/ChangeStatusOrderModal";
-import { CircleX, Printer } from "lucide-react";
+import { CircleX, Loader2, Printer } from "lucide-react";
 import CancelOrderModal from "@/components/modal/CancelOrderModal";
+import Badge from "@/components/ui/badge/Badge";
 
 
 // --- Interface Disesuaikan dengan Respons API Baru ---
@@ -164,31 +165,54 @@ export default function OrderDetailPage() {
         }
     };
 
-    if (isLoading) return <p className="text-center mt-10">Memuat data pesanan...</p>;
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-[50vh]">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <p className="ml-4 text-gray-700">Memuat detail pesanan...</p>
+            </div>
+        );
+    }
     if (!data) return <p className="text-center mt-10">Pesanan tidak ditemukan.</p>;
 
     const locationName = data.room ? data.room.name : (data.booking?.room?.name || data.location_text);
 
     return (
         <ComponentCard title="Detail Pesanan">
-            <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-                <div>
-                    {/* Judul utama sekarang adalah 'purpose' */}
-                    <h1 className="text-3xl font-bold text-gray-800">{data.purpose}</h1>
-                    <p className="text-gray-500">Diajukan oleh: <strong>{data.user.nama_user}</strong></p>
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 pb-4 border-b">
+
+                <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="text-2xl font-bold text-gray-800">
+                            {data.purpose}
+                        </h1>
+                    </div>
+                    <p className="text-sm text-gray-500 flex flex-wrap items-center gap-x-1">
+                        <span>Diajukan oleh</span>
+                        <strong className="text-gray-700">
+                            {data.user.nama_user}
+                        </strong>
+                    </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    {getStatusBadge(data.status)}
+                    <Badge {...getBadgeStatus(data.status)} />
                     {data.status === 'Approved' && (
                         <>
                             <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-700 text-white rounded-lg hover:bg-gray-800">
                                 <Printer /> Cetak Nota
                             </button>
                             <button onClick={() => handleOpenCancelModal(data)} className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 rounded-lg text-gray-700 hover:bg-gray-200">
-                                <CircleX className="text-red-500" /> Cancel
+                                <CircleX className="text-red-500" />
                             </button>
                         </>
                     )}
+                    {data.status === 'Submit' && (
+                        <div className="flex justify-end gap-2">
+                            <button className="px-5 py-2 rounded-lg bg-red-600 text-white" onClick={() => handleOpenModal(data, "Rejected")}>Tolak</button>
+                            <button className="px-5 py-2 rounded-lg bg-green-600 text-white" onClick={() => handleOpenModal(data, "Approved")}>Setujui</button>
+                        </div>
+                    )}
+
                 </div>
             </div>
 
@@ -203,32 +227,34 @@ export default function OrderDetailPage() {
             {/* Bagian Konten Utama Disesuaikan */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 <div className="lg:col-span-3 space-y-4">
-                    <h4 className="text-lg font-semibold text-gray-700 mb-2 flex items-center gap-2"><FaClipboardList /> Detail Item Dipesan</h4>
-                    {/* Melakukan map pada array 'details' */}
-                    {data.details.map((item) => (
-                        <div key={item.id} className="bg-white border rounded-lg p-4">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h5 className="font-bold text-blue-700 flex items-center gap-2"><FaUtensils />{item.consumption_type.name}</h5>
-                                    <p className="text-gray-800 text-lg">{item.menu}</p>
-                                </div>
-                                <div className="text-right flex-shrink-0 ml-4">
-                                    <div className="font-bold text-gray-800 text-xl flex items-center gap-2">
-                                        {item.qty} pax
+                    <div className="bg-white border rounded-lg p-5">
+                        <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2 border-b pb-2">Detail Item Dipesan</h4>
+                        {/* Melakukan map pada array 'details' */}
+                        {data.details.map((item) => (
+                            <div key={item.id} className="bg-white border rounded-lg p-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h5 className="font-bold text-blue-700 flex items-center gap-2"><FaUtensils />{item.consumption_type.name}</h5>
+                                        <p className="text-gray-800 text-lg">{item.menu}</p>
+                                    </div>
+                                    <div className="text-right flex-shrink-0 ml-4">
+                                        <div className="font-bold text-gray-800 text-xl flex items-center gap-2">
+                                            {item.qty} pax
+                                        </div>
                                     </div>
                                 </div>
+                                <div className="border-t mt-3 pt-3 text-sm text-gray-600 flex items-center gap-2">
+                                    <FaClock className="text-gray-400" />
+                                    <span>Waktu Antar: {moment(item.delivery_time).format('DD MMM YYYY, HH:mm')}</span>
+                                </div>
                             </div>
-                            <div className="border-t mt-3 pt-3 text-sm text-gray-600 flex items-center gap-2">
-                                <FaClock className="text-gray-400" />
-                                <span>Waktu Antar: {moment(item.delivery_time).format('DD MMM YYYY, HH:mm')}</span>
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
 
                 <div className="lg:col-span-2">
                     <div className="bg-white border rounded-lg p-5 sticky top-24">
-                        <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"><FaStickyNote /> Catatan Tambahan</h4>
+                        <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2"> Catatan Tambahan</h4>
                         {data.note ? (
                             <p className="text-gray-600 bg-gray-50 p-3 rounded-md whitespace-pre-wrap">{data.note}</p>
                         ) : (
@@ -239,12 +265,6 @@ export default function OrderDetailPage() {
             </div>
 
 
-            {data.status === 'Submit' && (
-                <div className="flex justify-end gap-3 mt-6">
-                    <button className="px-5 py-2 rounded-lg bg-red-600 text-white" onClick={() => handleOpenModal(data, "Rejected")}>Tolak</button>
-                    <button className="px-5 py-2 rounded-lg bg-green-600 text-white" onClick={() => handleOpenModal(data, "Approved")}>Setujui</button>
-                </div>
-            )}
 
             {/* Modal tidak perlu diubah karena logikanya sama */}
             <ChangeStatusOrderModal
@@ -267,11 +287,11 @@ export default function OrderDetailPage() {
 }
 
 const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | null }) => (
-    <div className="bg-white p-4 rounded-lg border flex items-start gap-4">
-        <div className="text-gray-400 mt-1">{icon}</div>
+    <div className="bg-white p-4 rounded-lg border flex items-start gap-4 h-full">
+        <div className="text-blue-500 text-xl mt-1">{icon}</div>
         <div>
             <span className="text-gray-500 text-sm block">{label}</span>
-            <span className="font-semibold text-base text-gray-800">{value || '-'}</span>
+            <span className="font-semibold text-base text-gray-800">{value || "-"}</span>
         </div>
     </div>
 );

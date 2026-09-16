@@ -97,7 +97,7 @@ export default function MyLoanPage() {
     }
 
     return (
-        <div className="p-4 md:p-6 space-y-6 bg-gray-50 min-h-screen">
+        <div className="p-4 md:p-6 space-y-6 min-h-screen">
             {/* Header Area */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
