@@ -18,10 +18,13 @@ import DateRangePicker from "@/components/common/DateRangePicker";
 
 interface TableDataItem {
     id: number;
+    id_user?: string | null;
+    intern_id?: number | null;
     name: string;
     phone_number: string;
     status: string;
     cabang: { id_cab: number; nama_cab: string; };
+    is_external?: number;
     created_at: string;
 }
 
@@ -103,6 +106,19 @@ export default function DriversPage() {
                 header: "Nama Supir",
                 accessorKey: "name",
                 cell: ({ row }: any) => <span>{row.name}</span>,
+            },
+            {
+                id: "is_external",
+                header: "Tipe",
+                accessorFn: (row: any) => row.intern_id || row.is_external,
+                cell: ({ row }: any) => {
+                    const isExternal = Boolean(row.intern_id || row.is_external === 1 || !row.id_user);
+                    return (
+                        <Badge color={isExternal ? "warning" : "primary"} size="sm">
+                            {isExternal ? "Eksternal" : "Internal"}
+                        </Badge>
+                    );
+                },
             },
             {
                 id: "phone_number",

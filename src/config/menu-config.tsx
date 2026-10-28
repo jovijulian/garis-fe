@@ -6,6 +6,7 @@ import {
   Users,
   Home,
   FileText,
+  UserRoundCheck,
   School,
   LayoutList,
   GitPullRequestArrow,
@@ -231,7 +232,13 @@ export const menuConfig: Record<string, NavItem[]> = {
       name: 'Manajemen Akses',
       icon: <Users className="w-[18px] h-[18px]" />,
       path: '/admin-panel',
-      roles: [1],
+      roles: [1, 2],
+    },
+    {
+      name: 'Data Master Karyawan HL/Magang',
+      icon: <UserRoundCheck className="w-[18px] h-[18px]" />,
+      path: '/admin-panel/intern',
+      roles: [1, 2],
     },
     {
       name: 'Kembali ke Menu',

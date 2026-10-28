@@ -50,69 +50,69 @@ const menuItems: {
     comingSoon?: boolean;
     allowedRoles?: string[];
 }[] = [
-    {
-        title: "Peminjaman Ruangan",
-        description: "Booking dan kelola jadwal ruangan meeting.",
-        icon: CalendarClock,
-        href: "/manage-booking/dashboard",
-        color: "blue",
-    },
-    {
-        title: "Pengajuan Kendaraan",
-        description: "Ajukan peminjaman kendaraan dan supir.",
-        icon: Car,
-        href: "/vehicles",
-        color: "green",
-    },
-    {
-        title: "Order",
-        description: "Pantau dan atur pesanan dengan mudah.",
-        icon: ShoppingCart,
-        href: "/orders/dashboard",
-        color: "indigo",
-    },
-    {
-        title: "Inventaris",
-        description: "Lihat dan pinjam inventaris kantor.",
-        icon: Package,
-        href: "/inventories/dashboard",
-        color: "yellow",
-        // allowedRoles: ["1", "2"],
-    },
-    {
-        title: "Pengajuan Proyek",
-        description: "Kelola dan ajukan proyek baru.",
-        icon: Briefcase,
-        href: "/projects/dashboard",
-        color: "purple",
-        allowedRoles: ["1", "2", "3"],
-        // comingSoon: true, 
-    },
-    {
-        title: "Pengingat",
-        description: "Kelola pengingat penting Anda.",
-        icon: CalendarClock,
-        href: "/reminders/dashboard",
-        color: "pink",
-        allowedRoles: ["1", "2"],
-    },
-    {
-        title: "Reimbursement",
-        description: "Ajukan klaim reimbursement biaya.",
-        icon: FileText,
-        href: "/reimbursements/dashboard",
-        color: "red",
-        // comingSoon: true, 
-    },
-    {
-        title: "Admin Panel",
-        description: "Kelola semua data (khusus super admin).",
-        icon: ShieldCheck,
-        href: "/admin-panel",
-        color: "gray",
-        allowedRoles: ["1"],
-    },
-];
+        {
+            title: "Peminjaman Ruangan",
+            description: "Booking dan kelola jadwal ruangan meeting.",
+            icon: CalendarClock,
+            href: "/manage-booking/dashboard",
+            color: "blue",
+        },
+        {
+            title: "Pengajuan Kendaraan",
+            description: "Ajukan peminjaman kendaraan dan supir.",
+            icon: Car,
+            href: "/vehicles",
+            color: "green",
+        },
+        {
+            title: "Order",
+            description: "Pantau dan atur pesanan dengan mudah.",
+            icon: ShoppingCart,
+            href: "/orders/dashboard",
+            color: "indigo",
+        },
+        {
+            title: "Inventaris",
+            description: "Lihat dan pinjam inventaris kantor.",
+            icon: Package,
+            href: "/inventories/dashboard",
+            color: "yellow",
+            // allowedRoles: ["1", "2"],
+        },
+        {
+            title: "Pengajuan Proyek",
+            description: "Kelola dan ajukan proyek baru.",
+            icon: Briefcase,
+            href: "/projects/dashboard",
+            color: "purple",
+            allowedRoles: ["1", "2", "3"],
+            // comingSoon: true, 
+        },
+        {
+            title: "Pengingat",
+            description: "Kelola pengingat penting Anda.",
+            icon: CalendarClock,
+            href: "/reminders/dashboard",
+            color: "pink",
+            allowedRoles: ["1", "2"],
+        },
+        {
+            title: "Reimbursement",
+            description: "Ajukan klaim reimbursement biaya.",
+            icon: FileText,
+            href: "/reimbursements/dashboard",
+            color: "red",
+            // comingSoon: true, 
+        },
+        {
+            title: "Admin Panel",
+            description: "Kelola semua data (khusus admin).",
+            icon: ShieldCheck,
+            href: "/admin-panel",
+            color: "gray",
+            allowedRoles: ["1", "2"],
+        },
+    ];
 
 interface MenuCardProps {
     title: string;
@@ -198,7 +198,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
         if (isNavigating) {
             return;
         }
-        
+
         onNavigate(dynamicHref);
     };
 
@@ -235,7 +235,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
                         SEGERA HADIR
                     </div>
                 )}
-                
+
                 {isRestricted && (
                     <div className="absolute top-3 right-3 text-gray-400">
                         <Lock className="w-5 h-5" />
@@ -269,13 +269,13 @@ const MenuCard: React.FC<MenuCardProps> = ({
                             <Icon className="w-7 h-7 text-white" />
                         )}
                     </div>
-                    
+
                     <h3 className={`font-bold text-lg mt-5 transition-colors 
                         ${isDisabled ? 'text-gray-500' : 'text-gray-800 dark:text-white group-hover:text-blue-600'}
                     `}>
                         {title}
                     </h3>
-                    
+
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
                         {description}
                     </p>
@@ -300,7 +300,7 @@ export default function MenusPage() {
     const [pendingCounts, setPendingCounts] = useState<PendingCounts | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isNavigating, setIsNavigating] = useState(false);
-    
+
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -359,7 +359,7 @@ export default function MenusPage() {
             <div className={`flex-1 transition-all duration-300 ease-in-out`}>
                 <AppHeader />
                 <div className="p-4 md:p-8 space-y-8 bg-gradient-to-br from-slate-50 to-blue-100 min-h-screen">
-                    
+
                     <div className={`max-w-5xl mx-auto transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-5'}`}>
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white tracking-tight">
                             Selamat Datang, <span className="text-blue-800">{userName}</span>!
