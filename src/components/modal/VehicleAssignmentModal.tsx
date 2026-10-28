@@ -91,7 +91,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
             const driversRes = await httpGet(endpointUrl("/drivers/options"), true, params);
             let fetchedDriverOptions = driversRes.data?.data?.map((d: any) => ({
                 value: d.id.toString(),
-                label: d.name,
+                label: `${d.name} - ${d.is_external ? '(Eksternal)' : '(Internal)'}`,
             })) || [];
 
             if (existingAssignments.length > 0) {
