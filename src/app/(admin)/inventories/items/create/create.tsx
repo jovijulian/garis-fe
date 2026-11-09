@@ -90,19 +90,20 @@ export default function CreateMasterItemPage() {
                 scannerRef.current = null;
             }
         }
-        if (!scannedBarcode || scannedBarcode.trim() === "") {
+        const trimmedBarcode = scannedBarcode.trim();
+        if (!trimmedBarcode) {
             setFormData(prev => ({ ...prev, barcode: "" }));
             return;
         }
 
         setIsCheckingBarcode(true);
         try {
-            const res = await httpGet(endpointUrl(`/inventory-items/check-barcode/${scannedBarcode}?cab_id=${formData.cab_id}`), true);
+            const res = await httpGet(endpointUrl(`/inventory-items/check-barcode/${encodeURIComponent(trimmedBarcode)}?cab_id=${formData.cab_id}`), true);
             if (res.data?.data?.is_existing) {
                 toast.error("Barcode sudah terdaftar! Gunakan menu Stock In untuk menambah stok.");
                 setFormData(prev => ({ ...prev, barcode: "" }));
             } else {
-                setFormData(prev => ({ ...prev, barcode: scannedBarcode }));
+                setFormData(prev => ({ ...prev, barcode: trimmedBarcode }));
                 toast.success("Barcode tersedia untuk digunakan.");
             }
         } catch (error) {

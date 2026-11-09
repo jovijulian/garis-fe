@@ -156,7 +156,8 @@ export default function StockInPage() {
             }
         }
 
-        if (!scannedBarcode || scannedBarcode.trim() === "") {
+        const trimmedBarcode = scannedBarcode.trim();
+        if (!trimmedBarcode) {
             setScannedItem(null);
             setFormData(prev => ({ ...prev, item_id: null, input_qty: "", input_unit_id: "", note: "" }));
             return;
@@ -165,7 +166,7 @@ export default function StockInPage() {
         setIsCheckingBarcode(true);
         try {
             // Gunakan state cabId yang sudah di-fetch di useEffect
-            const res = await httpGet(endpointUrl(`/inventory-items/check-barcode/${scannedBarcode}?cab_id=${cabId}`), true);
+            const res = await httpGet(endpointUrl(`/inventory-items/check-barcode/${encodeURIComponent(trimmedBarcode)}?cab_id=${cabId}`), true);
             const responseData = res.data?.data;
 
             // Jika barang ADA di database
@@ -173,7 +174,7 @@ export default function StockInPage() {
                 const item = responseData.data;
                 setScannedItem(item);
                 setFormData({
-                    barcode: scannedBarcode,
+                    barcode: trimmedBarcode,
                     item_id: item.id,
                     input_qty: "1",
                     input_unit_id: String(item.base_unit_id), // Default langsung terpilih satuan ecerannya
@@ -183,7 +184,7 @@ export default function StockInPage() {
             } else {
                 // Jika barang TIDAK ADA, blokir user di sini
                 setScannedItem(null);
-                setFormData(prev => ({ ...prev, barcode: scannedBarcode, item_id: null }));
+                setFormData(prev => ({ ...prev, barcode: trimmedBarcode, item_id: null }));
                 toast.error("Barang belum terdaftar! Silakan daftarkan di Master Barang terlebih dahulu.");
             }
         } catch (error) {

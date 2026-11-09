@@ -94,11 +94,12 @@ export default function StockOpnamePage() {
     };
 
     const handleCheckBarcode = async (scannedBarcode: string) => {
-        if (isCheckingBarcode) return;
+        const trimmedBarcode = scannedBarcode.trim();
+        if (!trimmedBarcode || isCheckingBarcode) return;
         setIsCheckingBarcode(true);
         try {
             const cabId = localStorage.getItem("sites");
-            const res = await httpGet(endpointUrl(`/inventory-items/check-barcode/${scannedBarcode}?cab_id=${cabId}`), true);
+            const res = await httpGet(endpointUrl(`/inventory-items/check-barcode/${encodeURIComponent(trimmedBarcode)}?cab_id=${cabId}`), true);
 
             if (res.data?.data?.is_existing) {
                 setSelectedItemData(res.data.data.data);
