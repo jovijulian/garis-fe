@@ -37,26 +37,51 @@ export default function BulkCreateMasterItemPage() {
     const [cabId, setCabId] = useState<number>(0);
     const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
     const [unitOptions, setUnitOptions] = useState<any[]>([]);
+    const [siteOptions, setSiteOptions] = useState<any[]>([]);
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
     const [items, setItems] = useState<BulkItem[]>([]);
 
     useEffect(() => {
+        const storedRole = localStorage.getItem("role");
+        const storedCabId = localStorage.getItem("sites");
+        const isSuper = Number(storedRole) === 1;
+        setIsSuperAdmin(isSuper);
+
         const fetchOptions = async () => {
             try {
-                const [unitRes, categoryRes] = await Promise.all([
+                const requests: Promise<any>[] = [
                     httpGet(endpointUrl("/inventory-units/options"), true),
                     httpGet(endpointUrl("/inventory-categories/options"), true),
-                ]);
+                ];
+
+                if (isSuper) {
+                    requests.push(httpGet(endpointUrl("/rooms/site-options"), true));
+                }
+
+                const responses = await Promise.all(requests);
+                const unitRes = responses[0];
+                const categoryRes = responses[1];
+
                 setUnitOptions(unitRes.data.data.map((r: any) => ({ value: r.id.toString(), label: r.name })));
                 setCategoryOptions(categoryRes.data.data.map((r: any) => ({ value: r.id.toString(), label: r.name })));
+
+                if (isSuper && responses[2]) {
+                    const formattedSites = responses[2].data?.data?.map((site: any) => ({
+                        value: site.id_cab.toString(),
+                        label: site.nama_cab,
+                    })) || [];
+                    setSiteOptions(formattedSites);
+                }
             } catch (error) {
                 console.error("Gagal mengambil master data:", error);
             }
         };
 
         fetchOptions();
-        const storedCabId = localStorage.getItem("sites");
-        setCabId(storedCabId ? Number(storedCabId) : 0);
+        if (!isSuper) {
+            setCabId(storedCabId ? Number(storedCabId) : 0);
+        }
         addNewItem();
     }, []);
 
@@ -135,6 +160,11 @@ export default function BulkCreateMasterItemPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (isSuperAdmin && (!cabId || cabId === 0)) {
+            toast.warning("Mohon pilih Cabang / Site tujuan barang.");
+            return;
+        }
+
         const isValid = items.every(item => item.name && item.category_id && item.base_unit_id);
         if (!isValid) {
             toast.warning("Mohon lengkapi Nama, Kategori, dan Satuan Eceran untuk semua barang.");
@@ -179,6 +209,19 @@ export default function BulkCreateMasterItemPage() {
     return (
         <ComponentCard title="Pendaftaran Massal Katalog Barang">
             <form onSubmit={handleSubmit} className="space-y-6">
+                {isSuperAdmin && (
+                    <div className="p-5 border border-blue-200 bg-blue-50/40 rounded-xl space-y-2">
+                        <label className="text-sm font-semibold text-gray-800">
+                            Cabang / Site Tujuan <span className="text-red-500">*</span>
+                        </label>
+                        <Select
+                            options={siteOptions}
+                            value={_.find(siteOptions, { value: String(cabId) }) || null}
+                            onValueChange={(opt) => setCabId(opt ? Number(opt.value) : 0)}
+                            placeholder="Pilih Cabang / Site tujuan..."
+                        />
+                    </div>
+                )}
                 <div className="space-y-6">
                     {items.map((item, index) => (
                         <div key={item.id} className="p-5 border border-gray-200 rounded-xl bg-gray-50/50 shadow-sm relative">

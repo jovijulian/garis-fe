@@ -18,6 +18,8 @@ export default function CreateMasterItemPage() {
     const [isCheckingBarcode, setIsCheckingBarcode] = useState(false);
     const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
     const [unitOptions, setUnitOptions] = useState<any[]>([]);
+    const [siteOptions, setSiteOptions] = useState<any[]>([]);
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
     const [formData, setFormData] = useState({
         cab_id: 0,
@@ -39,22 +41,45 @@ export default function CreateMasterItemPage() {
     const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
     useEffect(() => {
+        const storedRole = localStorage.getItem("role");
+        const storedCabId = localStorage.getItem("sites");
+        const isSuper = Number(storedRole) === 1;
+        setIsSuperAdmin(isSuper);
+
         const fetchOptions = async () => {
             try {
-                const [unitRes, categoryRes] = await Promise.all([
+                const requests: Promise<any>[] = [
                     httpGet(endpointUrl("/inventory-units/options"), true),
                     httpGet(endpointUrl("/inventory-categories/options"), true),
-                ]);
+                ];
+
+                if (isSuper) {
+                    requests.push(httpGet(endpointUrl("/rooms/site-options"), true));
+                }
+
+                const responses = await Promise.all(requests);
+                const unitRes = responses[0];
+                const categoryRes = responses[1];
+
                 setUnitOptions(unitRes.data.data.map((r: any) => ({ value: r.id.toString(), label: r.name })));
                 setCategoryOptions(categoryRes.data.data.map((r: any) => ({ value: r.id.toString(), label: r.name })));
+
+                if (isSuper && responses[2]) {
+                    const formattedSites = responses[2].data?.data?.map((site: any) => ({
+                        value: site.id_cab.toString(),
+                        label: site.nama_cab,
+                    })) || [];
+                    setSiteOptions(formattedSites);
+                }
             } catch (error) {
                 console.error("Gagal mengambil master data:", error);
             }
         };
 
         fetchOptions();
-        const cabId = localStorage.getItem("sites");
-        setFormData(prev => ({ ...prev, cab_id: cabId ? Number(cabId) : 0 }));
+        if (!isSuper) {
+            setFormData(prev => ({ ...prev, cab_id: storedCabId ? Number(storedCabId) : 0 }));
+        }
         return () => {
             if (scannerRef.current) scannerRef.current.clear().catch(e => console.error(e));
         };
@@ -96,11 +121,16 @@ export default function CreateMasterItemPage() {
             return;
         }
 
+        if (isSuperAdmin && (!formData.cab_id || formData.cab_id === 0)) {
+            toast.warning("Silakan pilih Cabang / Site terlebih dahulu sebelum memeriksa barcode.");
+            return;
+        }
+
         setIsCheckingBarcode(true);
         try {
             const res = await httpGet(endpointUrl(`/inventory-items/check-barcode/${encodeURIComponent(trimmedBarcode)}?cab_id=${formData.cab_id}`), true);
             if (res.data?.data?.is_existing) {
-                toast.error("Barcode sudah terdaftar! Gunakan menu Stock In untuk menambah stok.");
+                toast.error("Barcode sudah terdaftar di cabang ini! Gunakan menu Stock In untuk menambah stok.");
                 setFormData(prev => ({ ...prev, barcode: "" }));
             } else {
                 setFormData(prev => ({ ...prev, barcode: trimmedBarcode }));
@@ -188,6 +218,11 @@ export default function CreateMasterItemPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (isSuperAdmin && (!formData.cab_id || formData.cab_id === 0)) {
+            toast.warning("Mohon pilih Cabang / Site tujuan barang.");
+            return;
+        }
+
         if (!formData.name || !formData.category_id || !formData.base_unit_id) {
             toast.warning("Mohon lengkapi Nama, Kategori, dan Satuan Eceran");
             return;
@@ -245,6 +280,20 @@ export default function CreateMasterItemPage() {
                         <ScanBarcode className="w-5 h-5 text-gray-400" />
                         <h3 className="font-semibold text-gray-800">1. Identitas Barang Utama</h3>
                     </div>
+
+                    {isSuperAdmin && (
+                        <div className="col-span-1 md:col-span-2 space-y-2">
+                            <label className="text-sm font-medium text-gray-800">
+                                Cabang / Site <span className="text-red-500">*</span>
+                            </label>
+                            <Select
+                                options={siteOptions}
+                                value={_.find(siteOptions, { value: String(formData.cab_id) }) || null}
+                                onValueChange={(opt) => handleChange("cab_id", opt ? Number(opt.value) : 0)}
+                                placeholder="Pilih Cabang / Site tujuan..."
+                            />
+                        </div>
+                    )}
 
                     <div className="col-span-1 md:col-span-2 space-y-2">
                         <label className="text-sm font-medium text-gray-800 flex items-center justify-between">

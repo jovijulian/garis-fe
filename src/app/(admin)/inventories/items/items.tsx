@@ -48,6 +48,14 @@ export default function UnitPage() {
     const [selectedSite, setSelectedSite] = useState<any>(null);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [userRole, setUserRole] = useState<number | null>(null);
+
+    useEffect(() => {
+        const storedRole = localStorage.getItem("role");
+        if (storedRole) {
+            setUserRole(Number(storedRole));
+        }
+    }, []);
 
     useEffect(() => {
         getData();
@@ -142,6 +150,16 @@ export default function UnitPage() {
                 ),
             },
             {
+                id: "site",
+                header: "Cabang",
+                accessorKey: "cabang.nama_cab",
+                cell: ({ row }: any) => (
+                    <span className="text-sm font-medium text-gray-700">
+                        {row.cabang?.nama_cab || (row.cab_id ? `Cabang #${row.cab_id}` : "-")}
+                    </span>
+                ),
+            },
+            {
                 id: "category",
                 header: "Kategori",
                 accessorKey: "category.name",
@@ -209,15 +227,19 @@ export default function UnitPage() {
 
     const getData = async () => {
         setIsLoading(true);
-        const search = searchTerm.trim();;
+        const search = searchTerm.trim();
         const page = searchParams.get("page");
         const perPageParam = searchParams.get("per_page");
+        const storedRole = localStorage.getItem("role");
+        const storedCabId = localStorage.getItem("sites");
 
         const params: any = {
             ...(search ? { search } : {}),
             per_page: perPageParam ? Number(perPageParam) : perPage,
             page: page ? Number(page) : currentPage,
-            cab_id: selectedSite ? selectedSite.value : undefined,
+            cab_id: Number(storedRole) === 1
+                ? (selectedSite ? selectedSite.value : undefined)
+                : (storedCabId ? Number(storedCabId) : undefined),
         };
 
 
@@ -248,13 +270,15 @@ export default function UnitPage() {
             <div className="flex justify-end items-center">
                 <div className="flex gap-2 items-center">
 
-                    <Select
-                        onValueChange={(value) => setSelectedSite(value)}
-                        placeholder="Pilih Cabang"
-                        value={siteOptions.find(opt => opt.value == selectedSite)}
-                        options={siteOptions}
-                        isClearable
-                    />
+                    {userRole === 1 && (
+                        <Select
+                            onValueChange={(value) => setSelectedSite(value)}
+                            placeholder="Semua Cabang"
+                            value={siteOptions.find(opt => opt.value == (selectedSite?.value || selectedSite))}
+                            options={siteOptions}
+                            isClearable
+                        />
+                    )}
 
                     <input
                         type="text"
@@ -265,14 +289,16 @@ export default function UnitPage() {
                     />
 
 
-                    {/* Export */}
-                    <button
-                        onClick={() => setIsExportModalOpen(true)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2"
-                    >
-                        <FileDown className="w-4 h-4" />
-                        Export
-                    </button>
+                    {/* Export - Hanya muncul untuk Super Admin (role = 1) */}
+                    {userRole === 1 && (
+                        <button
+                            onClick={() => setIsExportModalOpen(true)}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2"
+                        >
+                            <FileDown className="w-4 h-4" />
+                            Export
+                        </button>
+                    )}
 
 
                     {/* Create Dropdown */}
@@ -350,10 +376,12 @@ export default function UnitPage() {
                 onSuccess={getData}
             />
 
-            <ExportInventoryItemModal
-                isOpen={isExportModalOpen}
-                onClose={() => setIsExportModalOpen(false)}
-            />
+            {userRole === 1 && (
+                <ExportInventoryItemModal
+                    isOpen={isExportModalOpen}
+                    onClose={() => setIsExportModalOpen(false)}
+                />
+            )}
         </div>
     );
 }
