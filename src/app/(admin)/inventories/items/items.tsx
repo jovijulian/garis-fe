@@ -290,15 +290,13 @@ export default function UnitPage() {
 
 
                     {/* Export - Hanya muncul untuk Super Admin (role = 1) */}
-                    {userRole === 1 && (
-                        <button
-                            onClick={() => setIsExportModalOpen(true)}
-                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2"
-                        >
-                            <FileDown className="w-4 h-4" />
-                            Export
-                        </button>
-                    )}
+                    <button
+                        onClick={() => setIsExportModalOpen(true)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2"
+                    >
+                        <FileDown className="w-4 h-4" />
+                        Export
+                    </button>
 
 
                     {/* Create Dropdown */}
@@ -376,12 +374,10 @@ export default function UnitPage() {
                 onSuccess={getData}
             />
 
-            {userRole === 1 && (
-                <ExportInventoryItemModal
-                    isOpen={isExportModalOpen}
-                    onClose={() => setIsExportModalOpen(false)}
-                />
-            )}
+            <ExportInventoryItemModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+            />
         </div>
     );
 }

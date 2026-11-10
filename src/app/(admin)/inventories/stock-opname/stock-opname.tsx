@@ -60,12 +60,21 @@ export default function StockOpnamePage() {
 
     const fetchItems = async () => {
         try {
-            const res = await httpGet(endpointUrl("inventory-items/options"), true);
+            const cabId = localStorage.getItem("sites");
+            const res = await httpGet(endpointUrl(`inventory-items/options${cabId ? `?cab_id=${cabId}` : ''}`), true);
             const items = res.data?.data || [];
-            setItemOptions(items.map((r: any) => ({
-                value: r.id.toString(),
-                label: `${r.name} ${r.barcode ? `(${r.barcode})` : ''}`
-            })));
+            setItemOptions(items.map((r: any) => {
+                const variants: string[] = [];
+                if (r.size) variants.push(`Ukuran: ${r.size}`);
+                if (r.color) variants.push(`Warna: ${r.color}`);
+                if (r.style) variants.push(`Style: ${r.style}`);
+                if (r.version) variants.push(`Versi: ${r.version}`);
+                const variantStr = variants.length > 0 ? ` [${variants.join(", ")}]` : '';
+                return {
+                    value: r.id.toString(),
+                    label: `${r.name}${variantStr} ${r.barcode ? `(${r.barcode})` : ''}`
+                };
+            }));
         } catch (error) {
             toast.error("Gagal memuat daftar barang.");
         }
@@ -252,10 +261,40 @@ export default function StockOpnamePage() {
 
                 {selectedItemData && (
                     <div className="space-y-6 pt-6 border-t border-gray-100 animate-in fade-in duration-500">
-                        <div className="p-4 bg-blue-50 rounded-xl flex items-center justify-between">
-                            <span className="text-sm font-medium text-blue-800">
-                                Stok Sistem: <strong>{selectedItemData.stock_available} {selectedItemData.base_unit?.name}</strong>
-                            </span>
+                        <div className="p-4 bg-white border border-blue-200 rounded-xl space-y-2">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                <div>
+                                    <h4 className="font-bold text-gray-800 text-base">{selectedItemData.name}</h4>
+                                    <span className="text-xs text-blue-600 font-mono font-medium">{selectedItemData.barcode || "Tanpa Barcode"}</span>
+                                </div>
+                                <span className="text-sm font-semibold text-blue-800 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                                    Stok Sistem: {selectedItemData.stock_available} {selectedItemData.base_unit?.name}
+                                </span>
+                            </div>
+                            {(selectedItemData.size || selectedItemData.color || selectedItemData.style || selectedItemData.version) && (
+                                <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100 text-xs">
+                                    {selectedItemData.size && (
+                                        <span className="px-2 py-0.5 bg-amber-50 text-amber-800 rounded border border-amber-200">
+                                            Ukuran: <strong>{selectedItemData.size}</strong>
+                                        </span>
+                                    )}
+                                    {selectedItemData.color && (
+                                        <span className="px-2 py-0.5 bg-blue-50 text-blue-800 rounded border border-blue-200">
+                                            Warna: <strong>{selectedItemData.color}</strong>
+                                        </span>
+                                    )}
+                                    {selectedItemData.style && (
+                                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded border border-emerald-200">
+                                            Style: <strong>{selectedItemData.style}</strong>
+                                        </span>
+                                    )}
+                                    {selectedItemData.version && (
+                                        <span className="px-2 py-0.5 bg-purple-50 text-purple-800 rounded border border-purple-200">
+                                            Versi: <strong>{selectedItemData.version}</strong>
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

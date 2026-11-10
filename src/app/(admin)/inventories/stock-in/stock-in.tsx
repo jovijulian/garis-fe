@@ -117,7 +117,7 @@ export default function StockInPage() {
         searchTimeoutRef.current = setTimeout(async () => {
             setIsSearching(true);
             try {
-                const res = await httpGet(endpointUrl(`/inventory-items/options?search=${val}`), true);
+                const res = await httpGet(endpointUrl(`/inventory-items/options?search=${encodeURIComponent(val)}&cab_id=${cabId}`), true);
                 setSearchResults(res.data?.data || []);
             } catch (error) {
                 console.error("Error fetching options:", error);
@@ -375,6 +375,30 @@ export default function StockInPage() {
                                             className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors"
                                         >
                                             <div className="font-semibold text-sm text-gray-800">{item.name}</div>
+                                            {(item.size || item.color || item.style || item.version) && (
+                                                <div className="flex flex-wrap gap-1 mt-1 text-[11px]">
+                                                    {item.size && (
+                                                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded border border-amber-200">
+                                                            Ukuran: {item.size}
+                                                        </span>
+                                                    )}
+                                                    {item.color && (
+                                                        <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200">
+                                                            Warna: {item.color}
+                                                        </span>
+                                                    )}
+                                                    {item.style && (
+                                                        <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded border border-emerald-200">
+                                                            Style: {item.style}
+                                                        </span>
+                                                    )}
+                                                    {item.version && (
+                                                        <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded border border-purple-200">
+                                                            Versi: {item.version}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="text-xs text-gray-500 flex justify-between mt-1">
                                                 <span className="text-blue-600">{item.barcode}</span>
                                                 <span className="font-medium text-gray-600">
@@ -426,8 +450,32 @@ export default function StockInPage() {
                                         </span>
                                     </h3>
                                     <p className="text-sm text-gray-500 mt-1">
-                                        Kategori: {scannedItem.category?.name || '-'} | Stok Saat Ini: <span className="font-bold text-gray-800">{scannedItem.stock_available} {scannedItem.base_unit?.name}</span>
+                                        Kategori: {scannedItem.category?.name || '-'} | Barcode: <span className="font-mono text-blue-600 font-semibold">{scannedItem.barcode || '-'}</span> | Stok Saat Ini: <span className="font-bold text-gray-800">{scannedItem.stock_available} {scannedItem.base_unit?.name}</span>
                                     </p>
+                                    {(scannedItem.size || scannedItem.color || scannedItem.style || scannedItem.version) && (
+                                        <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-gray-100 text-xs">
+                                            {scannedItem.size && (
+                                                <span className="px-2.5 py-1 bg-amber-50 text-amber-800 rounded-md border border-amber-200 font-medium">
+                                                    Ukuran: <strong>{scannedItem.size}</strong>
+                                                </span>
+                                            )}
+                                            {scannedItem.color && (
+                                                <span className="px-2.5 py-1 bg-blue-50 text-blue-800 rounded-md border border-blue-200 font-medium">
+                                                    Warna: <strong>{scannedItem.color}</strong>
+                                                </span>
+                                            )}
+                                            {scannedItem.style && (
+                                                <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 rounded-md border border-emerald-200 font-medium">
+                                                    Style: <strong>{scannedItem.style}</strong>
+                                                </span>
+                                            )}
+                                            {scannedItem.version && (
+                                                <span className="px-2.5 py-1 bg-purple-50 text-purple-800 rounded-md border border-purple-200 font-medium">
+                                                    Versi: <strong>{scannedItem.version}</strong>
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="bg-blue-50 px-4 py-2 rounded-lg text-xs font-semibold text-blue-700 flex items-center gap-2">
                                     <Info className="w-4 h-4" /> Barang Valid

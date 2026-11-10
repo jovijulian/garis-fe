@@ -117,14 +117,14 @@ const ExportInventoryItemModal: React.FC<ExportModalProps> = ({ isOpen, onClose 
                             initialEndDate={endDate}
                         />
                     </div>
-                    <div>
+                    {/* <div>
                         <label className="block font-medium mb-2">Filter Berdasarkan Cabang</label>
                         <Select
                             options={siteOptions}
                             onValueChange={(value) => setSelectedSite(value)}
                             value={siteOptions.find(opt => opt.value == selectedSite)}
                         />
-                    </div>
+                    </div> */}
                     <div>
                         <label className="block font-medium mb-2">
                             Status Stok

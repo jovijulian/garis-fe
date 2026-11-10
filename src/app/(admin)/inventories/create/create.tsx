@@ -23,6 +23,10 @@ interface CartItem {
     item_type: number;
     available_uoms: { value: string, label: string, multiplier: number, unitName: string }[];
     selected_multiplier: number;
+    size?: string | null;
+    color?: string | null;
+    style?: string | null;
+    version?: string | null;
 }
 
 interface SelectOption { value: string; label: string; }
@@ -140,7 +144,11 @@ export default function StockOutPage() {
                             stock_available: item.stock_available,
                             item_type: item.item_type,
                             available_uoms: opts,
-                            selected_multiplier: 1
+                            selected_multiplier: 1,
+                            size: item.size,
+                            color: item.color,
+                            style: item.style,
+                            version: item.version
                         });
                         toast.success(`${item.name} masuk keranjang`);
                     }
@@ -468,6 +476,14 @@ export default function StockOutPage() {
                                                 <td className="px-5 sm:px-6 py-4">
                                                     <div className="font-semibold text-gray-900">{item.name}</div>
                                                     <div className="text-xs text-gray-500 mt-1">{item.barcode || "-"}</div>
+                                                    {(item.size || item.color || item.style || item.version) && (
+                                                        <div className="flex flex-wrap gap-1 mt-1.5 text-[11px]">
+                                                            {item.size && <span className="px-1.5 py-0.5 bg-amber-50 text-amber-800 rounded border border-amber-200">Ukuran: {item.size}</span>}
+                                                            {item.color && <span className="px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded border border-blue-200">Warna: {item.color}</span>}
+                                                            {item.style && <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-800 rounded border border-emerald-200">Style: {item.style}</span>}
+                                                            {item.version && <span className="px-1.5 py-0.5 bg-purple-50 text-purple-800 rounded border border-purple-200">Versi: {item.version}</span>}
+                                                        </div>
+                                                    )}
                                                     <span className={`inline-block mt-2 px-2 py-0.5 text-[10px] font-bold rounded-md ${item.item_type === 1 ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
                                                         {item.item_type === 1 ? "BHP" : "ASET PINJAMAN"}
                                                     </span>
